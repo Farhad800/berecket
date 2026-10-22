@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { CalendarRange, Pencil } from "lucide-react";
 import { pageUser, can } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { ENTITY_HREF } from "@/lib/audit-query";
 import { factoryDay, formatDate, formatDateTime, formatNumber } from "@/lib/time";
 import { getLineProgress, OPEN_STATUSES, PRIORITY_TONE, STATUS_TONE } from "@/lib/orders";
 import { Alert, Badge, Card, LinkButton, PageHeader, cn } from "@/components/ui";
@@ -34,12 +35,32 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   if (!order) notFound();
 
   const jobIds = order.lines.flatMap((l) => l.jobs.map((j) => j.id));
+  const lineIds = order.lines.map((l) => l.id);
+  // Everything that happened to this order across departments: planning, production,
+  // maintenance interruptions, quality decisions, receipts and shipments.
+  const [batches, requests, serviceReports, receipts] = await Promise.all([
+    db.batch.findMany({ where: { orderLineId: { in: lineIds } }, select: { id: true, inspections: { select: { id: true } }, issues: { select: { id: true } } } }),
+    db.maintenanceRequest.findMany({ where: { jobId: { in: jobIds } }, select: { id: true } }),
+    db.serviceReport.findMany({ where: { orderId: id }, select: { id: true } }),
+    db.warehouseReceipt.findMany({ where: { orderLineId: { in: lineIds } }, select: { id: true } }),
+  ]);
+  const related: [string, string[]][] = [
+    ["Order", [id]],
+    ["ProductionJob", jobIds],
+    ["Batch", batches.map((b) => b.id)],
+    ["QcInspection", batches.flatMap((b) => b.inspections.map((i) => i.id))],
+    ["QualityIssue", batches.flatMap((b) => b.issues.map((i) => i.id))],
+    ["MaintenanceRequest", requests.map((r) => r.id)],
+    ["ServiceReport", serviceReports.map((r) => r.id)],
+    ["WarehouseReceipt", receipts.map((r) => r.id)],
+    ["Shipment", order.shipments.map((s) => s.id)],
+  ];
   const [progress, history, comments, users] = await Promise.all([
     getLineProgress([id]),
     db.auditLog.findMany({
-      where: { OR: [{ entityType: "Order", entityId: id }, { entityType: "ProductionJob", entityId: { in: jobIds } }] },
+      where: { OR: related.filter(([, ids]) => ids.length).map(([entityType, ids]) => ({ entityType, entityId: { in: ids } })) },
       orderBy: { createdAt: "desc" },
-      take: 60,
+      take: 200,
       include: { user: { select: { fullName: true } } },
     }),
     db.comment.findMany({ where: { entityType: "Order", entityId: id }, orderBy: { createdAt: "asc" } }),
@@ -186,7 +207,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <li key={h.id} className="relative">
                   <span className="absolute -start-[21px] top-1.5 size-2.5 rounded-full bg-brand-400" aria-hidden />
                   <p className="font-medium">{t.has(`history.${h.action}`) ? t(`history.${h.action}`) : h.action}</p>
-                  <p className="text-xs text-muted">{h.user?.fullName ?? "System"} · {formatDateTime(h.createdAt, locale)}</p>
+                  <p className="text-xs text-muted">
+                    {h.entityType !== "Order" && (
+                      <>
+                        {h.entityId && ENTITY_HREF[h.entityType] ? (
+                          <Link href={ENTITY_HREF[h.entityType](h.entityId)} className="font-semibold text-brand-600 hover:underline dark:text-brand-300">{t.has(`audit.entity.${h.entityType}`) ? t(`audit.entity.${h.entityType}`) : h.entityType}</Link>
+                        ) : (t.has(`audit.entity.${h.entityType}`) ? t(`audit.entity.${h.entityType}`) : h.entityType)}
+                        {" · "}
+                      </>
+                    )}
+                    {h.user?.fullName ?? t("audit.system")} · {formatDateTime(h.createdAt, locale)}
+                  </p>
                   {h.reason && <p className="mt-0.5 text-xs">“{h.reason}”</p>}
                 </li>
               ))}

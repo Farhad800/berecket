@@ -448,6 +448,58 @@
     "system": {
       "reset": "Test verileri temizlendi",
       "remove_demo_users": "Demo hesaplar kaldırıldı"
+    },
+    "auth": {
+      "login": "Giriş yaptı",
+      "password_change": "Şifre değiştirildi"
+    },
+    "setup": {
+      "first_admin": "İlk yönetici oluşturuldu"
+    },
+    "user": {
+      "create": "Çalışan eklendi",
+      "update": "Çalışan güncellendi",
+      "password_reset": "Yönetici şifreyi sıfırladı",
+      "enable": "Çalışan etkinleştirildi",
+      "disable": "Çalışan devre dışı"
+    },
+    "role": {
+      "create": "Rol oluşturuldu",
+      "delete": "Rol silindi",
+      "permissions": "Rol yetkileri değişti"
+    },
+    "customer": {
+      "create": "Müşteri eklendi",
+      "update": "Müşteri güncellendi",
+      "archive": "Müşteri arşivlendi",
+      "restore": "Müşteri geri alındı"
+    },
+    "product": {
+      "create": "Ürün eklendi",
+      "update": "Ürün güncellendi",
+      "archive": "Ürün arşivlendi",
+      "restore": "Ürün geri alındı"
+    },
+    "machine": {
+      "create": "Makine eklendi",
+      "update": "Makine güncellendi",
+      "archive": "Makine arşivlendi",
+      "restore": "Makine geri alındı"
+    },
+    "mold": {
+      "create": "Kalıp eklendi",
+      "update": "Kalıp güncellendi",
+      "archive": "Kalıp arşivlendi",
+      "restore": "Kalıp geri alındı"
+    },
+    "location": {
+      "save": "Depo yeri kaydedildi"
+    },
+    "preventive": {
+      "done": "Önleyici görev yapıldı"
+    },
+    "service": {
+      "report": "Servis raporu girildi"
     }
   },
   "sched": {

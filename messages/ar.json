@@ -448,6 +448,58 @@
     "system": {
       "reset": "مُسحت بيانات التجربة",
       "remove_demo_users": "حُذفت الحسابات التجريبية"
+    },
+    "auth": {
+      "login": "تسجيل دخول",
+      "password_change": "تغيير كلمة المرور"
+    },
+    "setup": {
+      "first_admin": "أُنشئ أول مسؤول"
+    },
+    "user": {
+      "create": "أُضيف موظف",
+      "update": "عُدّل موظف",
+      "password_reset": "أعاد المسؤول تعيين كلمة المرور",
+      "enable": "فُعّل الموظف",
+      "disable": "عُطّل الموظف"
+    },
+    "role": {
+      "create": "أُنشئ دور",
+      "delete": "حُذف دور",
+      "permissions": "تغيّرت صلاحيات الدور"
+    },
+    "customer": {
+      "create": "أُضيف عميل",
+      "update": "عُدّل عميل",
+      "archive": "أُرشف عميل",
+      "restore": "استُعيد عميل"
+    },
+    "product": {
+      "create": "أُضيف منتج",
+      "update": "عُدّل منتج",
+      "archive": "أُرشف منتج",
+      "restore": "استُعيد منتج"
+    },
+    "machine": {
+      "create": "أُضيفت آلة",
+      "update": "عُدّلت آلة",
+      "archive": "أُرشفت آلة",
+      "restore": "استُعيدت آلة"
+    },
+    "mold": {
+      "create": "أُضيف قالب",
+      "update": "عُدّل قالب",
+      "archive": "أُرشف قالب",
+      "restore": "استُعيد قالب"
+    },
+    "location": {
+      "save": "حُفظ موقع تخزين"
+    },
+    "preventive": {
+      "done": "أُنجزت مهمة وقائية"
+    },
+    "service": {
+      "report": "قُدّم تقرير خدمة"
     }
   },
   "sched": {

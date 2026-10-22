@@ -36,6 +36,24 @@ group("sys.count", {
 })
 group("history", {"system.reset":("Test data cleared","مُسحت بيانات التجربة","Test verileri temizlendi"),"system.remove_demo_users":("Demo accounts removed","حُذفت الحسابات التجريبية","Demo hesaplar kaldırıldı")})
 group("audit.entity", {"System":("System","النظام","Sistem")})
+group("history", {
+ "auth.login":("Signed in","تسجيل دخول","Giriş yaptı"),"auth.password_change":("Password changed","تغيير كلمة المرور","Şifre değiştirildi"),
+ "setup.first_admin":("First administrator created","أُنشئ أول مسؤول","İlk yönetici oluşturuldu"),
+ "user.create":("Employee added","أُضيف موظف","Çalışan eklendi"),"user.update":("Employee updated","عُدّل موظف","Çalışan güncellendi"),
+ "user.password_reset":("Password reset by admin","أعاد المسؤول تعيين كلمة المرور","Yönetici şifreyi sıfırladı"),
+ "user.enable":("Employee enabled","فُعّل الموظف","Çalışan etkinleştirildi"),"user.disable":("Employee disabled","عُطّل الموظف","Çalışan devre dışı"),
+ "role.create":("Role created","أُنشئ دور","Rol oluşturuldu"),"role.delete":("Role deleted","حُذف دور","Rol silindi"),"role.permissions":("Role permissions changed","تغيّرت صلاحيات الدور","Rol yetkileri değişti"),
+ "customer.create":("Customer added","أُضيف عميل","Müşteri eklendi"),"customer.update":("Customer updated","عُدّل عميل","Müşteri güncellendi"),
+ "customer.archive":("Customer archived","أُرشف عميل","Müşteri arşivlendi"),"customer.restore":("Customer restored","استُعيد عميل","Müşteri geri alındı"),
+ "product.create":("Product added","أُضيف منتج","Ürün eklendi"),"product.update":("Product updated","عُدّل منتج","Ürün güncellendi"),
+ "product.archive":("Product archived","أُرشف منتج","Ürün arşivlendi"),"product.restore":("Product restored","استُعيد منتج","Ürün geri alındı"),
+ "machine.create":("Machine added","أُضيفت آلة","Makine eklendi"),"machine.update":("Machine updated","عُدّلت آلة","Makine güncellendi"),
+ "machine.archive":("Machine archived","أُرشفت آلة","Makine arşivlendi"),"machine.restore":("Machine restored","استُعيدت آلة","Makine geri alındı"),
+ "mold.create":("Mold added","أُضيف قالب","Kalıp eklendi"),"mold.update":("Mold updated","عُدّل قالب","Kalıp güncellendi"),
+ "mold.archive":("Mold archived","أُرشف قالب","Kalıp arşivlendi"),"mold.restore":("Mold restored","استُعيد قالب","Kalıp geri alındı"),
+ "location.save":("Storage location saved","حُفظ موقع تخزين","Depo yeri kaydedildi"),"preventive.done":("Preventive task done","أُنجزت مهمة وقائية","Önleyici görev yapıldı"),
+ "service.report":("Service report filed","قُدّم تقرير خدمة","Servis raporu girildi"),
+})
 
 for i,loc in enumerate(["en","ar","tr"]):
     p=f"messages/{loc}.json"; d=json.load(open(p,encoding="utf-8"))

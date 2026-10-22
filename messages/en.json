@@ -448,6 +448,58 @@
     "system": {
       "reset": "Test data cleared",
       "remove_demo_users": "Demo accounts removed"
+    },
+    "auth": {
+      "login": "Signed in",
+      "password_change": "Password changed"
+    },
+    "setup": {
+      "first_admin": "First administrator created"
+    },
+    "user": {
+      "create": "Employee added",
+      "update": "Employee updated",
+      "password_reset": "Password reset by admin",
+      "enable": "Employee enabled",
+      "disable": "Employee disabled"
+    },
+    "role": {
+      "create": "Role created",
+      "delete": "Role deleted",
+      "permissions": "Role permissions changed"
+    },
+    "customer": {
+      "create": "Customer added",
+      "update": "Customer updated",
+      "archive": "Customer archived",
+      "restore": "Customer restored"
+    },
+    "product": {
+      "create": "Product added",
+      "update": "Product updated",
+      "archive": "Product archived",
+      "restore": "Product restored"
+    },
+    "machine": {
+      "create": "Machine added",
+      "update": "Machine updated",
+      "archive": "Machine archived",
+      "restore": "Machine restored"
+    },
+    "mold": {
+      "create": "Mold added",
+      "update": "Mold updated",
+      "archive": "Mold archived",
+      "restore": "Mold restored"
+    },
+    "location": {
+      "save": "Storage location saved"
+    },
+    "preventive": {
+      "done": "Preventive task done"
+    },
+    "service": {
+      "report": "Service report filed"
     }
   },
   "sched": {
