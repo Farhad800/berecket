@@ -54,5 +54,9 @@
   },
   "engines": {
     "node": "22.x"
+  },
+  "overrides": {
+    "postcss": "8.5.31",
+    "deepmerge-ts": "8.0.2"
   }
 }
