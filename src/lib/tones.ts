@@ -5,3 +5,4 @@ export const QC_TONE: Record<string, Tone> = { PENDING: "amber", RELEASED: "blue
 export const MAINT_TONE: Record<string, Tone> = { OPEN: "red", IN_PROGRESS: "purple", WAITING_PARTS: "amber", COMPLETED: "blue", VERIFIED: "green", CANCELLED: "gray" };
 export const ISSUE_TONE: Record<string, Tone> = { OPEN: "red", IN_PROGRESS: "purple", AWAITING_VERIFICATION: "amber", RESOLVED: "green", REOPENED: "red" };
 export const SEVERITY_TONE: Record<string, Tone> = { MINOR: "gray", MAJOR: "amber", CRITICAL: "red" };
+export const SHIP_TONE: Record<string, Tone> = { DRAFT: "amber", CONFIRMED: "green", CANCELLED: "gray" };

@@ -153,14 +153,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             </Card>
           )}
 
-          {order.shipments.length > 0 && (
+          {order.shipments.some((s) => s.status !== "CANCELLED") && (
             <Card>
               <h2 className="mb-2 font-semibold">{t("nav.shipments")}</h2>
               <ul className="space-y-1 text-sm">
-                {order.shipments.map((s) => (
+                {order.shipments.filter((s) => s.status !== "CANCELLED").map((s) => (
                   <li key={s.id} className="flex flex-wrap gap-2">
-                    <span className="font-semibold" dir="ltr">{s.number}</span>
-                    <Badge>{s.status}</Badge>
+                    <Link href={`/shipments/${s.id}`} className="font-semibold text-brand-600 hover:underline" dir="ltr">{s.number}</Link>
+                    <Badge tone={s.status === "CONFIRMED" ? "green" : s.status === "DRAFT" ? "amber" : "gray"}>{t(`status.ship.${s.status}`)}</Badge>
                     <span>{formatDate(s.shippedAt ?? s.plannedDate, locale)}</span>
                     <span className="tabular-nums">{n(s.lines.reduce((a, b) => a + b.qty, 0))} {t("md.pcs")}</span>
                   </li>

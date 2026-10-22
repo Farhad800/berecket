@@ -286,6 +286,18 @@
       "AWAITING_VERIFICATION": "Doğrulama bekliyor",
       "RESOLVED": "Çözüldü",
       "REOPENED": "Yeniden açıldı"
+    },
+    "stock": {
+      "AVAILABLE": "Kullanılabilir",
+      "RESERVED": "Ayrılmış",
+      "QUARANTINE": "Karantina",
+      "REJECTED": "Ret",
+      "SHIPPED": "Sevk edildi"
+    },
+    "ship": {
+      "DRAFT": "Taslak — stok ayrıldı",
+      "CONFIRMED": "Sevk edildi",
+      "CANCELLED": "İptal"
     }
   },
   "order": {
@@ -414,6 +426,17 @@
       "issue_submit": "Doğrulamaya gönderildi",
       "issue_resolve": "Doğrulandı ve kapatıldı",
       "issue_reopen": "Yeniden açıldı"
+    },
+    "warehouse": {
+      "receive": "Mal kabul edildi"
+    },
+    "stock": {
+      "adjust": "Stok düzeltildi"
+    },
+    "shipment": {
+      "create": "Sevkiyat taslağı, stok ayrıldı",
+      "confirm": "Sevkiyat yapıldı",
+      "cancel": "Sevkiyat iptal edildi"
     }
   },
   "sched": {
@@ -727,5 +750,99 @@
     },
     "continuesIssue": "Bu karar açık {issue} sorununun devamıdır.",
     "addNewDefect": "+ Farklı bir hata — kaydet"
+  },
+  "wh": {
+    "ledgerNote": "Stok kayıtlı hareketlerden hesaplanır — toplamlar elle girilemez.",
+    "searchStock": "Parti, ürün veya sipariş…",
+    "noStock": "Stokta ürün yok.",
+    "adjustTitle": "Stok düzeltmesi",
+    "adjustHint": "Sayım, hasar veya ret ürün imhası için. Her düzeltme adınız ve nedenle kaydedilir.",
+    "saveAdjustment": "Düzeltmeyi kaydet",
+    "stockState": "Stok durumu",
+    "adjustQty": "Miktar + / −",
+    "adjustKind": "Tür",
+    "nothingAwaiting": "Kabul bekleyen yok.",
+    "receive": "Kabul et",
+    "receipt": "Kabul",
+    "by": "Yapan",
+    "allTypes": "Tüm hareket türleri",
+    "type": "Tür",
+    "newLocation": "Yeni depo yeri",
+    "locationName": "Yer adı",
+    "receiptsCount": "{n} kabul",
+    "receiveTitle": "Mamul kabul",
+    "received": "{number} kaydedildi.",
+    "receivedQuarantine": "{number} kaydedildi — partinin KK durumu nedeniyle {n} adet karantinaya alındı.",
+    "waiting": "{n} adet bekliyor",
+    "willQuarantine": "karantinaya alınacak",
+    "qtyReceived": "Kabul edilen miktar",
+    "location": "Yer",
+    "overReason": "Sayım neden üretimin bildirdiğinden fazla?",
+    "overHint": "Üretime göre kabul edilecek {n} adet kaldı.",
+    "overBlocked": "Sadece {n} adet bekliyor. Daha fazlası için amir onayı gerekir.",
+    "confirmReceipt": "Kabulü onayla",
+    "tab": {
+      "stock": "Stok",
+      "awaiting": "Kabul bekleyen",
+      "receipts": "Kabuller",
+      "movements": "Hareketler",
+      "locations": "Yerler"
+    },
+    "kind": {
+      "COUNT": "Sayım düzeltme",
+      "DAMAGE": "Hasarlı",
+      "SCRAP": "Hurda",
+      "OTHER": "Diğer"
+    },
+    "mv": {
+      "RECEIPT": "Kabul",
+      "RESERVE": "Sevkiyata ayrıldı",
+      "UNRESERVE": "Ayırma kaldırıldı",
+      "SHIP": "Sevk",
+      "QC_SYNC": "Kalite kararı",
+      "ADJUST": "Düzeltme",
+      "SCRAP": "Hurda"
+    }
+  },
+  "ship": {
+    "new": "Yeni sevkiyat",
+    "search": "Sevkiyat, irsaliye, sipariş veya müşteri…",
+    "notCancelled": "İptal olmayanlar",
+    "newHint": "Yalnızca onaylı ve ayrılmamış stok sevk edilebilir.",
+    "nothingToShip": "Sevke hazır onaylı stoğu olan sipariş yok.",
+    "orderWithStock": "Sipariş (stoğu hazır)",
+    "lineFacts": "Sipariş {ordered} · sevk {shipped} · taslakta {drafts} · kalan {open}",
+    "fillFifo": "Önce en eski",
+    "noStockLine": "Bu ürün için henüz stok yok.",
+    "availableN": "{n} kullanılabilir",
+    "blockedN": "{n} bloke",
+    "lineTotal": "Bu kalem: {n} adet",
+    "overOpen": "teslim edilecek {n} adetten fazla",
+    "plannedDate": "Planlanan sevk tarihi",
+    "vehicle": "Araç / plaka",
+    "driver": "Şoför",
+    "reserveHint": "Kaydetmek stoğu bu sevkiyata ayırır. Stok yalnızca sevk onaylanınca depodan çıkar.",
+    "createDraft": "Stoğu ayır ve sevkiyat oluştur",
+    "confirmTitle": "Sevki onayla",
+    "confirmHint": "Stok düşülür ve sipariş tek adımda güncellenir. Bir şey değiştiyse (örn. KK bekletmesi) hiçbir şey değişmez.",
+    "deliveryNote": "İrsaliye no",
+    "deliveryNoteHint": "Otomatik numara için boş bırakın",
+    "confirmDispatch": "Sevki onayla",
+    "confirmedMsg": "Sevk edildi. Stok ve sipariş güncellendi.",
+    "cancelReason": "İptal nedeni",
+    "cancel": "Sevkiyatı iptal et",
+    "cancelledMsg": "İptal edildi — ayrılan stok serbest.",
+    "printNote": "İrsaliye yazdır",
+    "problems": "KK, ayrıldıktan sonra {batches} partisini bloke etti. Bu taslağı iptal edip yenisini oluşturun.",
+    "shippedAt": "Sevk zamanı",
+    "confirmedBy": "Onaylayan",
+    "total": "Toplam",
+    "print": "Yazdır",
+    "deliveryNoteTitle": "İrsaliye",
+    "shipment": "Sevkiyat",
+    "signWarehouse": "Depo",
+    "signDriver": "Şoför",
+    "signCustomer": "Müşteri teslim aldı",
+    "orderNo": "Sipariş"
   }
 }

@@ -59,7 +59,7 @@ export default function InstallBanner() {
     <div
       role="dialog"
       aria-labelledby="install-title"
-      className="fixed inset-x-3 z-50 mx-auto flex max-w-[520px] items-center gap-3 rounded-2xl border border-line bg-surface p-3 shadow-xl"
+      className="fixed inset-x-3 z-50 mx-auto flex print:hidden max-w-[520px] items-center gap-3 rounded-2xl border border-line bg-surface p-3 shadow-xl"
       style={{ bottom: "calc(12px + env(safe-area-inset-bottom))" }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}

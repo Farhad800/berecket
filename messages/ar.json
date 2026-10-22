@@ -286,6 +286,18 @@
       "AWAITING_VERIFICATION": "بانتظار التحقق",
       "RESOLVED": "محلولة",
       "REOPENED": "أُعيد فتحها"
+    },
+    "stock": {
+      "AVAILABLE": "متاح",
+      "RESERVED": "محجوز لشحنة",
+      "QUARANTINE": "حجر",
+      "REJECTED": "مرفوض",
+      "SHIPPED": "مشحون"
+    },
+    "ship": {
+      "DRAFT": "مسودة — المخزون محجوز",
+      "CONFIRMED": "تم الشحن",
+      "CANCELLED": "ملغاة"
     }
   },
   "order": {
@@ -414,6 +426,17 @@
       "issue_submit": "أُرسل للتحقق",
       "issue_resolve": "تم التحقق والإغلاق",
       "issue_reopen": "أُعيد فتحه"
+    },
+    "warehouse": {
+      "receive": "استُلمت بضائع"
+    },
+    "stock": {
+      "adjust": "عُدّل المخزون"
+    },
+    "shipment": {
+      "create": "مسودة شحنة، حُجز المخزون",
+      "confirm": "تم شحن الشحنة",
+      "cancel": "أُلغيت الشحنة"
     }
   },
   "sched": {
@@ -727,5 +750,99 @@
     },
     "continuesIssue": "هذا القرار استمرار للمشكلة المفتوحة {issue}.",
     "addNewDefect": "+ عيب مختلف — سجّله"
+  },
+  "wh": {
+    "ledgerNote": "يُحسب المخزون من الحركات المسجلة — لا يمكن إدخال الإجماليات يدوياً.",
+    "searchStock": "الدفعة، المنتج أو الطلب…",
+    "noStock": "لا يوجد مخزون.",
+    "adjustTitle": "تعديل المخزون",
+    "adjustHint": "للجرد أو التلف أو إتلاف المرفوض. يُسجل كل تعديل باسمك والسبب.",
+    "saveAdjustment": "حفظ التعديل",
+    "stockState": "حالة المخزون",
+    "adjustQty": "الكمية + / −",
+    "adjustKind": "النوع",
+    "nothingAwaiting": "لا شيء بانتظار الاستلام.",
+    "receive": "استلام",
+    "receipt": "الاستلام",
+    "by": "بواسطة",
+    "allTypes": "كل أنواع الحركات",
+    "type": "النوع",
+    "newLocation": "موقع تخزين جديد",
+    "locationName": "اسم الموقع",
+    "receiptsCount": "{n} استلام",
+    "receiveTitle": "استلام البضائع الجاهزة",
+    "received": "تم حفظ {number}.",
+    "receivedQuarantine": "تم حفظ {number} — ذهبت {n} قطعة إلى الحجر بسبب حالة الجودة للدفعة.",
+    "waiting": "{n} قطعة بالانتظار",
+    "willQuarantine": "ستوضع في الحجر",
+    "qtyReceived": "الكمية المستلمة",
+    "location": "الموقع",
+    "overReason": "لماذا العدد أكبر مما سجله الإنتاج؟",
+    "overHint": "سجل الإنتاج {n} قطعة متبقية للاستلام.",
+    "overBlocked": "فقط {n} قطعة بالانتظار. يجب أن يوافق مشرف على عدد أكبر.",
+    "confirmReceipt": "تأكيد الاستلام",
+    "tab": {
+      "stock": "المخزون",
+      "awaiting": "بانتظار الاستلام",
+      "receipts": "الاستلامات",
+      "movements": "الحركات",
+      "locations": "المواقع"
+    },
+    "kind": {
+      "COUNT": "تصحيح جرد",
+      "DAMAGE": "تالف",
+      "SCRAP": "إتلاف",
+      "OTHER": "أخرى"
+    },
+    "mv": {
+      "RECEIPT": "استلام",
+      "RESERVE": "حجز لشحنة",
+      "UNRESERVE": "إلغاء الحجز",
+      "SHIP": "شحن",
+      "QC_SYNC": "قرار الجودة",
+      "ADJUST": "تعديل",
+      "SCRAP": "إتلاف"
+    }
+  },
+  "ship": {
+    "new": "شحنة جديدة",
+    "search": "الشحنة، إشعار التسليم، الطلب أو العميل…",
+    "notCancelled": "غير الملغاة",
+    "newHint": "يمكن شحن المخزون المعتمد غير المحجوز فقط.",
+    "nothingToShip": "لا يوجد طلب لديه مخزون معتمد جاهز للشحن.",
+    "orderWithStock": "الطلب (مع مخزون جاهز)",
+    "lineFacts": "مطلوب {ordered} · مشحون {shipped} · في المسودات {drafts} · متبقٍ للتسليم {open}",
+    "fillFifo": "تعبئة الأقدم أولاً",
+    "noStockLine": "لا يوجد مخزون لهذا المنتج بعد.",
+    "availableN": "{n} متاح",
+    "blockedN": "{n} محجوب",
+    "lineTotal": "هذا البند: {n} قطعة",
+    "overOpen": "أكثر من {n} المتبقية للتسليم",
+    "plannedDate": "تاريخ الشحن المخطط",
+    "vehicle": "المركبة / اللوحة",
+    "driver": "السائق",
+    "reserveHint": "الحفظ يحجز هذا المخزون للشحنة. لا يخرج المخزون إلا عند تأكيد الشحن.",
+    "createDraft": "حجز المخزون وإنشاء الشحنة",
+    "confirmTitle": "تأكيد الشحن",
+    "confirmHint": "يُخصم المخزون ويُحدث الطلب في خطوة واحدة. إذا تغير شيء (مثل حجز الجودة) لا يتغير أي شيء.",
+    "deliveryNote": "رقم إشعار التسليم",
+    "deliveryNoteHint": "اتركه فارغاً للترقيم التلقائي",
+    "confirmDispatch": "تأكيد الشحن",
+    "confirmedMsg": "تم الشحن. حُدّث المخزون والطلب.",
+    "cancelReason": "سبب الإلغاء",
+    "cancel": "إلغاء الشحنة",
+    "cancelledMsg": "أُلغيت — حُرر المخزون المحجوز.",
+    "printNote": "طباعة إشعار التسليم",
+    "problems": "حجبت الجودة {batches} بعد حجزها. ألغِ هذه المسودة وأنشئ واحدة جديدة.",
+    "shippedAt": "وقت الشحن",
+    "confirmedBy": "أكده",
+    "total": "المجموع",
+    "print": "طباعة",
+    "deliveryNoteTitle": "إشعار تسليم",
+    "shipment": "الشحنة",
+    "signWarehouse": "المستودع",
+    "signDriver": "السائق",
+    "signCustomer": "استلمه العميل",
+    "orderNo": "الطلب"
   }
 }

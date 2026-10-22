@@ -286,6 +286,18 @@
       "AWAITING_VERIFICATION": "Awaiting verification",
       "RESOLVED": "Resolved",
       "REOPENED": "Reopened"
+    },
+    "stock": {
+      "AVAILABLE": "Available",
+      "RESERVED": "Reserved",
+      "QUARANTINE": "Quarantine",
+      "REJECTED": "Rejected",
+      "SHIPPED": "Shipped"
+    },
+    "ship": {
+      "DRAFT": "Draft — stock reserved",
+      "CONFIRMED": "Dispatched",
+      "CANCELLED": "Cancelled"
     }
   },
   "order": {
@@ -414,6 +426,17 @@
       "issue_submit": "Submitted for verification",
       "issue_resolve": "Verified and resolved",
       "issue_reopen": "Reopened"
+    },
+    "warehouse": {
+      "receive": "Goods received"
+    },
+    "stock": {
+      "adjust": "Stock adjusted"
+    },
+    "shipment": {
+      "create": "Shipment drafted, stock reserved",
+      "confirm": "Shipment dispatched",
+      "cancel": "Shipment cancelled"
     }
   },
   "sched": {
@@ -727,5 +750,99 @@
     },
     "continuesIssue": "This decision continues open issue {issue}.",
     "addNewDefect": "+ It's a different defect — record it"
+  },
+  "wh": {
+    "ledgerNote": "Stock is calculated from recorded movements — totals can't be typed in.",
+    "searchStock": "Batch, product or order…",
+    "noStock": "No stock on hand.",
+    "adjustTitle": "Stock adjustment",
+    "adjustHint": "For counts, damage or scrapping rejected goods. Every adjustment is logged with your name and reason.",
+    "saveAdjustment": "Save adjustment",
+    "stockState": "Stock state",
+    "adjustQty": "Quantity + / −",
+    "adjustKind": "Type",
+    "nothingAwaiting": "Nothing is waiting for receipt.",
+    "receive": "Receive",
+    "receipt": "Receipt",
+    "by": "By",
+    "allTypes": "All movement types",
+    "type": "Type",
+    "newLocation": "New storage location",
+    "locationName": "Location name",
+    "receiptsCount": "{n} receipts",
+    "receiveTitle": "Receive finished goods",
+    "received": "{number} saved.",
+    "receivedQuarantine": "{number} saved — {n} pcs went to quarantine because of the batch's QC status.",
+    "waiting": "{n} pcs waiting",
+    "willQuarantine": "will be placed in quarantine",
+    "qtyReceived": "Quantity received",
+    "location": "Location",
+    "overReason": "Why is the count higher than production reported?",
+    "overHint": "Production reported {n} pcs still to receive.",
+    "overBlocked": "Only {n} pcs are waiting. A supervisor must approve a higher count.",
+    "confirmReceipt": "Confirm receipt",
+    "tab": {
+      "stock": "Stock",
+      "awaiting": "Awaiting receipt",
+      "receipts": "Receipts",
+      "movements": "Movements",
+      "locations": "Locations"
+    },
+    "kind": {
+      "COUNT": "Count correction",
+      "DAMAGE": "Damaged",
+      "SCRAP": "Scrapped",
+      "OTHER": "Other"
+    },
+    "mv": {
+      "RECEIPT": "Receipt",
+      "RESERVE": "Reserved for shipment",
+      "UNRESERVE": "Reservation released",
+      "SHIP": "Shipped",
+      "QC_SYNC": "Quality decision",
+      "ADJUST": "Adjustment",
+      "SCRAP": "Scrap"
+    }
+  },
+  "ship": {
+    "new": "New shipment",
+    "search": "Shipment, delivery note, order or customer…",
+    "notCancelled": "Not cancelled",
+    "newHint": "Only approved, unreserved stock can be shipped.",
+    "nothingToShip": "No order has approved stock ready to ship.",
+    "orderWithStock": "Order (with stock ready)",
+    "lineFacts": "Ordered {ordered} · shipped {shipped} · in drafts {drafts} · still to deliver {open}",
+    "fillFifo": "Fill oldest first",
+    "noStockLine": "No stock for this product yet.",
+    "availableN": "{n} available",
+    "blockedN": "{n} blocked",
+    "lineTotal": "This line: {n} pcs",
+    "overOpen": "more than the {n} still to deliver",
+    "plannedDate": "Planned dispatch date",
+    "vehicle": "Vehicle / plate",
+    "driver": "Driver",
+    "reserveHint": "Saving reserves this stock for the shipment. Stock leaves the warehouse only when the dispatch is confirmed.",
+    "createDraft": "Reserve stock & create shipment",
+    "confirmTitle": "Confirm dispatch",
+    "confirmHint": "Stock is deducted and the order updated in one step. If anything has changed (e.g. a QC hold), nothing is changed.",
+    "deliveryNote": "Delivery note no.",
+    "deliveryNoteHint": "Leave empty to number it automatically",
+    "confirmDispatch": "Confirm dispatch",
+    "confirmedMsg": "Dispatched. Stock and order updated.",
+    "cancelReason": "Reason for cancelling",
+    "cancel": "Cancel shipment",
+    "cancelledMsg": "Cancelled — reserved stock released.",
+    "printNote": "Print delivery note",
+    "problems": "Quality Control blocked {batches} after it was reserved. Cancel this draft and create a new one.",
+    "shippedAt": "Dispatched",
+    "confirmedBy": "Confirmed by",
+    "total": "Total",
+    "print": "Print",
+    "deliveryNoteTitle": "Delivery note",
+    "shipment": "Shipment",
+    "signWarehouse": "Warehouse",
+    "signDriver": "Driver",
+    "signCustomer": "Received by customer",
+    "orderNo": "Order"
   }
 }
