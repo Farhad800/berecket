@@ -10,9 +10,13 @@ const PREFIX = {
   issue: "NCR",
   receipt: "GRN",
   shipment: "SHP",
+  customer: "CUS",
 } as const;
 
 export type DocKind = keyof typeof PREFIX;
+
+/** Kinds that are master data, not yearly documents: CUS-0001 rather than CUS-2026-0001. */
+const NO_YEAR: DocKind[] = ["customer"];
 
 /**
  * Atomic, gap-tolerant sequential numbers per kind and year, e.g. ORD-2026-0007.
@@ -20,10 +24,12 @@ export type DocKind = keyof typeof PREFIX;
  */
 export async function nextNumber(kind: DocKind, tx: Tx = db): Promise<string> {
   const year = new Date().getFullYear();
-  const name = `${kind}-${year}`;
+  const yearly = !NO_YEAR.includes(kind);
+  const name = yearly ? `${kind}-${year}` : kind;
   const rows = await tx.$queryRaw<{ value: number }[]>`
     INSERT INTO "Counter" ("name", "value") VALUES (${name}, 1)
     ON CONFLICT ("name") DO UPDATE SET "value" = "Counter"."value" + 1
     RETURNING "value"`;
-  return `${PREFIX[kind]}-${year}-${String(rows[0].value).padStart(4, "0")}`;
+  const n = String(rows[0].value).padStart(4, "0");
+  return yearly ? `${PREFIX[kind]}-${year}-${n}` : `${PREFIX[kind]}-${n}`;
 }

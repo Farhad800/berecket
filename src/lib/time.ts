@@ -21,6 +21,33 @@ export function factoryDay(d = new Date(), tz = FACTORY_TZ) {
   return { start, end: new Date(start.getTime() + 86_400_000) };
 }
 
+/** "2026-10-30" (a date picked in the factory) → that day's start as a UTC instant. */
+export function parseFactoryDate(s: string, tz = FACTORY_TZ): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) throw new Error("Invalid date");
+  return factoryDay(new Date(`${s}T12:00:00Z`), tz).start;
+}
+
+/** "2026-10-30T07:00" from a datetime-local input, read as factory local time → UTC instant. */
+export function parseFactoryDateTime(s: string, tz = FACTORY_TZ): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(s);
+  if (!m) throw new Error("Invalid date/time");
+  const guess = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
+  return new Date(guess.getTime() - tzOffsetMinutes(guess, tz) * 60000);
+}
+
+/** UTC instant → "YYYY-MM-DD" in factory time (for date inputs). */
+export function toFactoryDateInput(d: Date | null | undefined, tz = FACTORY_TZ) {
+  if (!d) return "";
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+}
+
+/** UTC instant → "YYYY-MM-DDTHH:mm" in factory time (for datetime-local inputs). */
+export function toFactoryDateTimeInput(d: Date | null | undefined, tz = FACTORY_TZ) {
+  if (!d) return "";
+  const local = new Date(d.getTime() + tzOffsetMinutes(d, tz) * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
 /** Shift boundaries: A 07–15, B 15–23, C 23–07 (factory local time). */
 export function currentShift(d = new Date(), tz = FACTORY_TZ): "A" | "B" | "C" {
   const hour = +new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "2-digit", hourCycle: "h23" }).format(d);

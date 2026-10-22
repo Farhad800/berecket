@@ -17,7 +17,9 @@ export function useFormAction<R extends Result>(
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const fd = new FormData(form);
+    // Include the clicked submit button's name/value (e.g. "Save draft" vs "Save & confirm").
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const fd = new FormData(form, submitter?.name ? submitter : undefined);
     start(async () => {
       const res = await action(null, fd);
       setState(res);
