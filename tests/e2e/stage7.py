@@ -69,7 +69,7 @@ with sync_playwright() as p:
     pg.pdf(path=O+"maintenance.pdf", format="A4", landscape=True, print_background=True); pg.screenshot(path=O+"print.png", full_page=True)
     ck("exports are written to the audit log", int(sql("SELECT count(*) FROM \\\"AuditLog\\\" WHERE action='report.export' AND \\\"createdAt\\\" > now() - interval '5 minutes'"))>=4)
     # ── Global search
-    go(pg,B+"/dashboard"); pg.keyboard.press("/"); ck("'/' focuses the header search", pg.evaluate("document.activeElement?.name")=="q")
+    go(pg,B+"/dashboard"); pg.wait_for_load_state("networkidle"); pg.keyboard.press("/"); ck("'/' focuses the header search", pg.evaluate("document.activeElement?.name")=="q")
     pg.keyboard.type(order_no); pg.keyboard.press("Enter"); pg.wait_for_url(re.compile(r".*/orders/c[a-z0-9]+$"), timeout=8000); pg.wait_for_selector("main [aria-busy=true]", state="detached")
     ck("exact order number jumps straight to the order", order_no in pg.inner_text("main"))
     go(pg,B+"/search?q="+batch_no); pg.wait_for_url(re.compile(r".*/qc/batches/.*"), timeout=8000); ck("exact batch number opens the batch", "/qc/batches/" in pg.url)

@@ -31,6 +31,11 @@ Day-to-day running of the Bereket Plastic FMS. No programming needed for anythin
 4. If they knew the administrator password or the backup passphrase, change those.
 5. If they had access to Vercel, Neon or GitHub, remove them there too.
 
+## 2b. Deleting versus archiving
+
+- **Delete** (customers, products, machines, molds, orders) removes a record that was created by mistake and **never used**. Machines and molds need the *Assets: archive* permission, orders *Orders: archive*; deleting an order also needs a reason. Every delete is written to the audit log with what was deleted.
+- As soon as a record has history (an order with production, a machine with jobs or repairs…), the system refuses to delete it and says why. Use **Archive** instead (master data) or **Cancel** (orders): the record disappears from everyday lists and pickers but past orders, reports and traceability stay correct.
+
 ## 3. Starting real use (go-live)
 
 When testing is finished:

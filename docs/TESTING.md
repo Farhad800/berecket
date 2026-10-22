@@ -7,6 +7,7 @@
 | Unit | `tests/unit/*.test.ts` (Vitest) | Order status rules (derived only from records; never "Delivered" without shipments) |
 | Acceptance | `tests/e2e/acceptance.py` | All 18 acceptance criteria of the specification, starting from an **empty database**: setup → employees → master data → multi-product order → scheduling → partial production → breakdown + linked maintenance → QC hold & reject → receipts → partial and final shipments → consistency → history → search/reports/exports → mobile → audit → backend rejections → go-live reset |
 | Security | `tests/e2e/security.py` | Authentication, authorisation, CSRF, sessions, headers, lockout, injection, XSS, uploads (see SECURITY.md) |
+| Daily sheet, large orders, deletes | `tests/e2e/stage9.py` | 60-product order via the multi-picker; 60 jobs entered and 54 finished in one save (≈3 s); a machine that breaks down mid-entry refuses only its row; safe deletes and their refusals; audit entries |
 | Stage tests | `tests/e2e/stage1.py` … `stage7.py` | Each module's detailed workflows, written while it was built. Stages 3–5 assume the data their earlier stages created; run them in order on a fresh database |
 
 ## Latest results (22 Oct 2026)
@@ -15,6 +16,7 @@
 - Acceptance (fresh database): **48/48**
 - Security: **28/28**
 - Stage 6 (warehouse & shipments): **23/23**, Stage 7 (reports, exports, search, audit): **41/41**
+- Daily sheet / large orders / deletes: **26/26**
 
 ## How to run
 

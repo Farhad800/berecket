@@ -3,12 +3,16 @@
 Sign in at **https://bereket-fms.vercel.app** with your own username. Your first password is temporary — choose your own. On a phone, tap **Install** (or browser menu → *Add to Home Screen*) to use it like an app. Change language with the globe icon. Everyone can *see* all factory records; buttons appear only for what your role may do. Search any number (order, batch, machine, mold, shipment…) from the box at the top or press **/**.
 
 ## Sales & Planning
-1. **Customer Orders → New order**: pick the customer, requested delivery date, priority, then add one line per product with quantity. *Save & confirm* sends it to planning (or save as draft).
+1. **Customer Orders → New order**: pick the customer, requested delivery date, priority, then add one line per product with quantity. For many products use **Add several products**: tick them all, press *Add*, then type each quantity (Enter jumps to the next box). Up to 500 products per order. *Save & confirm* sends it to planning (or save as draft).
+   An order typed by mistake can be removed with **Delete order** as long as nothing has been produced for it; after that, use *Cancel*.
 2. **Production Schedule**: open the order's line, choose machine, mold, start/end and quantity. The system warns about machine/mold clashes, machines down, open maintenance, deadline and capacity problems before saving.
 3. Changing a delivery date needs a reason; holds and cancellations too. Everything is in the order's history.
 4. The order status updates itself as production, QC, the warehouse and shipments progress — no need to change it by hand.
 
 ## Production
+**Fastest way — Daily entry sheet** (Production Reports → *Daily entry sheet*): every job running or due today on one screen, sorted by machine. Pick the shift, type good and defective pieces for as many jobs as you like (Enter jumps to the next box), tick **Finished** for jobs that are done, then **Save all** once. Planned jobs start automatically; a finished job is closed before the next job on the same machine starts. If one row has a problem (e.g. the machine was reported down), only that row is refused — the others are saved and the problem row stays filled in so you can fix it.
+
+Or job by job:
 1. **Production Reports**: open your job → *Start job*.
 2. Report good and defective pieces during the shift (*Add quantity*). Start a *New batch* for each lot/pallet run. Mistakes: *Correct a reported quantity…* (adds a correction line with a reason — nothing is erased).
 3. Machine problem: *Pause* → reason *Breakdown* → tick *Machine can't run until repaired* → a maintenance request is created for Technical Service automatically. Other stops: *Log stop*.
