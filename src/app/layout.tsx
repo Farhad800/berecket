@@ -14,6 +14,7 @@ export const metadata: Metadata = {
   description: "Bereket Plastic Factory Management System",
   applicationName: "Bereket FMS",
   manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.png", apple: "/icons/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "Bereket FMS", statusBarStyle: "black-translucent" },
   robots: { index: false, follow: false }, // internal system — keep out of search engines
   other: { "mobile-web-app-capable": "yes" },
