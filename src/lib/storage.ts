@@ -42,3 +42,18 @@ export async function getFile(storageKey: string): Promise<{ body: ReadableStrea
 
 export const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"];
 export const MAX_FILE_BYTES = 8 * 1024 * 1024;
+
+/** Permanently deletes stored files (used when test data is reset). Best effort. */
+export async function deleteFiles(keys: string[]) {
+  if (keys.length === 0) return;
+  if (useBlob) {
+    const { del } = await import("@vercel/blob");
+    for (let i = 0; i < keys.length; i += 100) await del(keys.slice(i, i + 100)).catch(() => {});
+    return;
+  }
+  const { rm } = await import("fs/promises");
+  for (const k of keys) {
+    const file = path.join(LOCAL_DIR, k);
+    if (file.startsWith(LOCAL_DIR)) await rm(file, { force: true }).catch(() => {});
+  }
+}

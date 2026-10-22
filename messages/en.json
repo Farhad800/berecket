@@ -444,6 +444,10 @@
     },
     "audit": {
       "export": "Audit log exported"
+    },
+    "system": {
+      "reset": "Test data cleared",
+      "remove_demo_users": "Demo accounts removed"
     }
   },
   "sched": {
@@ -1200,7 +1204,45 @@
       "Role": "Role",
       "Report": "Report",
       "AuditLog": "Audit log",
-      "Attachment": "Attachment"
+      "Attachment": "Attachment",
+      "System": "System"
+    }
+  },
+  "sys": {
+    "tab": "System",
+    "resetTitle": "Clear test data before going live",
+    "resetIntro": "Use this once, when testing is finished and the factory starts using the system for real. It permanently deletes these records:",
+    "kept": "Always kept:",
+    "keptList": "employees and their logins, roles and permissions, departments, defect types, storage locations and the audit log. Numbering starts again from 0001.",
+    "scope": "What to delete",
+    "scopeOps": "Test transactions only (recommended)",
+    "scopeOpsHint": "Orders, schedules, production, maintenance, QC, stock and shipments. Customers, products, machines and molds stay.",
+    "scopeAll": "Everything, including master data",
+    "scopeAllHint": "Also deletes {customers} customers, {products} products, {machines} machines and {molds} molds.",
+    "warning": "This cannot be undone. Make sure a backup exists first (see the backup guide).",
+    "typeReset": "Type RESET to confirm",
+    "yourPassword": "Your password",
+    "working": "Deleting…",
+    "resetButton": "Delete test transactions",
+    "resetAllButton": "Delete everything",
+    "resetDone": "Done. The system is clean and ready for real use. This reset is recorded in the audit log.",
+    "demoTitle": "Demo employee accounts",
+    "demoIntro": "{n} demo accounts (usernames starting with demo.) exist. Remove them before going live.",
+    "demoButton": "Remove demo accounts",
+    "demoDone": "Demo accounts removed.",
+    "count": {
+      "orders": "Orders",
+      "jobs": "Production jobs",
+      "batches": "Batches",
+      "entries": "Quantity reports",
+      "downtime": "Downtime records",
+      "maintenance": "Maintenance requests",
+      "serviceReports": "Service reports",
+      "inspections": "QC inspections",
+      "issues": "Quality issues",
+      "receipts": "Warehouse receipts",
+      "movements": "Stock movements",
+      "shipments": "Shipments"
     }
   }
 }

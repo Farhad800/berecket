@@ -1,0 +1,94 @@
+/**
+ * Go-live tools: remove test/demo data before the factory starts using the system for real.
+ * Used by the admin "System" page and by the CLI (scripts/go-live.ts). No "server-only"
+ * import so the CLI can run it with tsx.
+ *
+ * What is NEVER deleted: employees (except demo.* accounts when asked), roles, permissions,
+ * departments, settings, defect types, storage locations and the audit log.
+ */
+import type { PrismaClient } from "@prisma/client";
+
+export type ResetScope = "operations" | "everything";
+
+const OPERATIONAL_ENTITIES = ["Order", "ProductionJob", "Batch", "MaintenanceRequest", "ServiceReport", "QcInspection", "QualityIssue", "Shipment", "WarehouseReceipt"];
+const MASTER_ENTITIES = ["Customer", "Product", "Machine", "Mold"];
+const OPERATIONAL_COUNTERS = ["order-", "job-", "batch-", "maintenance-", "service-", "inspection-", "issue-", "receipt-", "shipment-"];
+
+/** How many records a reset would delete (shown before the admin confirms). */
+export async function resetPreview(db: PrismaClient) {
+  const [orders, jobs, batches, entries, downtime, maintenance, serviceReports, inspections, issues, receipts, movements, shipments, customers, products, machines, molds, demoUsers] =
+    await Promise.all([
+      db.order.count(), db.productionJob.count(), db.batch.count(), db.productionEntry.count(), db.downtime.count(),
+      db.maintenanceRequest.count(), db.serviceReport.count(), db.qcInspection.count(), db.qualityIssue.count(),
+      db.warehouseReceipt.count(), db.stockMovement.count(), db.shipment.count(),
+      db.customer.count(), db.product.count(), db.machine.count(), db.mold.count(),
+      db.user.count({ where: { username: { startsWith: "demo." } } }),
+    ]);
+  return {
+    operations: { orders, jobs, batches, entries, downtime, maintenance, serviceReports, inspections, issues, receipts, movements, shipments },
+    master: { customers, products, machines, molds },
+    demoUsers,
+  };
+}
+
+/**
+ * Deletes operational records (orders → shipments) and, for scope "everything", master data too.
+ * Runs in one transaction: either everything is removed or nothing is.
+ * Returns the storage keys of attachments whose files should then be deleted.
+ */
+export async function resetData(db: PrismaClient, scope: ResetScope) {
+  const entities = scope === "everything" ? [...OPERATIONAL_ENTITIES, ...MASTER_ENTITIES] : OPERATIONAL_ENTITIES;
+  return db.$transaction(
+    async (tx) => {
+      const files = await tx.attachment.findMany({ where: { entityType: { in: entities } }, select: { storageKey: true } });
+      await tx.attachment.deleteMany({ where: { entityType: { in: entities } } });
+      await tx.comment.deleteMany({ where: { entityType: { in: entities } } });
+      await tx.notification.deleteMany({});
+      await tx.shipmentLine.deleteMany({});
+      await tx.shipment.deleteMany({});
+      await tx.stockMovement.deleteMany({});
+      await tx.warehouseReceipt.deleteMany({});
+      await tx.correctiveAction.deleteMany({});
+      await tx.qualityIssue.deleteMany({});
+      await tx.qcInspection.deleteMany({});
+      await tx.downtime.deleteMany({});
+      await tx.serviceReport.deleteMany({});
+      await tx.maintenanceRequest.deleteMany({});
+      await tx.productionEntry.deleteMany({});
+      await tx.batch.deleteMany({});
+      await tx.productionJob.deleteMany({});
+      await tx.orderLine.deleteMany({});
+      await tx.order.deleteMany({});
+      await tx.counter.deleteMany({ where: { OR: OPERATIONAL_COUNTERS.map((p) => ({ name: { startsWith: p } })) } });
+      if (scope === "everything") {
+        await tx.preventiveTask.deleteMany({});
+        await tx.mold.deleteMany({});
+        await tx.machine.deleteMany({});
+        await tx.product.deleteMany({});
+        await tx.customer.deleteMany({});
+        await tx.counter.deleteMany({ where: { name: "customer" } });
+      } else {
+        // Test production left machines "running"/"down" and molds "in use" — start clean.
+        await tx.machine.updateMany({ where: { status: { not: "RETIRED" } }, data: { status: "AVAILABLE" } });
+        await tx.mold.updateMany({ where: { status: { not: "RETIRED" }, currentMachineId: null }, data: { status: "AVAILABLE" } });
+        await tx.mold.updateMany({ where: { status: { not: "RETIRED" }, currentMachineId: { not: null } }, data: { status: "IN_USE" } });
+      }
+      return files.map((f) => f.storageKey);
+    },
+    { timeout: 120_000 },
+  );
+}
+
+/** Deletes the demo.* employee accounts. Their past actions stay in the audit log as "System". */
+export async function removeDemoUsers(db: PrismaClient) {
+  const users = await db.user.findMany({ where: { username: { startsWith: "demo." } }, select: { id: true } });
+  const ids = users.map((u) => u.id);
+  if (ids.length === 0) return 0;
+  await db.$transaction([
+    db.session.deleteMany({ where: { userId: { in: ids } } }),
+    db.notification.deleteMany({ where: { userId: { in: ids } } }),
+    db.auditLog.updateMany({ where: { userId: { in: ids } }, data: { userId: null } }),
+    db.user.deleteMany({ where: { id: { in: ids } } }),
+  ]);
+  return ids.length;
+}

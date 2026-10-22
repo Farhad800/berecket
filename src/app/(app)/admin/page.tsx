@@ -1,33 +1,36 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { pageUser } from "@/lib/auth";
+import { can, pageUser } from "@/lib/auth";
+import { resetPreview } from "@/lib/data-reset";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/time";
 import { RESOURCES, RESOURCE_ACTIONS } from "@/lib/permissions";
 import { PageHeader, cn } from "@/components/ui";
 import EmployeeAdmin from "./employee-admin";
 import RoleAdmin from "./role-admin";
+import SystemAdmin from "./system-admin";
 
 export const metadata = { title: "Administration" };
 
-const TABS = ["employees", "roles", "audit"] as const;
+const TABS = ["employees", "roles", "audit", "system"] as const;
 
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  await pageUser("roles:manage");
+  const me = await pageUser("roles:manage");
   const sp = await searchParams;
   if (sp.tab === "audit") redirect("/audit");
   const tab = (TABS as readonly string[]).includes(sp.tab ?? "") ? sp.tab! : "employees";
   const t = await getTranslations();
   const locale = await getLocale();
 
-  const tabLabel = { employees: t("admin.employees"), roles: t("admin.roles"), audit: t("admin.audit") } as const;
+  const tabLabel = { employees: t("admin.employees"), roles: t("admin.roles"), audit: t("admin.audit"), system: t("sys.tab") } as const;
+  const tabs = TABS.filter((k) => k !== "system" || can(me, "settings:manage"));
 
   return (
     <>
       <PageHeader title={t("nav.administration")} />
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
-        {TABS.map((k) => (
+        {tabs.map((k) => (
           <Link
             key={k}
             href={k === "audit" ? "/audit" : `/admin?tab=${k}`}
@@ -45,6 +48,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
 
       {tab === "employees" && <EmployeesTab locale={locale} />}
       {tab === "roles" && <RolesTab />}
+      {tab === "system" && can(me, "settings:manage") && <SystemTab />}
     </>
   );
 }
@@ -95,4 +99,9 @@ async function RolesTab() {
       }))}
     />
   );
+}
+
+async function SystemTab() {
+  const p = await resetPreview(db);
+  return <SystemAdmin ops={p.operations} master={p.master} demoUsers={p.demoUsers} />;
 }

@@ -444,6 +444,10 @@
     },
     "audit": {
       "export": "Denetim kaydı dışa aktarıldı"
+    },
+    "system": {
+      "reset": "Test verileri temizlendi",
+      "remove_demo_users": "Demo hesaplar kaldırıldı"
     }
   },
   "sched": {
@@ -1200,7 +1204,45 @@
       "Role": "Rol",
       "Report": "Rapor",
       "AuditLog": "Denetim kaydı",
-      "Attachment": "Ek"
+      "Attachment": "Ek",
+      "System": "Sistem"
+    }
+  },
+  "sys": {
+    "tab": "Sistem",
+    "resetTitle": "Canlıya geçmeden önce test verilerini temizle",
+    "resetIntro": "Bunu test bittiğinde ve fabrika sistemi gerçekten kullanmaya başladığında bir kez kullanın. Şu kayıtları kalıcı olarak siler:",
+    "kept": "Her zaman korunur:",
+    "keptList": "çalışanlar ve girişleri, roller ve yetkiler, departmanlar, hata türleri, depo yerleri ve denetim kaydı. Numaralandırma 0001'den yeniden başlar.",
+    "scope": "Ne silinecek",
+    "scopeOps": "Yalnızca test işlemleri (önerilen)",
+    "scopeOpsHint": "Siparişler, planlar, üretim, bakım, KK, stok ve sevkiyatlar. Müşteriler, ürünler, makineler ve kalıplar kalır.",
+    "scopeAll": "Ana veriler dahil her şey",
+    "scopeAllHint": "Ayrıca {customers} müşteri, {products} ürün, {machines} makine ve {molds} kalıbı siler.",
+    "warning": "Bu geri alınamaz. Önce bir yedek olduğundan emin olun (yedekleme kılavuzuna bakın).",
+    "typeReset": "Onaylamak için RESET yazın",
+    "yourPassword": "Şifreniz",
+    "working": "Siliniyor…",
+    "resetButton": "Test işlemlerini sil",
+    "resetAllButton": "Her şeyi sil",
+    "resetDone": "Tamam. Sistem temiz ve gerçek kullanıma hazır. Bu sıfırlama denetim kaydına yazıldı.",
+    "demoTitle": "Demo çalışan hesapları",
+    "demoIntro": "{n} demo hesap var (demo. ile başlayan). Canlıya geçmeden önce kaldırın.",
+    "demoButton": "Demo hesapları kaldır",
+    "demoDone": "Demo hesaplar kaldırıldı.",
+    "count": {
+      "orders": "Siparişler",
+      "jobs": "Üretim işleri",
+      "batches": "Partiler",
+      "entries": "Miktar bildirimleri",
+      "downtime": "Duruş kayıtları",
+      "maintenance": "Bakım talepleri",
+      "serviceReports": "Servis raporları",
+      "inspections": "KK muayeneleri",
+      "issues": "Kalite sorunları",
+      "receipts": "Depo kabulleri",
+      "movements": "Stok hareketleri",
+      "shipments": "Sevkiyatlar"
     }
   }
 }

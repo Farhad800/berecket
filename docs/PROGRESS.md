@@ -7,8 +7,8 @@ wait until `<deployment-url>/api/health` returns {"status":"ok"} and readyState 
 
 Stages 1–7: done (see README). Stage 8 checklist:
 
-- [ ] Go-live data tools: admin "System" tab (remove demo employees, reset test data) + CLI scripts
-- [ ] Error logging (instrumentation onRequestError) + health check
+- [x] Go-live data tools: admin "System" tab (remove demo employees, reset test data) + CLI scripts
+- [x] Error logging (instrumentation onRequestError) + health check
 - [ ] Security tests (tests/e2e/security.py) and fixes
 - [ ] Acceptance tests from a fresh database (tests/e2e/acceptance.py, spec section 18)
 - [ ] Automated backups (GitHub Actions pg_dump + blob files) and restore guide

@@ -33,6 +33,27 @@ async function add() {
   }
   console.log(`Demo employees ready (password for all: ${DEMO_PASSWORD}):`);
   DEMO_USERS.forEach((u) => console.log(`  ${u[2].padEnd(18)} ${u[3]}`));
+
+  // Demo master data so orders can be tried straight away. All codes start with DEMO-.
+  for (const [code, name, phone] of [["DEMO-C1", "Demo Water Company", "+964 750 000 0001"], ["DEMO-C2", "Demo Dairy Co.", "+964 750 000 0002"]]) {
+    await db.customer.upsert({ where: { code }, update: {}, create: { code, name, phone, address: "Duhok (demo)" } });
+  }
+  const products = [
+    ["DEMO-PF500", "500 ml PET preform (demo)", 12, true],
+    ["DEMO-CAP28", "28 mm bottle cap (demo)", 6, false],
+    ["DEMO-JAR1L", "1 L food jar (demo)", 18, true],
+  ] as const;
+  for (const [code, name, cycle, qc] of products) {
+    await db.product.upsert({ where: { code }, update: {}, create: { code, name, cycleTimeSec: cycle, qcRequired: qc, material: "PET / PP" } });
+  }
+  for (const [code, model, tonnage] of [["DEMO-M01", "Si-180", 180], ["DEMO-M02", "Si-250", 250], ["DEMO-M03", "Si-350", 350]] as const) {
+    await db.machine.upsert({ where: { code }, update: {}, create: { code, name: `Toyo ${model} (demo)`, manufacturer: "Toyo", model, tonnage } });
+  }
+  for (const [code, product, cav] of [["DEMO-MD-PF500", "DEMO-PF500", 32], ["DEMO-MD-CAP28", "DEMO-CAP28", 48], ["DEMO-MD-JAR1L", "DEMO-JAR1L", 4]] as const) {
+    const p = await db.product.findUniqueOrThrow({ where: { code: product } });
+    await db.mold.upsert({ where: { code }, update: {}, create: { code, name: `${product} mold (demo)`, cavities: cav, productId: p.id } });
+  }
+  console.log("Demo customers, products, machines and molds ready (codes start with DEMO-).");
 }
 
 async function remove() {
@@ -45,6 +66,19 @@ async function remove() {
     db.user.deleteMany({ where: { id: { in: ids } } }),
   ]);
   console.log(`Removed ${ids.length} demo employees.`);
+  // Demo master data — only if nothing real refers to it any more.
+  const tryDelete = async (label: string, fn: () => Promise<{ count: number }>) => {
+    try {
+      const r = await fn();
+      if (r.count) console.log(`Removed ${r.count} demo ${label}.`);
+    } catch {
+      console.log(`Kept demo ${label}: orders or history still use them. Clear test data first (Administration → System).`);
+    }
+  };
+  await tryDelete("molds", () => db.mold.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
+  await tryDelete("machines", () => db.machine.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
+  await tryDelete("products", () => db.product.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
+  await tryDelete("customers", () => db.customer.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
 }
 
 const cmd = process.argv[2];
