@@ -266,6 +266,14 @@
       "PARTIAL": "Partly held",
       "HOLD": "On hold",
       "REJECTED": "Rejected"
+    },
+    "maint": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In progress",
+      "WAITING_PARTS": "Waiting for parts",
+      "COMPLETED": "Completed",
+      "VERIFIED": "Verified",
+      "CANCELLED": "Cancelled"
     }
   },
   "order": {
@@ -370,6 +378,19 @@
     },
     "downtime": {
       "log": "Stop recorded"
+    },
+    "maintenance": {
+      "create": "Maintenance request created",
+      "start": "Work started",
+      "waitParts": "Waiting for parts",
+      "complete": "Repair completed",
+      "verify": "Repair verified",
+      "reopen": "Reopened",
+      "cancel": "Cancelled",
+      "assign": "Assigned"
+    },
+    "file": {
+      "upload": "File added"
     }
   },
   "sched": {
@@ -488,5 +509,118 @@
       "SETUP": "Setup / adjustment",
       "OTHER": "Other"
     }
+  },
+  "svc": {
+    "newRequest": "New maintenance request",
+    "newReport": "Daily service report",
+    "searchRequests": "Request no. or problem…",
+    "searchReports": "Report no. or work done…",
+    "openStatuses": "Open & completed",
+    "machineDown": "Machine down",
+    "preventive": "Preventive",
+    "assignedTo": "Assigned to",
+    "assignTo": "Assign to…",
+    "assigned": "Assigned.",
+    "moldChange": "Mold change",
+    "newPreventive": "New preventive task",
+    "pmTitle": "Task",
+    "pmTitleHint": "e.g. Change hydraulic oil filter, Clean mold vents",
+    "everyDays": "Every (days)",
+    "everyN": "every {n} days",
+    "nextDue": "Next due",
+    "lastDone": "Last done",
+    "markDone": "Mark done",
+    "makeRequest": "Create request",
+    "pause": "Pause",
+    "enable": "Enable",
+    "noPreventive": "No preventive tasks yet.",
+    "newRequestHint": "Technical Service is notified straight away.",
+    "sendRequest": "Send request",
+    "problem": "Problem",
+    "problemHint": "Short and clear, e.g. 'Oil leak at clamp cylinder'",
+    "details": "Details",
+    "relatedJob": "Related production job",
+    "machineDownHint": "The machine is shown as down in the schedule until the repair is completed.",
+    "reportedBy": "Reported by",
+    "readyAt": "Ready to run again",
+    "verified": "Verified",
+    "resolution": "Repair done",
+    "resolutionPlaceholder": "What was repaired or replaced?",
+    "reasonPlaceholder": "Reason (required)",
+    "newReportHint": "Record mold changes, repairs and maintenance done on your shift.",
+    "saveReport": "Save report",
+    "date": "Date",
+    "moldOnMachine": "Mold on machine",
+    "relatedRequest": "Maintenance request",
+    "relatedOrder": "Related order",
+    "workPerformed": "Work performed",
+    "moldRemoved": "Mold removed",
+    "moldInstalled": "Mold installed",
+    "moldChangeReason": "Reason for mold change",
+    "moldChangeReasonHint": "Required when a mold is removed or installed",
+    "breakdown": "Machine breakdown",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "downtimeMinutes": "Machine stopped (minutes)",
+    "downtimeHint": "Leave empty to use start → end",
+    "spareParts": "Spare parts used",
+    "repairsCompleted": "Repairs completed",
+    "outstanding": "Outstanding work",
+    "followUp": "Follow-up needed",
+    "technician": "Technician",
+    "reportSubtitle": "Daily service report",
+    "hasOutstanding": "Has outstanding work",
+    "tab": {
+      "requests": "Maintenance requests",
+      "reports": "Service reports",
+      "preventive": "Preventive maintenance"
+    },
+    "pm": {
+      "ok": "On schedule",
+      "soon": "Due this week",
+      "overdue": "Overdue",
+      "off": "Paused"
+    },
+    "act": {
+      "start": "Start work",
+      "waitParts": "Waiting for parts",
+      "complete": "Repair completed",
+      "verify": "Verify",
+      "reopen": "Reopen",
+      "cancel": "Cancel request",
+      "confirm": "Confirm"
+    },
+    "done": {
+      "start": "Work started.",
+      "waitParts": "Marked as waiting for parts.",
+      "complete": "Repair completed — Production has been notified.",
+      "verify": "Verified.",
+      "reopen": "Reopened.",
+      "cancel": "Cancelled."
+    }
+  },
+  "hist": {
+    "lastDays": "Last {n} days",
+    "days": "{n} days",
+    "downtimeH": "Downtime (h)",
+    "breakdowns": "Breakdowns",
+    "moldChanges": "Mold changes",
+    "openRequests": "Open requests",
+    "requests": "Maintenance requests",
+    "repeated": "Repeated failures",
+    "repeatedWarning": "Repeated failures: {n} breakdowns in the last {days} days. Consider a root-cause check or overhaul.",
+    "timeline": "Timeline",
+    "downtimeByReason": "Downtime by reason"
+  },
+  "files": {
+    "title": "Photos & documents",
+    "none": "No files yet.",
+    "add": "Add photo or PDF",
+    "uploading": "Uploading…"
+  },
+  "notif": {
+    "unread": "{n} unread",
+    "none": "No notifications.",
+    "markAll": "Mark all read"
   }
 }

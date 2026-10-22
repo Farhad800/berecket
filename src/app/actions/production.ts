@@ -10,6 +10,7 @@ import { nextNumber } from "@/lib/numbering";
 import { currentShift, parseFactoryDateTime } from "@/lib/time";
 import { recomputeOrderStatus } from "@/lib/orders";
 import { DOWNTIME_CATEGORIES, ensureOpenBatch, syncMachineStatus } from "@/lib/production";
+import { notify } from "@/lib/notify";
 
 const shiftEnum = z.enum(["A", "B", "C"]);
 
@@ -171,6 +172,14 @@ async function createMaintenanceRequest(
   });
   if (p.machineDown) await tx.machine.update({ where: { id: p.machineId }, data: { status: "DOWN" } });
   await audit({ userId: me.id, action: "maintenance.create", entityType: "MaintenanceRequest", entityId: mr.id, after: { number: mr.number, machineDown: p.machineDown, job: p.jobId } }, tx);
+  await notify({
+    type: "maintenance.new",
+    title: `${mr.number}: ${p.title}`,
+    body: p.machineDown ? `Machine is down. ${p.description}` : p.description,
+    link: `/service/requests/${mr.id}`,
+    toPermission: "maintenance:edit",
+    exceptUserId: me.id,
+  }, tx);
   return mr;
 }
 

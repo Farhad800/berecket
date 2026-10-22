@@ -266,6 +266,14 @@
       "PARTIAL": "Kısmen bekletildi",
       "HOLD": "Bekletiliyor",
       "REJECTED": "Reddedildi"
+    },
+    "maint": {
+      "OPEN": "Açık",
+      "IN_PROGRESS": "Devam ediyor",
+      "WAITING_PARTS": "Parça bekliyor",
+      "COMPLETED": "Tamamlandı",
+      "VERIFIED": "Doğrulandı",
+      "CANCELLED": "İptal edildi"
     }
   },
   "order": {
@@ -370,6 +378,19 @@
     },
     "downtime": {
       "log": "Duruş kaydedildi"
+    },
+    "maintenance": {
+      "create": "Bakım talebi oluşturuldu",
+      "start": "İşe başlandı",
+      "waitParts": "Parça bekleniyor",
+      "complete": "Onarım tamamlandı",
+      "verify": "Onarım doğrulandı",
+      "reopen": "Yeniden açıldı",
+      "cancel": "İptal edildi",
+      "assign": "Atandı"
+    },
+    "file": {
+      "upload": "Dosya eklendi"
     }
   },
   "sched": {
@@ -488,5 +509,118 @@
       "SETUP": "Ayar / hazırlık",
       "OTHER": "Diğer"
     }
+  },
+  "svc": {
+    "newRequest": "Yeni bakım talebi",
+    "newReport": "Günlük servis raporu",
+    "searchRequests": "Talep no veya sorun…",
+    "searchReports": "Rapor no veya yapılan iş…",
+    "openStatuses": "Açık ve tamamlanan",
+    "machineDown": "Makine duruyor",
+    "preventive": "Önleyici",
+    "assignedTo": "Atanan",
+    "assignTo": "Ata…",
+    "assigned": "Atandı.",
+    "moldChange": "Kalıp değişimi",
+    "newPreventive": "Yeni önleyici görev",
+    "pmTitle": "Görev",
+    "pmTitleHint": "Örn. Hidrolik yağ filtresi değişimi, Kalıp hava kanalı temizliği",
+    "everyDays": "Her (gün)",
+    "everyN": "her {n} günde",
+    "nextDue": "Sonraki tarih",
+    "lastDone": "Son yapılan",
+    "markDone": "Yapıldı",
+    "makeRequest": "Talep oluştur",
+    "pause": "Durdur",
+    "enable": "Etkinleştir",
+    "noPreventive": "Henüz önleyici görev yok.",
+    "newRequestHint": "Teknik servis hemen bilgilendirilir.",
+    "sendRequest": "Talebi gönder",
+    "problem": "Sorun",
+    "problemHint": "Kısa ve net, örn. 'Kapama silindirinde yağ kaçağı'",
+    "details": "Ayrıntılar",
+    "relatedJob": "İlgili üretim işi",
+    "machineDownHint": "Onarım tamamlanana kadar makine planda arızalı görünür.",
+    "reportedBy": "Bildiren",
+    "readyAt": "Tekrar çalışmaya hazır",
+    "verified": "Doğrulandı",
+    "resolution": "Yapılan onarım",
+    "resolutionPlaceholder": "Ne onarıldı veya değiştirildi?",
+    "reasonPlaceholder": "Neden (zorunlu)",
+    "newReportHint": "Vardiyanızdaki kalıp değişimlerini, onarımları ve bakımları kaydedin.",
+    "saveReport": "Raporu kaydet",
+    "date": "Tarih",
+    "moldOnMachine": "Makinedeki kalıp",
+    "relatedRequest": "Bakım talebi",
+    "relatedOrder": "İlgili sipariş",
+    "workPerformed": "Yapılan iş",
+    "moldRemoved": "Sökülen kalıp",
+    "moldInstalled": "Takılan kalıp",
+    "moldChangeReason": "Kalıp değişim nedeni",
+    "moldChangeReasonHint": "Kalıp sökülür veya takılırsa zorunlu",
+    "breakdown": "Makine arızası",
+    "startTime": "Başlangıç saati",
+    "endTime": "Bitiş saati",
+    "downtimeMinutes": "Makine duruşu (dakika)",
+    "downtimeHint": "Boş bırakılırsa başlangıç → bitiş kullanılır",
+    "spareParts": "Kullanılan yedek parçalar",
+    "repairsCompleted": "Tamamlanan onarımlar",
+    "outstanding": "Kalan işler",
+    "followUp": "Gerekli takip",
+    "technician": "Teknisyen",
+    "reportSubtitle": "Günlük servis raporu",
+    "hasOutstanding": "Kalan iş var",
+    "tab": {
+      "requests": "Bakım talepleri",
+      "reports": "Servis raporları",
+      "preventive": "Önleyici bakım"
+    },
+    "pm": {
+      "ok": "Zamanında",
+      "soon": "Bu hafta",
+      "overdue": "Gecikmiş",
+      "off": "Durduruldu"
+    },
+    "act": {
+      "start": "İşe başla",
+      "waitParts": "Parça bekleniyor",
+      "complete": "Onarım tamamlandı",
+      "verify": "Doğrula",
+      "reopen": "Yeniden aç",
+      "cancel": "Talebi iptal et",
+      "confirm": "Onayla"
+    },
+    "done": {
+      "start": "İşe başlandı.",
+      "waitParts": "Parça bekleniyor olarak işaretlendi.",
+      "complete": "Onarım tamamlandı — Üretim bilgilendirildi.",
+      "verify": "Doğrulandı.",
+      "reopen": "Yeniden açıldı.",
+      "cancel": "İptal edildi."
+    }
+  },
+  "hist": {
+    "lastDays": "Son {n} gün",
+    "days": "{n} gün",
+    "downtimeH": "Duruş (sa)",
+    "breakdowns": "Arızalar",
+    "moldChanges": "Kalıp değişimleri",
+    "openRequests": "Açık talepler",
+    "requests": "Bakım talepleri",
+    "repeated": "Tekrarlayan arıza",
+    "repeatedWarning": "Tekrarlayan arıza: son {days} günde {n} arıza. Kök neden analizi veya revizyon düşünün.",
+    "timeline": "Zaman çizelgesi",
+    "downtimeByReason": "Nedene göre duruş"
+  },
+  "files": {
+    "title": "Fotoğraflar ve belgeler",
+    "none": "Henüz dosya yok.",
+    "add": "Fotoğraf veya PDF ekle",
+    "uploading": "Yükleniyor…"
+  },
+  "notif": {
+    "unread": "{n} okunmamış",
+    "none": "Bildirim yok.",
+    "markAll": "Tümünü okundu say"
   }
 }

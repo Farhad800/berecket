@@ -266,6 +266,14 @@
       "PARTIAL": "محجوز جزئياً",
       "HOLD": "محجوز",
       "REJECTED": "مرفوض"
+    },
+    "maint": {
+      "OPEN": "مفتوح",
+      "IN_PROGRESS": "قيد التنفيذ",
+      "WAITING_PARTS": "بانتظار قطع الغيار",
+      "COMPLETED": "مكتمل",
+      "VERIFIED": "تم التحقق",
+      "CANCELLED": "ملغى"
     }
   },
   "order": {
@@ -370,6 +378,19 @@
     },
     "downtime": {
       "log": "سُجل توقف"
+    },
+    "maintenance": {
+      "create": "أُنشئ طلب صيانة",
+      "start": "بدأ العمل",
+      "waitParts": "بانتظار قطع الغيار",
+      "complete": "اكتمل الإصلاح",
+      "verify": "تم التحقق من الإصلاح",
+      "reopen": "أُعيد فتحه",
+      "cancel": "أُلغي",
+      "assign": "أُسند"
+    },
+    "file": {
+      "upload": "أُضيف ملف"
     }
   },
   "sched": {
@@ -488,5 +509,118 @@
       "SETUP": "إعداد / ضبط",
       "OTHER": "أخرى"
     }
+  },
+  "svc": {
+    "newRequest": "طلب صيانة جديد",
+    "newReport": "تقرير خدمة يومي",
+    "searchRequests": "رقم الطلب أو المشكلة…",
+    "searchReports": "رقم التقرير أو العمل المنجز…",
+    "openStatuses": "المفتوحة والمكتملة",
+    "machineDown": "الماكينة متوقفة",
+    "preventive": "وقائية",
+    "assignedTo": "مُسند إلى",
+    "assignTo": "إسناد إلى…",
+    "assigned": "تم الإسناد.",
+    "moldChange": "تغيير القالب",
+    "newPreventive": "مهمة وقائية جديدة",
+    "pmTitle": "المهمة",
+    "pmTitleHint": "مثال: تغيير فلتر الزيت الهيدروليكي، تنظيف فتحات القالب",
+    "everyDays": "كل (أيام)",
+    "everyN": "كل {n} يوماً",
+    "nextDue": "الموعد القادم",
+    "lastDone": "آخر تنفيذ",
+    "markDone": "تم التنفيذ",
+    "makeRequest": "إنشاء طلب",
+    "pause": "إيقاف",
+    "enable": "تفعيل",
+    "noPreventive": "لا توجد مهام وقائية بعد.",
+    "newRequestHint": "يتم إشعار الخدمة الفنية فوراً.",
+    "sendRequest": "إرسال الطلب",
+    "problem": "المشكلة",
+    "problemHint": "قصير وواضح، مثل: 'تسرب زيت في أسطوانة الإغلاق'",
+    "details": "التفاصيل",
+    "relatedJob": "عمل الإنتاج المرتبط",
+    "machineDownHint": "تظهر الماكينة متوقفة في الجدول حتى اكتمال الإصلاح.",
+    "reportedBy": "أبلغ عنه",
+    "readyAt": "جاهزة للتشغيل",
+    "verified": "تم التحقق",
+    "resolution": "الإصلاح المنجز",
+    "resolutionPlaceholder": "ما الذي تم إصلاحه أو استبداله؟",
+    "reasonPlaceholder": "السبب (مطلوب)",
+    "newReportHint": "سجل تغييرات القوالب والإصلاحات والصيانة في ورديتك.",
+    "saveReport": "حفظ التقرير",
+    "date": "التاريخ",
+    "moldOnMachine": "القالب على الماكينة",
+    "relatedRequest": "طلب الصيانة",
+    "relatedOrder": "الطلب المرتبط",
+    "workPerformed": "العمل المنجز",
+    "moldRemoved": "القالب المُزال",
+    "moldInstalled": "القالب المُركّب",
+    "moldChangeReason": "سبب تغيير القالب",
+    "moldChangeReasonHint": "مطلوب عند إزالة أو تركيب قالب",
+    "breakdown": "عطل الماكينة",
+    "startTime": "وقت البدء",
+    "endTime": "وقت الانتهاء",
+    "downtimeMinutes": "توقف الماكينة (دقائق)",
+    "downtimeHint": "اتركه فارغاً لحسابه من البدء إلى الانتهاء",
+    "spareParts": "قطع الغيار المستخدمة",
+    "repairsCompleted": "الإصلاحات المكتملة",
+    "outstanding": "الأعمال المتبقية",
+    "followUp": "المتابعة المطلوبة",
+    "technician": "الفني",
+    "reportSubtitle": "تقرير خدمة يومي",
+    "hasOutstanding": "توجد أعمال متبقية",
+    "tab": {
+      "requests": "طلبات الصيانة",
+      "reports": "تقارير الخدمة",
+      "preventive": "الصيانة الوقائية"
+    },
+    "pm": {
+      "ok": "في الموعد",
+      "soon": "مستحق هذا الأسبوع",
+      "overdue": "متأخر",
+      "off": "متوقف"
+    },
+    "act": {
+      "start": "بدء العمل",
+      "waitParts": "بانتظار قطع الغيار",
+      "complete": "اكتمل الإصلاح",
+      "verify": "تحقق",
+      "reopen": "إعادة فتح",
+      "cancel": "إلغاء الطلب",
+      "confirm": "تأكيد"
+    },
+    "done": {
+      "start": "بدأ العمل.",
+      "waitParts": "بانتظار قطع الغيار.",
+      "complete": "اكتمل الإصلاح — تم إشعار الإنتاج.",
+      "verify": "تم التحقق.",
+      "reopen": "أُعيد فتحه.",
+      "cancel": "أُلغي."
+    }
+  },
+  "hist": {
+    "lastDays": "آخر {n} يوماً",
+    "days": "{n} يوماً",
+    "downtimeH": "التوقف (ساعة)",
+    "breakdowns": "الأعطال",
+    "moldChanges": "تغييرات القالب",
+    "openRequests": "الطلبات المفتوحة",
+    "requests": "طلبات الصيانة",
+    "repeated": "أعطال متكررة",
+    "repeatedWarning": "أعطال متكررة: {n} أعطال خلال آخر {days} يوماً. يُنصح بفحص السبب الجذري أو صيانة شاملة.",
+    "timeline": "التسلسل الزمني",
+    "downtimeByReason": "التوقف حسب السبب"
+  },
+  "files": {
+    "title": "الصور والمستندات",
+    "none": "لا توجد ملفات بعد.",
+    "add": "إضافة صورة أو PDF",
+    "uploading": "جارٍ الرفع…"
+  },
+  "notif": {
+    "unread": "{n} غير مقروءة",
+    "none": "لا توجد إشعارات.",
+    "markAll": "تعليم الكل كمقروء"
   }
 }
