@@ -258,6 +258,14 @@
       "PAUSED": "Paused",
       "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
+    },
+    "qc": {
+      "PENDING": "Awaiting QC",
+      "RELEASED": "Released",
+      "APPROVED": "Approved",
+      "PARTIAL": "Partly held",
+      "HOLD": "On hold",
+      "REJECTED": "Rejected"
     }
   },
   "order": {
@@ -347,7 +355,21 @@
       "create": "Production job scheduled",
       "update": "Production job updated",
       "reschedule": "Production job rescheduled",
-      "cancel": "Production job cancelled"
+      "cancel": "Production job cancelled",
+      "start": "Job started",
+      "pause": "Job paused",
+      "resume": "Job resumed",
+      "complete": "Job completed"
+    },
+    "production": {
+      "report": "Quantity reported",
+      "correct": "Quantity corrected"
+    },
+    "batch": {
+      "open": "New batch opened"
+    },
+    "downtime": {
+      "log": "Stop recorded"
     }
   },
   "sched": {
@@ -396,6 +418,75 @@
       "DEADLINE": "Finishes after the requested delivery date of {order}.",
       "CAPACITY": "Needs about {needed} h at this cycle time, but the slot is {available} h.",
       "OVER_PLANNED": "Planned total {planned} pcs is more than the {ordered} ordered."
+    },
+    "openJob": "Open job"
+  },
+  "prod": {
+    "reported": "Quantity added.",
+    "pausedMsg": "Job paused.",
+    "startedMsg": "Job started — first batch opened.",
+    "resumedMsg": "Job resumed.",
+    "newBatchMsg": "New batch opened.",
+    "completedMsg": "Job completed.",
+    "start": "Start job",
+    "reportTitle": "Report production",
+    "batch": "Batch",
+    "good": "Good pieces",
+    "defective": "Defective",
+    "addQuantity": "Add quantity",
+    "pause": "Pause",
+    "resume": "Resume",
+    "newBatch": "New batch",
+    "logDowntime": "Log stop",
+    "logDowntimeHint": "For a stop that already ended, without pausing the job.",
+    "complete": "Complete job",
+    "pauseTitle": "Why is the machine stopping?",
+    "category": "Reason type",
+    "whatHappened": "What happened",
+    "createMaintenance": "Send a maintenance request to Technical Service",
+    "machineDown": "Machine can't run until repaired",
+    "breakdownHint": "A breakdown always creates a maintenance request.",
+    "pauseConfirm": "Pause job",
+    "completeTitle": "Finish this job?",
+    "completeHint": "Closes the open batch and frees the machine. Remaining quantity stays on the order for a new job.",
+    "completeNote": "Note (optional)",
+    "correctLink": "Correct a reported quantity…",
+    "correctHint": "Old entries are never changed. A correction adds a + or − line with your reason, so the history stays complete.",
+    "reason": "Reason",
+    "goodDelta": "Good pieces + / −",
+    "defectiveDelta": "Defective + / −",
+    "deltaHint": "Use a minus sign to remove, e.g. -200",
+    "saveCorrection": "Save correction",
+    "ofPlanned": "{done} of {total} pcs",
+    "downtime": "Downtime",
+    "minutes": "{n} min",
+    "plannedWindow": "Planned",
+    "actualWindow": "Actual",
+    "batches": "Batches / lots",
+    "noBatches": "A batch opens when the job starts.",
+    "qc": "Quality",
+    "open": "open",
+    "log": "Production log",
+    "correction": "correction",
+    "ongoing": "ongoing",
+    "shiftNow": "Current shift: {shift}",
+    "todayByMachine": "Today by machine (good / defective)",
+    "searchPlaceholder": "Job, order, product code or batch…",
+    "tab": {
+      "now": "Now & today",
+      "planned": "Planned",
+      "done": "Completed"
+    },
+    "cat": {
+      "BREAKDOWN": "Machine breakdown",
+      "MOLD_CHANGE": "Mold change",
+      "MOLD_PROBLEM": "Mold problem",
+      "MATERIAL": "No material / material problem",
+      "POWER": "Power cut",
+      "QUALITY": "Quality problem",
+      "NO_OPERATOR": "No operator",
+      "SETUP": "Setup / adjustment",
+      "OTHER": "Other"
     }
   }
 }

@@ -128,7 +128,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                       <ul className="mt-3 space-y-1 border-t border-line pt-3 text-xs">
                         {l.jobs.map((j) => (
                           <li key={j.id} className="flex flex-wrap items-center gap-2">
-                            <Link href={`/schedule?job=${j.id}`} className="font-semibold text-brand-600 hover:underline" dir="ltr">{j.number}</Link>
+                            <Link href={`/production/${j.id}`} className="font-semibold text-brand-600 hover:underline" dir="ltr">{j.number}</Link>
                             <Badge tone={j.status === "CANCELLED" ? "gray" : j.status === "COMPLETED" ? "green" : j.status === "IN_PROGRESS" ? "purple" : "blue"}>{t(`status.job.${j.status}`)}</Badge>
                             <span dir="ltr">{j.machine?.code ?? "—"}{j.mold ? ` / ${j.mold.code}` : ""}</span>
                             <span className="text-muted">{formatDateTime(j.plannedStart, locale)} → {formatDateTime(j.plannedEnd, locale)}</span>

@@ -68,6 +68,7 @@ export default function JobPanel({ mode, lineOptions, machines, molds, initial, 
         <div>
           <h2 className="font-semibold">{mode === "new" ? t("sched.newJob") : `${t("sched.job")} ${initial.number}`}</h2>
           {initial.status && <p className="text-xs text-muted">{t(`status.job.${initial.status}`)}</p>}
+          {initial.jobId && <a href={`/production/${initial.jobId}`} className="text-xs font-semibold text-brand-600 hover:underline">{t("sched.openJob")} →</a>}
         </div>
         <Button size="sm" variant="ghost" type="button" aria-label={t("nav.close")} onClick={() => router.replace(closeHref)}><X className="size-4" /></Button>
       </div>

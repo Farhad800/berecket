@@ -258,6 +258,14 @@
       "PAUSED": "Duraklatıldı",
       "COMPLETED": "Tamamlandı",
       "CANCELLED": "İptal edildi"
+    },
+    "qc": {
+      "PENDING": "KK bekliyor",
+      "RELEASED": "Serbest",
+      "APPROVED": "Onaylı",
+      "PARTIAL": "Kısmen bekletildi",
+      "HOLD": "Bekletiliyor",
+      "REJECTED": "Reddedildi"
     }
   },
   "order": {
@@ -347,7 +355,21 @@
       "create": "Üretim işi planlandı",
       "update": "Üretim işi güncellendi",
       "reschedule": "Üretim işi yeniden planlandı",
-      "cancel": "Üretim işi iptal edildi"
+      "cancel": "Üretim işi iptal edildi",
+      "start": "İş başladı",
+      "pause": "İş duraklatıldı",
+      "resume": "İş devam etti",
+      "complete": "İş tamamlandı"
+    },
+    "production": {
+      "report": "Miktar bildirildi",
+      "correct": "Miktar düzeltildi"
+    },
+    "batch": {
+      "open": "Yeni parti açıldı"
+    },
+    "downtime": {
+      "log": "Duruş kaydedildi"
     }
   },
   "sched": {
@@ -396,6 +418,75 @@
       "DEADLINE": "{order} için istenen teslim tarihinden sonra bitiyor.",
       "CAPACITY": "Bu çevrim süresiyle yaklaşık {needed} saat gerekli, ayrılan süre {available} saat.",
       "OVER_PLANNED": "Planlanan toplam {planned} adet, sipariş edilen {ordered} adetten fazla."
+    },
+    "openJob": "İşi aç"
+  },
+  "prod": {
+    "reported": "Miktar eklendi.",
+    "pausedMsg": "İş duraklatıldı.",
+    "startedMsg": "İş başladı — ilk parti açıldı.",
+    "resumedMsg": "İş devam ediyor.",
+    "newBatchMsg": "Yeni parti açıldı.",
+    "completedMsg": "İş tamamlandı.",
+    "start": "İşi başlat",
+    "reportTitle": "Üretim bildir",
+    "batch": "Parti",
+    "good": "Sağlam adet",
+    "defective": "Hatalı",
+    "addQuantity": "Miktarı ekle",
+    "pause": "Duraklat",
+    "resume": "Devam",
+    "newBatch": "Yeni parti",
+    "logDowntime": "Duruş kaydet",
+    "logDowntimeHint": "Bitmiş bir duruş için; işi duraklatmadan.",
+    "complete": "İşi bitir",
+    "pauseTitle": "Makine neden duruyor?",
+    "category": "Neden türü",
+    "whatHappened": "Ne oldu",
+    "createMaintenance": "Teknik servise bakım talebi gönder",
+    "machineDown": "Makine tamir edilene kadar çalışamaz",
+    "breakdownHint": "Arıza her zaman bakım talebi oluşturur.",
+    "pauseConfirm": "İşi duraklat",
+    "completeTitle": "Bu iş bitirilsin mi?",
+    "completeHint": "Açık partiyi kapatır ve makineyi serbest bırakır. Kalan miktar yeni iş için siparişte kalır.",
+    "completeNote": "Not (isteğe bağlı)",
+    "correctLink": "Bildirilen miktarı düzelt…",
+    "correctHint": "Eski kayıtlar değiştirilmez. Düzeltme, nedeninizle birlikte + veya − satırı ekler.",
+    "reason": "Neden",
+    "goodDelta": "Sağlam + / −",
+    "defectiveDelta": "Hatalı + / −",
+    "deltaHint": "Çıkarmak için eksi kullanın, örn. -200",
+    "saveCorrection": "Düzeltmeyi kaydet",
+    "ofPlanned": "{total} adetin {done} adedi",
+    "downtime": "Duruş süresi",
+    "minutes": "{n} dk",
+    "plannedWindow": "Planlanan",
+    "actualWindow": "Gerçekleşen",
+    "batches": "Partiler / lotlar",
+    "noBatches": "İş başladığında bir parti açılır.",
+    "qc": "Kalite",
+    "open": "açık",
+    "log": "Üretim kaydı",
+    "correction": "düzeltme",
+    "ongoing": "devam ediyor",
+    "shiftNow": "Şu anki vardiya: {shift}",
+    "todayByMachine": "Bugün makineye göre (sağlam / hatalı)",
+    "searchPlaceholder": "İş, sipariş, ürün kodu veya parti…",
+    "tab": {
+      "now": "Şimdi ve bugün",
+      "planned": "Planlanan",
+      "done": "Tamamlanan"
+    },
+    "cat": {
+      "BREAKDOWN": "Makine arızası",
+      "MOLD_CHANGE": "Kalıp değişimi",
+      "MOLD_PROBLEM": "Kalıp sorunu",
+      "MATERIAL": "Hammadde yok / sorunlu",
+      "POWER": "Elektrik kesintisi",
+      "QUALITY": "Kalite sorunu",
+      "NO_OPERATOR": "Operatör yok",
+      "SETUP": "Ayar / hazırlık",
+      "OTHER": "Diğer"
     }
   }
 }

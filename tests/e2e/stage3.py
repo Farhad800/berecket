@@ -1,0 +1,57 @@
+import re, subprocess
+from playwright.sync_api import sync_playwright
+B="http://localhost:3000"; O="/tmp/claude-0/-home-claude/f2fd9017-1975-5c5d-8632-f9a800ffa010/scratchpad/e2e/"
+res=[]
+def ck(n,c): res.append(bool(c)); print(("PASS " if c else "FAIL ")+n)
+def sql(q): return subprocess.run(["su","postgres","-c",f"psql -d bereket -tAc \"{q}\""],capture_output=True,text=True).stdout.strip()
+def login(pg,u,pw):
+    pg.goto(B+"/login"); pg.fill("#username",u); pg.fill("#password",pw); pg.click("button[type=submit]"); pg.wait_for_url("**/dashboard", wait_until="commit"); pg.wait_for_load_state("networkidle")
+def btn(pg,name): pg.get_by_role("button", name=name, exact=True).click(); pg.wait_for_load_state("networkidle"); pg.wait_for_timeout(700)
+# the first job of the latest order (from the Stage 2 test) — 50,000 caps
+job_id, machine_id, order_id = sql("""SELECT j.id||'|'||j.\\"machineId\\"||'|'||l.\\"orderId\\" FROM \\"ProductionJob\\" j JOIN \\"OrderLine\\" l ON l.id=j.\\"orderLineId\\" WHERE j.\\"plannedQty\\"=50000 AND j.status='PLANNED' ORDER BY j.\\"createdAt\\" DESC LIMIT 1""").split("|")
+print("   job", job_id)
+with sync_playwright() as p:
+    br=p.chromium.launch()
+    c=br.new_context(viewport={"width":1180,"height":820}); pg=c.new_page(); errs=[]; pg.on("pageerror", lambda e: errs.append(str(e)))
+    login(pg,"demo.production","Demo12345!")
+    pg.goto(B+"/production?tab=planned"); ck("planned job on production board", pg.locator(f"a[href='/production/{job_id}']").count()==1)
+    pg.goto(B+f"/production/{job_id}"); btn(pg,"Start job")
+    ck("job started, first batch opened", "Running" in pg.inner_text("main") and re.search(r"LOT-\d{4}-\d{4}", pg.inner_text("main")))
+    ck("machine now RUNNING", sql(f"SELECT status FROM \\\"Machine\\\" WHERE id='{machine_id}'")=="RUNNING")
+    pg.fill("#qtyGood","20000"); pg.fill("#qtyDefective","150"); btn(pg,"Add quantity")
+    ck("20,000 of 50,000 shown", "20,000 of 50,000" in pg.inner_text("main"))
+    ck("form cleared after report", pg.input_value("#qtyGood")=="")
+    btn(pg,"New batch"); ck("second batch opened", len(set(re.findall(r"LOT-\d{4}-\d{4}", pg.inner_text("main"))))==2)
+    pg.fill("#qtyGood","5000"); btn(pg,"Add quantity")
+    pg.click("text=Correct a reported quantity…"); pg.fill("#goodDelta","-500"); pg.fill("#reason","Miscounted one carton"); btn(pg,"Save correction")
+    ck("correction applied as new line (24,500)", "24,500 of 50,000" in pg.inner_text("main") and "correction" in pg.inner_text("main"))
+    ck("order now In production", sql(f"SELECT status FROM \\\"Order\\\" WHERE id='{order_id}'")=="IN_PRODUCTION")
+    ck("mold shot count increased", int(sql(f"SELECT \\\"shotCount\\\" FROM \\\"Mold\\\" m JOIN \\\"ProductionJob\\\" j ON j.\\\"moldId\\\"=m.id WHERE j.id='{job_id}'") or 0) > 0)
+    # breakdown → maintenance request, machine down
+    btn(pg,"Pause"); pg.select_option("#category","BREAKDOWN"); pg.fill("#reason","Hydraulic oil leak at clamp unit"); pg.check("input[name=machineDown]"); btn(pg,"Pause job")
+    mr=sql(f"SELECT number FROM \\\"MaintenanceRequest\\\" WHERE \\\"jobId\\\"='{job_id}'")
+    ck("breakdown created linked maintenance request", mr.startswith("MR-"))
+    ck("machine marked DOWN", sql(f"SELECT status FROM \\\"Machine\\\" WHERE id='{machine_id}'")=="DOWN")
+    ck("job paused with ongoing downtime", "Paused" in pg.inner_text("main") and "ongoing" in pg.inner_text("main"))
+    pg.screenshot(path=O+"s3-job-paused.png", full_page=True)
+    btn(pg,"Resume"); ck("resume refused while machine is down", "still marked down" in pg.inner_text("main"))
+    # Service repairs (Stage 4 will do this from the service screen) — simulate by returning machine to AVAILABLE
+    sql(f"UPDATE \\\"Machine\\\" SET status='AVAILABLE' WHERE id='{machine_id}'")
+    pg.reload(); btn(pg,"Resume"); ck("resumed after repair", "Running" in pg.inner_text("main"))
+    btn(pg,"Log stop"); pg.select_option("form:has(#startedAt) #category","MATERIAL"); pg.fill("form:has(#startedAt) #reason","Dryer empty"); pg.fill("#startedAt","2026-10-22T09:00"); pg.fill("#endedAt","2026-10-22T09:25"); btn(pg,"Save")
+    ck("past stop logged", "Dryer empty" in pg.inner_text("main"))
+    btn(pg,"Complete job"); pg.get_by_role("button", name="Complete job").last.click(); pg.wait_for_timeout(1200)
+    ck("job completed", "Completed" in pg.inner_text("main"))
+    ck("machine back to AVAILABLE", sql(f"SELECT status FROM \\\"Machine\\\" WHERE id='{machine_id}'")=="AVAILABLE")
+    ck("order partially produced (not delivered)", sql(f"SELECT status FROM \\\"Order\\\" WHERE id='{order_id}'")=="PARTIALLY_PRODUCED")
+    pg.screenshot(path=O+"s3-job-done.png", full_page=True)
+    pg.goto(B+"/dashboard"); ck("dashboard shows 24,500 produced today", "24,500" in pg.inner_text("main"))
+    ck("no JS errors", not errs)
+    c.close()
+    # warehouse user: view only
+    c=br.new_context(**p.devices["iPhone 13"]); pg=c.new_page()
+    login(pg,"demo.warehouse","Demo12345!"); pg.goto(B+f"/production/{job_id}")
+    ck("warehouse sees job read-only", pg.get_by_role("button", name="Add quantity").count()==0 and "View only" in pg.inner_text("main"))
+    pg.goto(B+"/production"); pg.screenshot(path=O+"s3-board-mobile.png", full_page=True)
+    c.close(); br.close()
+print(f"\n{sum(res)}/{len(res)} passed")
