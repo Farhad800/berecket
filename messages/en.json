@@ -29,7 +29,8 @@
     "employees": "Employee Directory",
     "administration": "Administration & Permissions",
     "menu": "Menu",
-    "close": "Close"
+    "close": "Close",
+    "audit": "Audit log"
   },
   "common": {
     "save": "Save",
@@ -437,6 +438,12 @@
       "create": "Shipment drafted, stock reserved",
       "confirm": "Shipment dispatched",
       "cancel": "Shipment cancelled"
+    },
+    "report": {
+      "export": "Report exported"
+    },
+    "audit": {
+      "export": "Audit log exported"
     }
   },
   "sched": {
@@ -844,5 +851,356 @@
     "signDriver": "Driver",
     "signCustomer": "Received by customer",
     "orderNo": "Order"
+  },
+  "rep": {
+    "intro": "Live figures from the factory's records. Pick a report, set the dates and filters, then export to Excel (CSV) or PDF.",
+    "noExport": "You can view reports. Exporting to CSV or PDF needs the \"Reports: export\" permission.",
+    "csv": "Excel (CSV)",
+    "pdf": "PDF / Print",
+    "pdfHint": "Choose \"Save as PDF\" as the printer to get a PDF file.",
+    "printSave": "Print / Save as PDF",
+    "printedBy": "Printed by {name} · {at}",
+    "noData": "No records match these dates and filters.",
+    "rows": "{n} rows",
+    "rowsLimited": "Showing the first {n} of {total} rows — export to see them all.",
+    "chartTop": "Top {n} of {total} shown — all are in the table.",
+    "total": "Total",
+    "unit": {
+      "h": "{n} h",
+      "d": "{n} d",
+      "hShort": "hours",
+      "dShort": "days"
+    },
+    "sec": {
+      "production": "Production",
+      "orders": "Orders & delivery",
+      "service": "Machines & maintenance",
+      "quality": "Quality",
+      "warehouse": "Warehouse & shipments"
+    },
+    "r": {
+      "production": {
+        "title": "Production output",
+        "desc": "Good and defective pieces by day, week, month, machine, product or shift."
+      },
+      "planned-vs-actual": {
+        "title": "Planned vs actual",
+        "desc": "Each production job's planned quantity and dates against what was really made."
+      },
+      "order-completion": {
+        "title": "Order completion",
+        "desc": "How much of each order has been produced and delivered."
+      },
+      "on-time": {
+        "title": "On-time delivery",
+        "desc": "Orders delivered by the requested date, late, or still overdue."
+      },
+      "delayed": {
+        "title": "Delayed orders",
+        "desc": "Open orders past their requested delivery date, most overdue first."
+      },
+      "outstanding": {
+        "title": "Outstanding quantities",
+        "desc": "For every open order line: ordered, produced, received, shipped and what is left."
+      },
+      "downtime": {
+        "title": "Machine downtime",
+        "desc": "Hours lost by machine or reason, or every stop in detail."
+      },
+      "maintenance": {
+        "title": "Maintenance requests",
+        "desc": "Requests raised, their status and how long repairs took."
+      },
+      "mold-changes": {
+        "title": "Mold changes",
+        "desc": "Every mold removed or installed, with time taken and technician."
+      },
+      "quality": {
+        "title": "Rejection rates",
+        "desc": "Inspections, held and rejected pieces and defect rates by product."
+      },
+      "defects": {
+        "title": "Quality defects",
+        "desc": "Quality issues by defect type and severity."
+      },
+      "corrective": {
+        "title": "Corrective actions",
+        "desc": "Every corrective action recorded against a quality issue."
+      },
+      "receipts": {
+        "title": "Warehouse receipts",
+        "desc": "Finished goods received from production."
+      },
+      "movements": {
+        "title": "Inventory movements",
+        "desc": "Every stock movement: receipts, reservations, shipments, QC changes and adjustments."
+      },
+      "shipments": {
+        "title": "Customer shipments",
+        "desc": "Dispatched shipments with delivery notes, pieces and vehicles."
+      }
+    },
+    "group": {
+      "day": "Day",
+      "week": "Week starting",
+      "month": "Month",
+      "machine": "Machine",
+      "product": "Product",
+      "shift": "Shift",
+      "category": "Reason",
+      "list": "Every stop"
+    },
+    "shift": {
+      "A": "Shift A (07–15)",
+      "B": "Shift B (15–23)",
+      "C": "Shift C (23–07)"
+    },
+    "outcome": {
+      "ON_TIME": "On time",
+      "LATE": "Delivered late",
+      "OVERDUE": "Overdue",
+      "NOT_DUE": "Not due yet"
+    },
+    "f": {
+      "from": "From",
+      "to": "To",
+      "reset": "Clear filters",
+      "groupBy": "Group by",
+      "allCustomers": "All customers",
+      "allProducts": "All products",
+      "allMachines": "All machines",
+      "allPriorities": "All priorities",
+      "allCategories": "All reasons",
+      "allSeverities": "All severities",
+      "allTypes": "All movement types",
+      "defaultStatus": "All (except cancelled)",
+      "period": "Period: {from} – {to}",
+      "preset": {
+        "today": "Today",
+        "last7": "Last 7 days",
+        "last30": "Last 30 days",
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "thisYear": "This year"
+      }
+    },
+    "col": {
+      "accepted": "Accepted",
+      "achieved": "Achieved",
+      "actionTaken": "Action taken",
+      "actualEnd": "Actual end",
+      "assigned": "Assigned to",
+      "available": "Available",
+      "batch": "Batch",
+      "batches": "Batches",
+      "by": "By",
+      "category": "Reason",
+      "completed": "Completed",
+      "confirmedBy": "Dispatched by",
+      "created": "Raised",
+      "critical": "Critical",
+      "customer": "Customer",
+      "daysLate": "Days late",
+      "daysOverdue": "Days overdue",
+      "defectRate": "Defect rate",
+      "defectType": "Defect type",
+      "defective": "Defective",
+      "delPct": "Delivered",
+      "deliveredOn": "Delivered on",
+      "deliveryNote": "Delivery note",
+      "driver": "Driver",
+      "due": "Requested date",
+      "ended": "Ended",
+      "events": "Stops",
+      "good": "Good pieces",
+      "held": "Held",
+      "holdDecisions": "Hold / reject decisions",
+      "hours": "Hours",
+      "hoursToFix": "Hours to fix",
+      "inspected": "Inspected",
+      "inspections": "Inspections",
+      "issue": "Issue",
+      "issueStatus": "Issue status",
+      "issues": "Issues",
+      "job": "Job",
+      "jobs": "Jobs",
+      "lastShipment": "Last shipment",
+      "late": "Late",
+      "line": "Line",
+      "location": "Location",
+      "longest": "Longest stop",
+      "machine": "Machine",
+      "machineDown": "Machine down",
+      "major": "Major",
+      "minor": "Minor",
+      "minutes": "Minutes",
+      "mold": "Mold",
+      "moldInstalled": "Mold installed",
+      "moldRemoved": "Mold removed",
+      "movement": "Movement",
+      "order": "Order",
+      "ordered": "Ordered",
+      "outcome": "Result",
+      "pieces": "Pieces",
+      "planned": "Planned",
+      "plannedEnd": "Planned end",
+      "preventive": "Preventive",
+      "priority": "Priority",
+      "prodPct": "Produced",
+      "produced": "Produced",
+      "product": "Product",
+      "qty": "Quantity",
+      "quarantine": "Quarantine",
+      "reason": "Reason",
+      "receipt": "Receipt",
+      "received": "Received",
+      "rejected": "Rejected",
+      "rejectionRate": "Rejection rate",
+      "request": "Request",
+      "resolved": "Resolved",
+      "serviceReport": "Service report",
+      "severity": "Severity",
+      "share": "Share",
+      "shift": "Shift",
+      "shipment": "Shipment",
+      "shipped": "Shipped",
+      "started": "Started",
+      "status": "Status",
+      "stockState": "Stock state",
+      "technician": "Technician",
+      "title": "Problem",
+      "toDeliver": "Left to deliver",
+      "toProduce": "Left to produce",
+      "totalMade": "Total made",
+      "unresolved": "Unresolved",
+      "variance": "Difference",
+      "vehicle": "Vehicle",
+      "when": "Date & time"
+    },
+    "kpi": {
+      "achievement": "Plan achieved",
+      "actions": "Corrective actions",
+      "adjustments": "Adjustments",
+      "avgChangeMinutes": "Avg. minutes per change",
+      "avgDaysLate": "Avg. days late",
+      "avgDaysOverdue": "Avg. days overdue",
+      "avgHoursToFix": "Avg. hours to fix",
+      "avgPerDay": "Good pieces per day",
+      "breakdownHours": "Breakdown hours",
+      "changeHours": "Hours spent changing",
+      "completionRate": "Completion rate",
+      "critical": "Critical",
+      "customersServed": "Customers",
+      "defectRate": "Defect rate",
+      "defectivePcs": "Defective pieces",
+      "delayedOrders": "Delayed orders",
+      "deliveredShare": "Pieces delivered",
+      "downHours": "Downtime hours",
+      "events": "Stops",
+      "fullyDelivered": "Fully delivered",
+      "goodPcs": "Good pieces",
+      "inspectedPcs": "Pieces inspected",
+      "inspections": "Inspections",
+      "issues": "Quality issues",
+      "issuesCovered": "Issues worked on",
+      "issuesResolved": "Issues resolved",
+      "jobs": "Jobs",
+      "judged": "Orders due",
+      "lateJobs": "Jobs late",
+      "lateOrOverdue": "Late or overdue",
+      "machineDownRequests": "Machine-down requests",
+      "moldChanges": "Mold changes",
+      "movements": "Movements",
+      "onTime": "On time",
+      "onTimeRate": "On-time rate",
+      "ongoing": "Still stopped",
+      "openLines": "Open order lines",
+      "orderedPcs": "Pieces ordered",
+      "orders": "Orders",
+      "ordersCompleted": "Orders completed",
+      "pcsToDeliver": "Pieces to deliver",
+      "pcsToProduce": "Pieces to produce",
+      "plannedPcs": "Pieces planned",
+      "producedPcs": "Pieces produced",
+      "producedShare": "Pieces produced",
+      "quarantinePcs": "Into quarantine",
+      "receipts": "Receipts",
+      "receivedPcs": "Pieces received",
+      "rejectedPcs": "Pieces rejected",
+      "rejectionRate": "Rejection rate",
+      "requests": "Requests",
+      "resolvedRate": "Resolved",
+      "shipments": "Shipments",
+      "shippedPcs": "Pieces shipped",
+      "stillOpen": "Still open",
+      "unresolved": "Unresolved",
+      "urgentDelayed": "Urgent among them"
+    },
+    "chartMax": "Highest: {v}"
+  },
+  "search": {
+    "title": "Search",
+    "hint": "Find any order, customer, product code, batch, machine, mold, quality issue, maintenance request or shipment.",
+    "typeMore": "Type at least 2 characters. Typing an exact number (like ORD-2026-0001) opens that record directly.",
+    "none": "Nothing found for \"{q}\".",
+    "kind": {
+      "orders": "Customer orders",
+      "customers": "Customers",
+      "products": "Products",
+      "batches": "Batches / lots",
+      "jobs": "Production jobs",
+      "machines": "Machines",
+      "molds": "Molds",
+      "issues": "Quality issues",
+      "inspections": "QC inspections",
+      "requests": "Maintenance requests",
+      "serviceReports": "Service reports",
+      "shipments": "Shipments",
+      "receipts": "Warehouse receipts"
+    }
+  },
+  "ui": {
+    "errorTitle": "This page couldn't load",
+    "errorBody": "Nothing was lost. Check your connection and try again. If it keeps happening, tell the administrator the reference below.",
+    "tryAgain": "Try again",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The record may have been moved, or the link is wrong. Try searching for it."
+  },
+  "audit": {
+    "intro": "Who did what and when. Entries can't be edited or deleted.",
+    "search": "Action, reason or record ID…",
+    "anyTime": "Any time",
+    "lastDays": "Last {n} days",
+    "anyone": "Anyone",
+    "anyRecord": "Any record",
+    "system": "System",
+    "open": "Open record",
+    "reason": "Reason",
+    "changes": "Changes",
+    "count": "{n} entries",
+    "entity": {
+      "Order": "Order",
+      "ProductionJob": "Production job",
+      "Batch": "Batch",
+      "QcInspection": "QC inspection",
+      "QualityIssue": "Quality issue",
+      "MaintenanceRequest": "Maintenance request",
+      "ServiceReport": "Service report",
+      "PreventiveTask": "Preventive task",
+      "Shipment": "Shipment",
+      "WarehouseReceipt": "Warehouse receipt",
+      "StockMovement": "Stock",
+      "StorageLocation": "Storage location",
+      "Customer": "Customer",
+      "Product": "Product",
+      "Machine": "Machine",
+      "Mold": "Mold",
+      "DefectCategory": "Defect type",
+      "User": "Employee",
+      "Role": "Role",
+      "Report": "Report",
+      "AuditLog": "Audit log",
+      "Attachment": "Attachment"
+    }
   }
 }

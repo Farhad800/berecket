@@ -11,13 +11,13 @@ Works in any browser on PC, tablet and phone, and can be installed to the home s
 | Stage | Scope | Status |
 |---|---|---|
 | 1 | Login, roles & permissions, employees, dashboard, branding, languages, install-to-home-screen | ✅ done |
-| 2 | Customers, products, machines & molds, multi-line orders, production calendar | next |
-| 3 | Production jobs, batches, quantities, downtime | |
-| 4 | Technical service, mold changes, maintenance requests | |
-| 5 | QC inspections, holds/rejections, corrective actions | |
-| 6 | Warehouse receipts, stock ledger, shipments | |
-| 7 | Notifications, reports, CSV/PDF export, search | |
-| 8 | Full end-to-end tests, deployment, backups, operations guide | |
+| 2 | Customers, products, machines & molds, multi-line orders, production calendar | ✅ done |
+| 3 | Production jobs, batches, quantities, downtime | ✅ done |
+| 4 | Technical service, mold changes, maintenance requests | ✅ done |
+| 5 | QC inspections, holds/rejections, corrective actions | ✅ done |
+| 6 | Warehouse receipts, stock ledger, shipments | ✅ done |
+| 7 | Notifications, reports, CSV/PDF export, search | ✅ done |
+| 8 | Full end-to-end tests, deployment, backups, operations guide | next |
 
 ## Run locally
 

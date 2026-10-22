@@ -29,7 +29,8 @@
     "employees": "دليل الموظفين",
     "administration": "الإدارة والصلاحيات",
     "menu": "القائمة",
-    "close": "إغلاق"
+    "close": "إغلاق",
+    "audit": "سجل التدقيق"
   },
   "common": {
     "save": "حفظ",
@@ -437,6 +438,12 @@
       "create": "مسودة شحنة، حُجز المخزون",
       "confirm": "تم شحن الشحنة",
       "cancel": "أُلغيت الشحنة"
+    },
+    "report": {
+      "export": "تم تصدير تقرير"
+    },
+    "audit": {
+      "export": "تم تصدير سجل التدقيق"
     }
   },
   "sched": {
@@ -844,5 +851,356 @@
     "signDriver": "السائق",
     "signCustomer": "استلمه العميل",
     "orderNo": "الطلب"
+  },
+  "rep": {
+    "intro": "أرقام مباشرة من سجلات المصنع. اختر تقريراً وحدد التواريخ والمرشحات ثم صدّره إلى Excel (CSV) أو PDF.",
+    "noExport": "يمكنك عرض التقارير. التصدير إلى CSV أو PDF يحتاج صلاحية «التقارير: تصدير».",
+    "csv": "Excel (CSV)",
+    "pdf": "PDF / طباعة",
+    "pdfHint": "اختر «حفظ كـ PDF» كطابعة للحصول على ملف PDF.",
+    "printSave": "طباعة / حفظ كـ PDF",
+    "printedBy": "طُبع بواسطة {name} · {at}",
+    "noData": "لا توجد سجلات تطابق هذه التواريخ والمرشحات.",
+    "rows": "{n} صف",
+    "rowsLimited": "عرض أول {n} من {total} صف — صدّر التقرير لرؤيتها كلها.",
+    "chartTop": "أعلى {n} من {total} — الكل في الجدول.",
+    "total": "الإجمالي",
+    "unit": {
+      "h": "{n} س",
+      "d": "{n} ي",
+      "hShort": "ساعات",
+      "dShort": "أيام"
+    },
+    "sec": {
+      "production": "الإنتاج",
+      "orders": "الطلبات والتسليم",
+      "service": "الآلات والصيانة",
+      "quality": "الجودة",
+      "warehouse": "المستودع والشحنات"
+    },
+    "r": {
+      "production": {
+        "title": "الإنتاج المنجز",
+        "desc": "القطع السليمة والمعيبة حسب اليوم أو الأسبوع أو الشهر أو الآلة أو المنتج أو الوردية."
+      },
+      "planned-vs-actual": {
+        "title": "المخطط مقابل الفعلي",
+        "desc": "الكمية والتواريخ المخططة لكل أمر إنتاج مقابل ما أُنتج فعلاً."
+      },
+      "order-completion": {
+        "title": "إنجاز الطلبات",
+        "desc": "كم أُنتج وسُلّم من كل طلب."
+      },
+      "on-time": {
+        "title": "التسليم في الموعد",
+        "desc": "الطلبات المسلّمة في الموعد أو المتأخرة أو التي ما زالت متأخرة."
+      },
+      "delayed": {
+        "title": "الطلبات المتأخرة",
+        "desc": "الطلبات المفتوحة التي تجاوزت موعد التسليم، الأكثر تأخراً أولاً."
+      },
+      "outstanding": {
+        "title": "الكميات المتبقية",
+        "desc": "لكل بند طلب مفتوح: المطلوب والمنتج والمستلم والمشحون والمتبقي."
+      },
+      "downtime": {
+        "title": "توقف الآلات",
+        "desc": "الساعات الضائعة حسب الآلة أو السبب، أو كل توقف بالتفصيل."
+      },
+      "maintenance": {
+        "title": "طلبات الصيانة",
+        "desc": "الطلبات المقدمة وحالتها ومدة الإصلاح."
+      },
+      "mold-changes": {
+        "title": "تغييرات القوالب",
+        "desc": "كل قالب أُزيل أو رُكّب مع الوقت المستغرق والفني."
+      },
+      "quality": {
+        "title": "نسب الرفض",
+        "desc": "الفحوصات والقطع المحجوزة والمرفوضة ونسب العيوب حسب المنتج."
+      },
+      "defects": {
+        "title": "عيوب الجودة",
+        "desc": "مشاكل الجودة حسب نوع العيب والخطورة."
+      },
+      "corrective": {
+        "title": "الإجراءات التصحيحية",
+        "desc": "كل إجراء تصحيحي مسجل على مشكلة جودة."
+      },
+      "receipts": {
+        "title": "استلامات المستودع",
+        "desc": "البضائع الجاهزة المستلمة من الإنتاج."
+      },
+      "movements": {
+        "title": "حركات المخزون",
+        "desc": "كل حركة مخزون: استلام وحجز وشحن وتغييرات الجودة والتعديلات."
+      },
+      "shipments": {
+        "title": "شحنات العملاء",
+        "desc": "الشحنات المرسلة مع إشعارات التسليم والقطع والمركبات."
+      }
+    },
+    "group": {
+      "day": "اليوم",
+      "week": "بداية الأسبوع",
+      "month": "الشهر",
+      "machine": "الآلة",
+      "product": "المنتج",
+      "shift": "الوردية",
+      "category": "السبب",
+      "list": "كل توقف"
+    },
+    "shift": {
+      "A": "الوردية A (07–15)",
+      "B": "الوردية B (15–23)",
+      "C": "الوردية C (23–07)"
+    },
+    "outcome": {
+      "ON_TIME": "في الموعد",
+      "LATE": "سُلّم متأخراً",
+      "OVERDUE": "متأخر",
+      "NOT_DUE": "لم يحن موعده"
+    },
+    "f": {
+      "from": "من",
+      "to": "إلى",
+      "reset": "مسح المرشحات",
+      "groupBy": "تجميع حسب",
+      "allCustomers": "كل العملاء",
+      "allProducts": "كل المنتجات",
+      "allMachines": "كل الآلات",
+      "allPriorities": "كل الأولويات",
+      "allCategories": "كل الأسباب",
+      "allSeverities": "كل الدرجات",
+      "allTypes": "كل أنواع الحركات",
+      "defaultStatus": "الكل (عدا الملغى)",
+      "period": "الفترة: {from} – {to}",
+      "preset": {
+        "today": "اليوم",
+        "last7": "آخر 7 أيام",
+        "last30": "آخر 30 يوماً",
+        "thisMonth": "هذا الشهر",
+        "lastMonth": "الشهر الماضي",
+        "thisYear": "هذه السنة"
+      }
+    },
+    "col": {
+      "accepted": "مقبول",
+      "achieved": "المنجز",
+      "actionTaken": "الإجراء المتخذ",
+      "actualEnd": "النهاية الفعلية",
+      "assigned": "مُسند إلى",
+      "available": "متاح",
+      "batch": "الدفعة",
+      "batches": "الدفعات",
+      "by": "بواسطة",
+      "category": "السبب",
+      "completed": "اكتمل",
+      "confirmedBy": "أرسلها",
+      "created": "أُنشئ",
+      "critical": "حرج",
+      "customer": "العميل",
+      "daysLate": "أيام التأخير",
+      "daysOverdue": "أيام التأخر",
+      "defectRate": "نسبة العيوب",
+      "defectType": "نوع العيب",
+      "defective": "معيب",
+      "delPct": "المسلّم",
+      "deliveredOn": "تاريخ التسليم",
+      "deliveryNote": "إشعار التسليم",
+      "driver": "السائق",
+      "due": "التاريخ المطلوب",
+      "ended": "انتهى",
+      "events": "التوقفات",
+      "good": "قطع سليمة",
+      "held": "محجوز",
+      "holdDecisions": "قرارات حجز/رفض",
+      "hours": "الساعات",
+      "hoursToFix": "ساعات الإصلاح",
+      "inspected": "المفحوص",
+      "inspections": "الفحوصات",
+      "issue": "المشكلة",
+      "issueStatus": "حالة المشكلة",
+      "issues": "المشاكل",
+      "job": "أمر الإنتاج",
+      "jobs": "أوامر الإنتاج",
+      "lastShipment": "آخر شحنة",
+      "late": "متأخر",
+      "line": "البند",
+      "location": "الموقع",
+      "longest": "أطول توقف",
+      "machine": "الآلة",
+      "machineDown": "الآلة متوقفة",
+      "major": "كبير",
+      "minor": "بسيط",
+      "minutes": "الدقائق",
+      "mold": "القالب",
+      "moldInstalled": "القالب المركب",
+      "moldRemoved": "القالب المُزال",
+      "movement": "الحركة",
+      "order": "الطلب",
+      "ordered": "المطلوب",
+      "outcome": "النتيجة",
+      "pieces": "القطع",
+      "planned": "المخطط",
+      "plannedEnd": "النهاية المخططة",
+      "preventive": "وقائية",
+      "priority": "الأولوية",
+      "prodPct": "المُنتَج",
+      "produced": "المُنتَج",
+      "product": "المنتج",
+      "qty": "الكمية",
+      "quarantine": "حجر",
+      "reason": "السبب",
+      "receipt": "الاستلام",
+      "received": "المستلم",
+      "rejected": "المرفوض",
+      "rejectionRate": "نسبة الرفض",
+      "request": "الطلب",
+      "resolved": "محلولة",
+      "serviceReport": "تقرير الخدمة",
+      "severity": "الخطورة",
+      "share": "الحصة",
+      "shift": "الوردية",
+      "shipment": "الشحنة",
+      "shipped": "المشحون",
+      "started": "بدأ",
+      "status": "الحالة",
+      "stockState": "حالة المخزون",
+      "technician": "الفني",
+      "title": "المشكلة",
+      "toDeliver": "المتبقي للتسليم",
+      "toProduce": "المتبقي للإنتاج",
+      "totalMade": "إجمالي الإنتاج",
+      "unresolved": "غير محلولة",
+      "variance": "الفرق",
+      "vehicle": "المركبة",
+      "when": "التاريخ والوقت"
+    },
+    "kpi": {
+      "achievement": "تحقيق الخطة",
+      "actions": "الإجراءات التصحيحية",
+      "adjustments": "التعديلات",
+      "avgChangeMinutes": "متوسط الدقائق لكل تغيير",
+      "avgDaysLate": "متوسط أيام التأخير",
+      "avgDaysOverdue": "متوسط أيام التأخر",
+      "avgHoursToFix": "متوسط ساعات الإصلاح",
+      "avgPerDay": "قطع سليمة يومياً",
+      "breakdownHours": "ساعات الأعطال",
+      "changeHours": "ساعات التغيير",
+      "completionRate": "نسبة الإنجاز",
+      "critical": "حرجة",
+      "customersServed": "العملاء",
+      "defectRate": "نسبة العيوب",
+      "defectivePcs": "قطع معيبة",
+      "delayedOrders": "طلبات متأخرة",
+      "deliveredShare": "القطع المسلّمة",
+      "downHours": "ساعات التوقف",
+      "events": "التوقفات",
+      "fullyDelivered": "مسلّمة بالكامل",
+      "goodPcs": "قطع سليمة",
+      "inspectedPcs": "القطع المفحوصة",
+      "inspections": "الفحوصات",
+      "issues": "مشاكل الجودة",
+      "issuesCovered": "المشاكل المعالجة",
+      "issuesResolved": "المشاكل المحلولة",
+      "jobs": "أوامر الإنتاج",
+      "judged": "الطلبات المستحقة",
+      "lateJobs": "أوامر متأخرة",
+      "lateOrOverdue": "متأخرة",
+      "machineDownRequests": "طلبات توقف آلة",
+      "moldChanges": "تغييرات القوالب",
+      "movements": "الحركات",
+      "onTime": "في الموعد",
+      "onTimeRate": "نسبة الالتزام بالموعد",
+      "ongoing": "ما زالت متوقفة",
+      "openLines": "بنود مفتوحة",
+      "orderedPcs": "القطع المطلوبة",
+      "orders": "الطلبات",
+      "ordersCompleted": "طلبات مكتملة",
+      "pcsToDeliver": "قطع للتسليم",
+      "pcsToProduce": "قطع للإنتاج",
+      "plannedPcs": "القطع المخططة",
+      "producedPcs": "القطع المنتجة",
+      "producedShare": "القطع المنتجة",
+      "quarantinePcs": "إلى الحجر",
+      "receipts": "الاستلامات",
+      "receivedPcs": "القطع المستلمة",
+      "rejectedPcs": "القطع المرفوضة",
+      "rejectionRate": "نسبة الرفض",
+      "requests": "الطلبات",
+      "resolvedRate": "المحلول",
+      "shipments": "الشحنات",
+      "shippedPcs": "القطع المشحونة",
+      "stillOpen": "ما زالت مفتوحة",
+      "unresolved": "غير محلولة",
+      "urgentDelayed": "العاجلة منها"
+    },
+    "chartMax": "الأعلى: {v}"
+  },
+  "search": {
+    "title": "البحث",
+    "hint": "ابحث عن أي طلب أو عميل أو رمز منتج أو دفعة أو آلة أو قالب أو مشكلة جودة أو طلب صيانة أو شحنة.",
+    "typeMore": "اكتب حرفين على الأقل. كتابة رقم كامل (مثل ORD-2026-0001) تفتح السجل مباشرة.",
+    "none": "لا توجد نتائج لـ «{q}».",
+    "kind": {
+      "orders": "طلبات العملاء",
+      "customers": "العملاء",
+      "products": "المنتجات",
+      "batches": "الدفعات",
+      "jobs": "أوامر الإنتاج",
+      "machines": "الآلات",
+      "molds": "القوالب",
+      "issues": "مشاكل الجودة",
+      "inspections": "فحوصات الجودة",
+      "requests": "طلبات الصيانة",
+      "serviceReports": "تقارير الخدمة",
+      "shipments": "الشحنات",
+      "receipts": "استلامات المستودع"
+    }
+  },
+  "ui": {
+    "errorTitle": "تعذر تحميل هذه الصفحة",
+    "errorBody": "لم يُفقد شيء. تحقق من الاتصال وحاول مجدداً. إذا تكرر ذلك أخبر المسؤول بالرقم المرجعي أدناه.",
+    "tryAgain": "حاول مجدداً",
+    "notFoundTitle": "الصفحة غير موجودة",
+    "notFoundBody": "ربما نُقل السجل أو أن الرابط خاطئ. جرّب البحث عنه."
+  },
+  "audit": {
+    "intro": "من فعل ماذا ومتى. لا يمكن تعديل السجلات أو حذفها.",
+    "search": "الإجراء أو السبب أو معرّف السجل…",
+    "anyTime": "أي وقت",
+    "lastDays": "آخر {n} أيام",
+    "anyone": "أي شخص",
+    "anyRecord": "أي سجل",
+    "system": "النظام",
+    "open": "فتح السجل",
+    "reason": "السبب",
+    "changes": "التغييرات",
+    "count": "{n} سجل",
+    "entity": {
+      "Order": "طلب",
+      "ProductionJob": "أمر إنتاج",
+      "Batch": "دفعة",
+      "QcInspection": "فحص جودة",
+      "QualityIssue": "مشكلة جودة",
+      "MaintenanceRequest": "طلب صيانة",
+      "ServiceReport": "تقرير خدمة",
+      "PreventiveTask": "مهمة وقائية",
+      "Shipment": "شحنة",
+      "WarehouseReceipt": "استلام مستودع",
+      "StockMovement": "مخزون",
+      "StorageLocation": "موقع تخزين",
+      "Customer": "عميل",
+      "Product": "منتج",
+      "Machine": "آلة",
+      "Mold": "قالب",
+      "DefectCategory": "نوع عيب",
+      "User": "موظف",
+      "Role": "دور",
+      "Report": "تقرير",
+      "AuditLog": "سجل التدقيق",
+      "Attachment": "مرفق"
+    }
   }
 }

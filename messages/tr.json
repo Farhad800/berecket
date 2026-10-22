@@ -29,7 +29,8 @@
     "employees": "Çalışan Rehberi",
     "administration": "Yönetim ve Yetkiler",
     "menu": "Menü",
-    "close": "Kapat"
+    "close": "Kapat",
+    "audit": "Denetim kaydı"
   },
   "common": {
     "save": "Kaydet",
@@ -437,6 +438,12 @@
       "create": "Sevkiyat taslağı, stok ayrıldı",
       "confirm": "Sevkiyat yapıldı",
       "cancel": "Sevkiyat iptal edildi"
+    },
+    "report": {
+      "export": "Rapor dışa aktarıldı"
+    },
+    "audit": {
+      "export": "Denetim kaydı dışa aktarıldı"
     }
   },
   "sched": {
@@ -844,5 +851,356 @@
     "signDriver": "Şoför",
     "signCustomer": "Müşteri teslim aldı",
     "orderNo": "Sipariş"
+  },
+  "rep": {
+    "intro": "Fabrika kayıtlarından canlı rakamlar. Bir rapor seçin, tarihleri ve filtreleri ayarlayın, sonra Excel (CSV) veya PDF olarak dışa aktarın.",
+    "noExport": "Raporları görüntüleyebilirsiniz. CSV veya PDF dışa aktarmak için \"Raporlar: dışa aktar\" yetkisi gerekir.",
+    "csv": "Excel (CSV)",
+    "pdf": "PDF / Yazdır",
+    "pdfHint": "PDF dosyası için yazıcı olarak \"PDF olarak kaydet\"i seçin.",
+    "printSave": "Yazdır / PDF kaydet",
+    "printedBy": "Yazdıran: {name} · {at}",
+    "noData": "Bu tarih ve filtrelere uyan kayıt yok.",
+    "rows": "{n} satır",
+    "rowsLimited": "{total} satırın ilk {n} tanesi gösteriliyor — tümü için dışa aktarın.",
+    "chartTop": "{total} içinden ilk {n} gösteriliyor — tümü tabloda.",
+    "total": "Toplam",
+    "unit": {
+      "h": "{n} sa",
+      "d": "{n} gün",
+      "hShort": "saat",
+      "dShort": "gün"
+    },
+    "sec": {
+      "production": "Üretim",
+      "orders": "Siparişler ve teslimat",
+      "service": "Makineler ve bakım",
+      "quality": "Kalite",
+      "warehouse": "Depo ve sevkiyat"
+    },
+    "r": {
+      "production": {
+        "title": "Üretim çıktısı",
+        "desc": "Güne, haftaya, aya, makineye, ürüne veya vardiyaya göre sağlam ve hatalı adet."
+      },
+      "planned-vs-actual": {
+        "title": "Planlanan ve gerçekleşen",
+        "desc": "Her üretim işinin planlanan miktar ve tarihleri ile gerçekte üretilen."
+      },
+      "order-completion": {
+        "title": "Sipariş tamamlanma",
+        "desc": "Her siparişin ne kadarının üretildiği ve teslim edildiği."
+      },
+      "on-time": {
+        "title": "Zamanında teslimat",
+        "desc": "İstenen tarihte, geç teslim edilen veya hâlâ geciken siparişler."
+      },
+      "delayed": {
+        "title": "Geciken siparişler",
+        "desc": "İstenen teslim tarihini geçmiş açık siparişler, en çok geciken önce."
+      },
+      "outstanding": {
+        "title": "Kalan miktarlar",
+        "desc": "Her açık sipariş satırı için: sipariş, üretilen, kabul, sevk ve kalan."
+      },
+      "downtime": {
+        "title": "Makine duruşları",
+        "desc": "Makineye veya nedene göre kaybedilen saatler ya da her duruş ayrıntılı."
+      },
+      "maintenance": {
+        "title": "Bakım talepleri",
+        "desc": "Açılan talepler, durumları ve onarım süreleri."
+      },
+      "mold-changes": {
+        "title": "Kalıp değişimleri",
+        "desc": "Sökülen veya takılan her kalıp, süre ve teknisyen ile."
+      },
+      "quality": {
+        "title": "Ret oranları",
+        "desc": "Ürüne göre muayeneler, bekletilen ve reddedilen adetler ve hata oranları."
+      },
+      "defects": {
+        "title": "Kalite hataları",
+        "desc": "Hata türüne ve önem derecesine göre kalite sorunları."
+      },
+      "corrective": {
+        "title": "Düzeltici faaliyetler",
+        "desc": "Kalite sorunlarına kaydedilen her düzeltici faaliyet."
+      },
+      "receipts": {
+        "title": "Depo kabulleri",
+        "desc": "Üretimden kabul edilen mamuller."
+      },
+      "movements": {
+        "title": "Stok hareketleri",
+        "desc": "Tüm stok hareketleri: kabul, ayırma, sevk, KK değişiklikleri ve düzeltmeler."
+      },
+      "shipments": {
+        "title": "Müşteri sevkiyatları",
+        "desc": "İrsaliye, adet ve araç bilgisiyle yapılan sevkiyatlar."
+      }
+    },
+    "group": {
+      "day": "Gün",
+      "week": "Hafta başlangıcı",
+      "month": "Ay",
+      "machine": "Makine",
+      "product": "Ürün",
+      "shift": "Vardiya",
+      "category": "Neden",
+      "list": "Her duruş"
+    },
+    "shift": {
+      "A": "A vardiyası (07–15)",
+      "B": "B vardiyası (15–23)",
+      "C": "C vardiyası (23–07)"
+    },
+    "outcome": {
+      "ON_TIME": "Zamanında",
+      "LATE": "Geç teslim",
+      "OVERDUE": "Gecikmiş",
+      "NOT_DUE": "Henüz vadesi gelmedi"
+    },
+    "f": {
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "reset": "Filtreleri temizle",
+      "groupBy": "Gruplama",
+      "allCustomers": "Tüm müşteriler",
+      "allProducts": "Tüm ürünler",
+      "allMachines": "Tüm makineler",
+      "allPriorities": "Tüm öncelikler",
+      "allCategories": "Tüm nedenler",
+      "allSeverities": "Tüm dereceler",
+      "allTypes": "Tüm hareket türleri",
+      "defaultStatus": "Tümü (iptal hariç)",
+      "period": "Dönem: {from} – {to}",
+      "preset": {
+        "today": "Bugün",
+        "last7": "Son 7 gün",
+        "last30": "Son 30 gün",
+        "thisMonth": "Bu ay",
+        "lastMonth": "Geçen ay",
+        "thisYear": "Bu yıl"
+      }
+    },
+    "col": {
+      "accepted": "Kabul",
+      "achieved": "Gerçekleşme",
+      "actionTaken": "Yapılan faaliyet",
+      "actualEnd": "Gerçek bitiş",
+      "assigned": "Atanan",
+      "available": "Kullanılabilir",
+      "batch": "Parti",
+      "batches": "Partiler",
+      "by": "Yapan",
+      "category": "Neden",
+      "completed": "Tamamlandı",
+      "confirmedBy": "Sevk eden",
+      "created": "Açıldı",
+      "critical": "Kritik",
+      "customer": "Müşteri",
+      "daysLate": "Gecikme (gün)",
+      "daysOverdue": "Gecikme (gün)",
+      "defectRate": "Hata oranı",
+      "defectType": "Hata türü",
+      "defective": "Hatalı",
+      "delPct": "Teslim",
+      "deliveredOn": "Teslim tarihi",
+      "deliveryNote": "İrsaliye",
+      "driver": "Şoför",
+      "due": "İstenen tarih",
+      "ended": "Bitti",
+      "events": "Duruşlar",
+      "good": "Sağlam adet",
+      "held": "Bekletilen",
+      "holdDecisions": "Bekletme / ret kararı",
+      "hours": "Saat",
+      "hoursToFix": "Onarım süresi",
+      "inspected": "Muayene edilen",
+      "inspections": "Muayeneler",
+      "issue": "Sorun",
+      "issueStatus": "Sorun durumu",
+      "issues": "Sorunlar",
+      "job": "İş",
+      "jobs": "İşler",
+      "lastShipment": "Son sevkiyat",
+      "late": "Gecikti",
+      "line": "Satır",
+      "location": "Yer",
+      "longest": "En uzun duruş",
+      "machine": "Makine",
+      "machineDown": "Makine durdu",
+      "major": "Büyük",
+      "minor": "Küçük",
+      "minutes": "Dakika",
+      "mold": "Kalıp",
+      "moldInstalled": "Takılan kalıp",
+      "moldRemoved": "Sökülen kalıp",
+      "movement": "Hareket",
+      "order": "Sipariş",
+      "ordered": "Sipariş edilen",
+      "outcome": "Sonuç",
+      "pieces": "Adet",
+      "planned": "Planlanan",
+      "plannedEnd": "Planlanan bitiş",
+      "preventive": "Önleyici",
+      "priority": "Öncelik",
+      "prodPct": "Üretilen",
+      "produced": "Üretilen",
+      "product": "Ürün",
+      "qty": "Miktar",
+      "quarantine": "Karantina",
+      "reason": "Neden",
+      "receipt": "Kabul",
+      "received": "Kabul edilen",
+      "rejected": "Reddedilen",
+      "rejectionRate": "Ret oranı",
+      "request": "Talep",
+      "resolved": "Çözüldü",
+      "serviceReport": "Servis raporu",
+      "severity": "Önem",
+      "share": "Pay",
+      "shift": "Vardiya",
+      "shipment": "Sevkiyat",
+      "shipped": "Sevk edilen",
+      "started": "Başladı",
+      "status": "Durum",
+      "stockState": "Stok durumu",
+      "technician": "Teknisyen",
+      "title": "Sorun",
+      "toDeliver": "Teslim edilecek",
+      "toProduce": "Üretilecek",
+      "totalMade": "Toplam üretim",
+      "unresolved": "Çözülmedi",
+      "variance": "Fark",
+      "vehicle": "Araç",
+      "when": "Tarih ve saat"
+    },
+    "kpi": {
+      "achievement": "Plan gerçekleşme",
+      "actions": "Düzeltici faaliyet",
+      "adjustments": "Düzeltmeler",
+      "avgChangeMinutes": "Değişim başına ort. dakika",
+      "avgDaysLate": "Ort. gecikme (gün)",
+      "avgDaysOverdue": "Ort. gecikme (gün)",
+      "avgHoursToFix": "Ort. onarım süresi",
+      "avgPerDay": "Günlük sağlam adet",
+      "breakdownHours": "Arıza saatleri",
+      "changeHours": "Değişim saatleri",
+      "completionRate": "Tamamlanma oranı",
+      "critical": "Kritik",
+      "customersServed": "Müşteriler",
+      "defectRate": "Hata oranı",
+      "defectivePcs": "Hatalı adet",
+      "delayedOrders": "Geciken sipariş",
+      "deliveredShare": "Teslim edilen adet",
+      "downHours": "Duruş saatleri",
+      "events": "Duruşlar",
+      "fullyDelivered": "Tamamen teslim",
+      "goodPcs": "Sağlam adet",
+      "inspectedPcs": "Muayene edilen adet",
+      "inspections": "Muayeneler",
+      "issues": "Kalite sorunları",
+      "issuesCovered": "Üzerinde çalışılan sorun",
+      "issuesResolved": "Çözülen sorun",
+      "jobs": "İşler",
+      "judged": "Vadesi gelen sipariş",
+      "lateJobs": "Geciken iş",
+      "lateOrOverdue": "Geç veya gecikmiş",
+      "machineDownRequests": "Makine durdu talebi",
+      "moldChanges": "Kalıp değişimi",
+      "movements": "Hareketler",
+      "onTime": "Zamanında",
+      "onTimeRate": "Zamanında oranı",
+      "ongoing": "Hâlâ duruşta",
+      "openLines": "Açık sipariş satırı",
+      "orderedPcs": "Sipariş adedi",
+      "orders": "Siparişler",
+      "ordersCompleted": "Tamamlanan sipariş",
+      "pcsToDeliver": "Teslim edilecek adet",
+      "pcsToProduce": "Üretilecek adet",
+      "plannedPcs": "Planlanan adet",
+      "producedPcs": "Üretilen adet",
+      "producedShare": "Üretilen adet",
+      "quarantinePcs": "Karantinaya",
+      "receipts": "Kabuller",
+      "receivedPcs": "Kabul edilen adet",
+      "rejectedPcs": "Reddedilen adet",
+      "rejectionRate": "Ret oranı",
+      "requests": "Talepler",
+      "resolvedRate": "Çözülen",
+      "shipments": "Sevkiyatlar",
+      "shippedPcs": "Sevk edilen adet",
+      "stillOpen": "Hâlâ açık",
+      "unresolved": "Çözülmedi",
+      "urgentDelayed": "Acil olanlar"
+    },
+    "chartMax": "En yüksek: {v}"
+  },
+  "search": {
+    "title": "Ara",
+    "hint": "Herhangi bir sipariş, müşteri, ürün kodu, parti, makine, kalıp, kalite sorunu, bakım talebi veya sevkiyatı bulun.",
+    "typeMore": "En az 2 karakter yazın. Tam bir numara (ör. ORD-2026-0001) yazmak kaydı doğrudan açar.",
+    "none": "\"{q}\" için sonuç bulunamadı.",
+    "kind": {
+      "orders": "Müşteri siparişleri",
+      "customers": "Müşteriler",
+      "products": "Ürünler",
+      "batches": "Partiler",
+      "jobs": "Üretim işleri",
+      "machines": "Makineler",
+      "molds": "Kalıplar",
+      "issues": "Kalite sorunları",
+      "inspections": "KK muayeneleri",
+      "requests": "Bakım talepleri",
+      "serviceReports": "Servis raporları",
+      "shipments": "Sevkiyatlar",
+      "receipts": "Depo kabulleri"
+    }
+  },
+  "ui": {
+    "errorTitle": "Bu sayfa yüklenemedi",
+    "errorBody": "Hiçbir şey kaybolmadı. Bağlantınızı kontrol edip tekrar deneyin. Sürerse yöneticiye aşağıdaki referansı iletin.",
+    "tryAgain": "Tekrar dene",
+    "notFoundTitle": "Sayfa bulunamadı",
+    "notFoundBody": "Kayıt taşınmış veya bağlantı hatalı olabilir. Aramayı deneyin."
+  },
+  "audit": {
+    "intro": "Kim, ne zaman, ne yaptı. Kayıtlar düzenlenemez veya silinemez.",
+    "search": "İşlem, neden veya kayıt kimliği…",
+    "anyTime": "Tüm zamanlar",
+    "lastDays": "Son {n} gün",
+    "anyone": "Herkes",
+    "anyRecord": "Tüm kayıtlar",
+    "system": "Sistem",
+    "open": "Kaydı aç",
+    "reason": "Neden",
+    "changes": "Değişiklikler",
+    "count": "{n} kayıt",
+    "entity": {
+      "Order": "Sipariş",
+      "ProductionJob": "Üretim işi",
+      "Batch": "Parti",
+      "QcInspection": "KK muayenesi",
+      "QualityIssue": "Kalite sorunu",
+      "MaintenanceRequest": "Bakım talebi",
+      "ServiceReport": "Servis raporu",
+      "PreventiveTask": "Önleyici görev",
+      "Shipment": "Sevkiyat",
+      "WarehouseReceipt": "Depo kabulü",
+      "StockMovement": "Stok",
+      "StorageLocation": "Depo yeri",
+      "Customer": "Müşteri",
+      "Product": "Ürün",
+      "Machine": "Makine",
+      "Mold": "Kalıp",
+      "DefectCategory": "Hata türü",
+      "User": "Çalışan",
+      "Role": "Rol",
+      "Report": "Rapor",
+      "AuditLog": "Denetim kaydı",
+      "Attachment": "Ek"
+    }
   }
 }

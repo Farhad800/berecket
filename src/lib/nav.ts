@@ -31,5 +31,6 @@ export const NAV: NavGroup[] = [
   ]},
   { key: "admin", items: [
     { href: "/admin", key: "administration", icon: "KeyRound", perm: "roles:manage" },
+    { href: "/audit", key: "audit", icon: "ScrollText", perm: "audit:view" },
   ]},
 ];

@@ -4,6 +4,7 @@ import { NAV } from "@/lib/nav";
 import Sidebar from "@/components/shell/sidebar";
 import UserMenu from "@/components/shell/user-menu";
 import AutoRefresh from "@/components/shell/auto-refresh";
+import GlobalSearch from "@/components/shell/global-search";
 import { Logo } from "@/components/ui";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-surface/90 px-3 pt-[env(safe-area-inset-top)] backdrop-blur sm:px-6">
           <div className="flex min-h-16 flex-1 items-center gap-3 ps-12 lg:ps-0">
             <Logo size={36} className="lg:hidden" />
+            <div className="flex flex-1 justify-end md:justify-start">
+              <GlobalSearch />
+            </div>
           </div>
           <UserMenu name={me.fullName} role={me.roleName} />
         </header>
