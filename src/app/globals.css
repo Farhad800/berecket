@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
+/* Brand palette derived from the official Bereket logo navy (#294680). */
+@theme {
+  --color-brand-50: #eef2fa;
+  --color-brand-100: #d9e2f3;
+  --color-brand-200: #b3c4e6;
+  --color-brand-300: #8199cf;
+  --color-brand-400: #5070b4;
+  --color-brand-500: #35559a;
+  --color-brand-600: #294680; /* logo */
+  --color-brand-700: #223a6b;
+  --color-brand-800: #1b2e55;
+  --color-brand-900: #142240;
+  --color-logo: #26417b; /* logo background edge — used behind the logo tile */
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+
+  --font-sans: var(--font-latin), var(--font-arabic), ui-sans-serif, system-ui, sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface: #ffffff;
+  --surface-2: #f4f6fa;
+  --ink: #142033;
+  --muted: #5b6678;
+  --line: #e1e6ef;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* Dark mode follows the device; factory tablets on night shift benefit from it. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --surface: #121a2b;
+    --surface-2: #0b1220;
+    --ink: #e7ecf5;
+    --muted: #97a3b8;
+    --line: #23304a;
+    color-scheme: dark;
   }
 }
 
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Arabic text reads better slightly larger with more line height. */
+html[lang="ar"] body {
+  font-size: 15.5px;
+  line-height: 1.7;
+}
+
+/* Tables scroll inside their card on phones instead of breaking the page. */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Logo always sits on its own navy so the JPEG background blends in. */
+.logo-tile {
+  background: var(--color-logo);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-400);
+  outline-offset: 2px;
 }

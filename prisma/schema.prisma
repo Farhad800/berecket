@@ -1,0 +1,731 @@
+// Bereket Plastic — Factory Management System
+// Full schema for all departments. Designed up front so later stages don't restructure.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ───────────────────────────── Identity & access ─────────────────────────────
+
+model Department {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false) // system roles can't be deleted
+  permissions RolePermission[]
+  users       User[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model RolePermission {
+  roleId     String
+  permission String // "resource:action", e.g. "orders:create"
+  role       Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permission])
+}
+
+model User {
+  id                 String      @id @default(cuid())
+  employeeId         String      @unique
+  fullName           String
+  username           String      @unique
+  email              String?     @unique
+  passwordHash       String
+  mustChangePassword Boolean     @default(true)
+  active             Boolean     @default(true)
+  locale             String      @default("en")
+  departmentId       String?
+  department         Department? @relation(fields: [departmentId], references: [id])
+  roleId             String
+  role               Role        @relation(fields: [roleId], references: [id])
+  failedLogins       Int         @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  sessions      Session[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  @@index([roleId])
+}
+
+model Session {
+  id        String   @id // SHA-256 hash of the cookie token — raw token never stored
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  ip        String?
+  userAgent String?
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String // e.g. "order.create", "qc.hold", "stock.adjust"
+  entityType String
+  entityId   String?
+  reason     String?
+  before     Json?
+  after      Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Sequential, human-readable document numbers (ORD-2026-0001, etc.)
+model Counter {
+  name  String @id
+  value Int    @default(0)
+}
+
+// ───────────────────────────── Master data ─────────────────────────────
+
+model Customer {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  notes       String?
+  archivedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  orders      Order[]
+  shipments   Shipment[]
+
+  @@index([name])
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  code           String      @unique
+  name           String
+  specifications String?
+  unit           String      @default("pcs")
+  material       String?
+  color          String?
+  weightGrams    Decimal?    @db.Decimal(10, 2)
+  cycleTimeSec   Decimal?    @db.Decimal(8, 2) // for capacity estimates
+  qcRequired     Boolean     @default(false) // if true, batches start PENDING instead of RELEASED
+  archivedAt     DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  molds          Mold[]
+  orderLines     OrderLine[]
+  batches        Batch[]
+  stockMovements StockMovement[]
+
+  @@index([name])
+}
+
+enum MachineStatus {
+  AVAILABLE
+  RUNNING
+  DOWN
+  MAINTENANCE
+  RETIRED
+}
+
+model Machine {
+  id           String         @id @default(cuid())
+  code         String         @unique // e.g. "M-01"
+  name         String
+  manufacturer String?        @default("Toyo")
+  model        String?
+  tonnage      Int?
+  status       MachineStatus  @default(AVAILABLE)
+  notes        String?
+  archivedAt   DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  jobs         ProductionJob[]
+  molds        Mold[]         @relation("MoldCurrentMachine")
+  maintenance  MaintenanceRequest[]
+  serviceReports ServiceReport[]
+  downtimes    Downtime[]
+  preventive   PreventiveTask[]
+}
+
+enum MoldStatus {
+  AVAILABLE
+  IN_USE
+  IN_REPAIR
+  RETIRED
+}
+
+model Mold {
+  id               String      @id @default(cuid())
+  code             String      @unique
+  name             String
+  cavities         Int         @default(1)
+  productId        String?
+  product          Product?    @relation(fields: [productId], references: [id])
+  currentMachineId String?
+  currentMachine   Machine?    @relation("MoldCurrentMachine", fields: [currentMachineId], references: [id])
+  status           MoldStatus  @default(AVAILABLE)
+  shotCount        Int         @default(0)
+  notes            String?
+  archivedAt       DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  jobs             ProductionJob[]
+  maintenance      MaintenanceRequest[]
+  serviceReports   ServiceReport[] @relation("ServiceMold")
+  removedIn        ServiceReport[] @relation("MoldRemoved")
+  installedIn      ServiceReport[] @relation("MoldInstalled")
+  preventive       PreventiveTask[]
+}
+
+model StorageLocation {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  active    Boolean  @default(true)
+  receipts  WarehouseReceipt[]
+  movements StockMovement[]
+}
+
+model DefectCategory {
+  id     String         @id @default(cuid())
+  code   String         @unique
+  name   String
+  active Boolean        @default(true)
+  issues QualityIssue[]
+}
+
+// ───────────────────────────── Sales & planning ─────────────────────────────
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  WAITING_PLANNING
+  SCHEDULED
+  IN_PRODUCTION
+  ON_HOLD
+  PARTIALLY_PRODUCED
+  AWAITING_QC
+  PARTIALLY_COMPLETED
+  COMPLETED
+  READY_FOR_DISPATCH
+  PARTIALLY_DELIVERED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id                    String      @id @default(cuid())
+  number                String      @unique
+  customerId            String
+  customer              Customer    @relation(fields: [customerId], references: [id])
+  status                OrderStatus @default(DRAFT)
+  priority              Priority    @default(NORMAL)
+  customerReference     String?
+  requestedDeliveryDate DateTime
+  plannedStart          DateTime?
+  plannedEnd            DateTime?
+  instructions          String?
+  packaging             String?
+  notes                 String?
+  deliveryException     String? // authorised reason for closing as Delivered short
+  createdById           String
+  confirmedAt           DateTime?
+  completedAt           DateTime?
+  deliveredAt           DateTime?
+  cancelledAt           DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  lines                 OrderLine[]
+  shipments             Shipment[]
+  serviceReports        ServiceReport[]
+
+  @@index([status])
+  @@index([requestedDeliveryDate])
+  @@index([customerId])
+}
+
+model OrderLine {
+  id             String   @id @default(cuid())
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lineNo         Int
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  specifications String?
+  quantity       Int
+  unit           String   @default("pcs")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  jobs           ProductionJob[]
+  batches        Batch[]
+  receipts       WarehouseReceipt[]
+  shipmentLines  ShipmentLine[]
+  stockMovements StockMovement[]
+
+  @@unique([orderId, lineNo])
+}
+
+// ───────────────────────────── Production ─────────────────────────────
+
+enum Shift {
+  A // 07:00–15:00
+  B // 15:00–23:00
+  C // 23:00–07:00
+}
+
+enum JobStatus {
+  PLANNED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+model ProductionJob {
+  id            String     @id @default(cuid())
+  number        String     @unique
+  orderLineId   String
+  orderLine     OrderLine  @relation(fields: [orderLineId], references: [id])
+  machineId     String?
+  machine       Machine?   @relation(fields: [machineId], references: [id])
+  moldId        String?
+  mold          Mold?      @relation(fields: [moldId], references: [id])
+  plannedQty    Int
+  plannedStart  DateTime
+  plannedEnd    DateTime
+  actualStart   DateTime?
+  actualEnd     DateTime?
+  status        JobStatus  @default(PLANNED)
+  priority      Priority   @default(NORMAL)
+  responsibleId String?
+  notes         String?
+  createdById   String
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  batches       Batch[]
+  entries       ProductionEntry[]
+  downtimes     Downtime[]
+  maintenance   MaintenanceRequest[]
+
+  @@index([machineId, plannedStart, plannedEnd])
+  @@index([status])
+}
+
+enum BatchQcStatus {
+  PENDING // awaiting inspection (product requires QC)
+  RELEASED // not inspected, released by default (random QC policy)
+  APPROVED
+  PARTIAL // some accepted, some held/rejected
+  HOLD
+  REJECTED
+}
+
+model Batch {
+  id          String        @id @default(cuid())
+  number      String        @unique // lot number
+  jobId       String
+  job         ProductionJob @relation(fields: [jobId], references: [id])
+  orderLineId String
+  orderLine   OrderLine     @relation(fields: [orderLineId], references: [id])
+  productId   String
+  product     Product       @relation(fields: [productId], references: [id])
+  shift       Shift
+  qcStatus    BatchQcStatus @default(RELEASED)
+  closedAt    DateTime?
+  createdById String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  entries     ProductionEntry[]
+  inspections QcInspection[]
+  issues      QualityIssue[]
+  receipts    WarehouseReceipt[]
+  movements   StockMovement[]
+  shipmentLines ShipmentLine[]
+
+  @@index([jobId])
+  @@index([qcStatus])
+}
+
+/// Append-only production progress log. Totals are derived from these rows,
+/// so history is preserved whenever quantities are reported or corrected.
+model ProductionEntry {
+  id           String        @id @default(cuid())
+  jobId        String
+  job          ProductionJob @relation(fields: [jobId], references: [id])
+  batchId      String
+  batch        Batch         @relation(fields: [batchId], references: [id])
+  shift        Shift
+  qtyGood      Int
+  qtyDefective Int           @default(0)
+  isCorrection Boolean       @default(false)
+  notes        String?
+  reportedById String
+  reportedAt   DateTime      @default(now())
+
+  @@index([jobId])
+  @@index([batchId])
+  @@index([reportedAt])
+}
+
+model Downtime {
+  id                   String              @id @default(cuid())
+  machineId            String
+  machine              Machine             @relation(fields: [machineId], references: [id])
+  jobId                String?
+  job                  ProductionJob?      @relation(fields: [jobId], references: [id])
+  maintenanceRequestId String?
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  category             String // BREAKDOWN, MOLD_CHANGE, MATERIAL, POWER, QUALITY, OTHER
+  reason               String
+  startedAt            DateTime
+  endedAt              DateTime?
+  reportedById         String
+  createdAt            DateTime            @default(now())
+
+  @@index([machineId, startedAt])
+}
+
+// ───────────────────────────── Technical service ─────────────────────────────
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_PARTS
+  COMPLETED
+  VERIFIED
+  CANCELLED
+}
+
+model MaintenanceRequest {
+  id           String            @id @default(cuid())
+  number       String            @unique
+  machineId    String
+  machine      Machine           @relation(fields: [machineId], references: [id])
+  moldId       String?
+  mold         Mold?             @relation(fields: [moldId], references: [id])
+  jobId        String?
+  job          ProductionJob?    @relation(fields: [jobId], references: [id])
+  title        String
+  description  String?
+  priority     Priority          @default(NORMAL)
+  status       MaintenanceStatus @default(OPEN)
+  machineDown  Boolean           @default(false)
+  isPreventive Boolean           @default(false)
+  reportedById String
+  assignedToId String?
+  resolution   String?
+  readyAt      DateTime? // machine ready to return to service
+  completedAt  DateTime?
+  verifiedAt   DateTime?
+  verifiedById String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  downtimes    Downtime[]
+  serviceReports ServiceReport[]
+
+  @@index([status])
+  @@index([machineId])
+}
+
+model ServiceReport {
+  id                   String              @id @default(cuid())
+  number               String              @unique
+  date                 DateTime
+  shift                Shift
+  technicianId         String
+  machineId            String
+  machine              Machine             @relation(fields: [machineId], references: [id])
+  moldId               String?
+  mold                 Mold?               @relation("ServiceMold", fields: [moldId], references: [id])
+  orderId              String?
+  order                Order?              @relation(fields: [orderId], references: [id])
+  maintenanceRequestId String?
+  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
+  moldRemovedId        String?
+  moldRemoved          Mold?               @relation("MoldRemoved", fields: [moldRemovedId], references: [id])
+  moldInstalledId      String?
+  moldInstalled        Mold?               @relation("MoldInstalled", fields: [moldInstalledId], references: [id])
+  moldChangeReason     String?
+  workPerformed        String
+  breakdown            String?
+  startTime            DateTime
+  endTime              DateTime?
+  downtimeMinutes      Int                 @default(0)
+  spareParts           String?
+  repairsCompleted     String?
+  outstandingWork      String?
+  followUp             String?
+  notes                String?
+  createdAt            DateTime            @default(now())
+
+  @@index([machineId, date])
+  @@index([moldId])
+}
+
+model PreventiveTask {
+  id           String    @id @default(cuid())
+  machineId    String?
+  machine      Machine?  @relation(fields: [machineId], references: [id])
+  moldId       String?
+  mold         Mold?     @relation(fields: [moldId], references: [id])
+  title        String
+  intervalDays Int
+  lastDoneAt   DateTime?
+  nextDueAt    DateTime
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+}
+
+// ───────────────────────────── Quality control ─────────────────────────────
+
+enum QcDecision {
+  APPROVE
+  PARTIAL
+  HOLD
+  REJECT
+}
+
+model QcInspection {
+  id           String     @id @default(cuid())
+  number       String     @unique
+  batchId      String
+  batch        Batch      @relation(fields: [batchId], references: [id])
+  inspectorId  String
+  inspectedAt  DateTime   @default(now())
+  sampleOnly   Boolean    @default(true)
+  qtyInspected Int
+  qtyAccepted  Int
+  qtyRejected  Int        @default(0)
+  qtyHold      Int        @default(0)
+  decision     QcDecision
+  notes        String?
+  createdAt    DateTime   @default(now())
+  issues       QualityIssue[]
+
+  @@index([batchId])
+}
+
+enum Severity {
+  MINOR
+  MAJOR
+  CRITICAL
+}
+
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  AWAITING_VERIFICATION
+  RESOLVED
+  REOPENED
+}
+
+model QualityIssue {
+  id                  String          @id @default(cuid())
+  number              String          @unique
+  batchId             String
+  batch               Batch           @relation(fields: [batchId], references: [id])
+  inspectionId        String?
+  inspection          QcInspection?   @relation(fields: [inspectionId], references: [id])
+  categoryId          String
+  category            DefectCategory  @relation(fields: [categoryId], references: [id])
+  severity            Severity
+  description         String
+  recommendedAction   String?
+  responsibleDept     String // PRODUCTION, SERVICE, QC, WAREHOUSE
+  assignedToId        String?
+  status              IssueStatus     @default(OPEN)
+  maintenanceRequestId String?
+  createdById         String
+  resolvedAt          DateTime?
+  verifiedById        String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  actions             CorrectiveAction[]
+
+  @@index([status, severity])
+}
+
+model CorrectiveAction {
+  id            String       @id @default(cuid())
+  issueId       String
+  issue         QualityIssue @relation(fields: [issueId], references: [id])
+  description   String
+  performedById String
+  performedAt   DateTime     @default(now())
+}
+
+// ───────────────────────────── Warehouse ─────────────────────────────
+
+model WarehouseReceipt {
+  id             String          @id @default(cuid())
+  number         String          @unique
+  batchId        String
+  batch          Batch           @relation(fields: [batchId], references: [id])
+  orderLineId    String
+  orderLine      OrderLine       @relation(fields: [orderLineId], references: [id])
+  qtyReceived    Int
+  qtyAvailable   Int
+  qtyQuarantine  Int
+  locationId     String
+  location       StorageLocation @relation(fields: [locationId], references: [id])
+  receivedById   String
+  receivedAt     DateTime        @default(now())
+  idempotencyKey String          @unique // stops double-submits creating duplicate receipts
+  notes          String?
+
+  @@index([batchId])
+}
+
+enum StockState {
+  AVAILABLE
+  RESERVED
+  QUARANTINE
+  REJECTED
+  SHIPPED
+}
+
+/// Inventory ledger. Every balance is SUM(qty) grouped by (batch, state).
+/// Transfers between states are two rows with the same transactionId.
+model StockMovement {
+  id            String           @id @default(cuid())
+  transactionId String
+  type          String // RECEIPT, SHIP, ADJUST, HOLD, RELEASE, REJECT, RESERVE, UNRESERVE
+  productId     String
+  product       Product          @relation(fields: [productId], references: [id])
+  batchId       String
+  batch         Batch            @relation(fields: [batchId], references: [id])
+  orderLineId   String?
+  orderLine     OrderLine?       @relation(fields: [orderLineId], references: [id])
+  locationId    String?
+  location      StorageLocation? @relation(fields: [locationId], references: [id])
+  state         StockState
+  qty           Int // signed
+  referenceType String?
+  referenceId   String?
+  reason        String?
+  createdById   String
+  createdAt     DateTime         @default(now())
+
+  @@index([batchId, state])
+  @@index([productId, state])
+  @@index([transactionId])
+}
+
+enum ShipmentStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+model Shipment {
+  id             String         @id @default(cuid())
+  number         String         @unique
+  customerId     String
+  customer       Customer       @relation(fields: [customerId], references: [id])
+  orderId        String
+  order          Order          @relation(fields: [orderId], references: [id])
+  status         ShipmentStatus @default(DRAFT)
+  plannedDate    DateTime?
+  shippedAt      DateTime?
+  deliveryNote   String?
+  vehicle        String?
+  driver         String?
+  notes          String?
+  createdById    String
+  confirmedById  String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  lines          ShipmentLine[]
+
+  @@index([orderId])
+  @@index([status, plannedDate])
+}
+
+model ShipmentLine {
+  id          String    @id @default(cuid())
+  shipmentId  String
+  shipment    Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  orderLineId String
+  orderLine   OrderLine @relation(fields: [orderLineId], references: [id])
+  batchId     String
+  batch       Batch     @relation(fields: [batchId], references: [id])
+  qty         Int
+}
+
+// ───────────────────────────── Collaboration ─────────────────────────────
+
+model Comment {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  authorId   String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  entityType   String
+  entityId     String
+  storageKey   String // private blob pathname — served through an authorised route only
+  filename     String
+  mimeType     String
+  size         Int
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
