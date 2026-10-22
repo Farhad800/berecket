@@ -17,7 +17,7 @@ Works in any browser on PC, tablet and phone, and can be installed to the home s
 | 5 | QC inspections, holds/rejections, corrective actions | ✅ done |
 | 6 | Warehouse receipts, stock ledger, shipments | ✅ done |
 | 7 | Notifications, reports, CSV/PDF export, search | ✅ done |
-| 8 | Full end-to-end tests, deployment, backups, operations guide | next |
+| 8 | Full end-to-end tests, deployment, backups, operations guide | ✅ done |
 
 ## Run locally
 
@@ -25,7 +25,7 @@ Requires Node.js 20+ and PostgreSQL 14+.
 
 ```bash
 npm install
-cp .env.example .env          # set DATABASE_URL and DIRECT_URL
+cp .env.example .env          # set DATABASE_URL and DATABASE_URL_UNPOOLED
 npm run db:deploy              # apply migrations
 ADMIN_USERNAME=admin npm run db:seed   # prints a one-time temporary admin password
 npm run dev                    # http://localhost:3000
@@ -44,4 +44,15 @@ Optional demo accounts (one per department, password `Demo12345!`):
 - Sensitive actions are written to the audit log (who, what, before/after, reason).
 - The service worker caches only static files and an offline page — never factory data or signed-in pages.
 
-Full deployment, backup and restore guides arrive in Stage 8.
+Details and test results: [docs/SECURITY.md](docs/SECURITY.md).
+
+## Documentation
+
+| Guide | For |
+|---|---|
+| [USER-GUIDE.md](docs/USER-GUIDE.md) | Employees — quick guide per department |
+| [OPERATIONS.md](docs/OPERATIONS.md) | Administrator — employees, staff leaving, go-live reset, monitoring, troubleshooting |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Hosting choice and costs, environments, environment variables, migrations, first admin, updates |
+| [BACKUP-RESTORE.md](docs/BACKUP-RESTORE.md) | Automated backups and step-by-step restore |
+| [SECURITY.md](docs/SECURITY.md) | Security controls and test results |
+| [TESTING.md](docs/TESTING.md) | Test suites and how to run them |
