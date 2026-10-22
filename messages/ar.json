@@ -274,6 +274,18 @@
       "COMPLETED": "مكتمل",
       "VERIFIED": "تم التحقق",
       "CANCELLED": "ملغى"
+    },
+    "severity": {
+      "MINOR": "بسيطة",
+      "MAJOR": "كبيرة",
+      "CRITICAL": "حرجة"
+    },
+    "issue": {
+      "OPEN": "مفتوحة",
+      "IN_PROGRESS": "قيد المعالجة",
+      "AWAITING_VERIFICATION": "بانتظار التحقق",
+      "RESOLVED": "محلولة",
+      "REOPENED": "أُعيد فتحها"
     }
   },
   "order": {
@@ -391,6 +403,17 @@
     },
     "file": {
       "upload": "أُضيف ملف"
+    },
+    "qc": {
+      "approve": "اعتمدت الجودة الدفعة",
+      "partial": "إفراج جزئي من الجودة",
+      "hold": "حجزت الجودة الدفعة",
+      "reject": "رفضت الجودة الدفعة",
+      "issue_create": "فُتحت مشكلة جودة",
+      "corrective_action": "سُجل إجراء تصحيحي",
+      "issue_submit": "أُرسل للتحقق",
+      "issue_resolve": "تم التحقق والإغلاق",
+      "issue_reopen": "أُعيد فتحه"
     }
   },
   "sched": {
@@ -622,5 +645,87 @@
     "unread": "{n} غير مقروءة",
     "none": "لا توجد إشعارات.",
     "markAll": "تعليم الكل كمقروء"
+  },
+  "qc": {
+    "policy": "تُفرج الدفعات افتراضياً؛ تفحص الجودة عينات عشوائية ويمكنها حجز أو رفض أي دفعة في أي وقت.",
+    "criticalBanner": "{n} مشاكل جودة حرجة مفتوحة",
+    "searchBatches": "الدفعة، رمز المنتج أو الطلب…",
+    "searchIssues": "رقم المشكلة، الوصف أو الدفعة…",
+    "needsAttention": "تحتاج متابعة + آخر 7 أيام",
+    "randomPick": "اقتراح عينة عشوائية:",
+    "notInspected": "غير مفحوص",
+    "inspection": "الفحص",
+    "decision": "القرار",
+    "inspected": "المفحوص",
+    "accepted": "المقبول",
+    "rejectedShort": "المرفوض",
+    "hold": "محجوز",
+    "inspector": "المفتش",
+    "sample": "عينة",
+    "full": "فحص كامل",
+    "unresolved": "غير المحلولة",
+    "severity": "الخطورة",
+    "actionsCount": "{n} إجراءات",
+    "categoriesHelp": "أنواع العيوب المستخدمة في الفحص. عطّل النوع بدلاً من حذفه للحفاظ على السجلات السابقة.",
+    "newCategory": "نوع عيب جديد",
+    "categoryName": "نوع العيب",
+    "recordInspection": "تسجيل الفحص",
+    "producedInBatch": "{n} قطعة سليمة منتجة في هذه الدفعة",
+    "saved": "تم حفظ الفحص.",
+    "holdOnlyHint": "يمكنك حجز الدفعة. الإفراج أو الرفض يتطلب صلاحية اعتماد الجودة.",
+    "sampleOnly": "فحص عينة (ليس كل القطع)",
+    "addMinorDefect": "+ تسجيل عيب على أي حال",
+    "defect": "العيب",
+    "defectType": "نوع العيب",
+    "responsible": "القسم المسؤول",
+    "defectDescription": "ما المشكلة",
+    "recommendedAction": "الإجراء التصحيحي المقترح",
+    "saveDecision": "حفظ — {decision}",
+    "inWarehouse": "في المستودع: {available} متاح · {quarantine} حجر · {rejected} مرفوض",
+    "noInspections": "لم يُفحص بعد.",
+    "counts": "{inspected} مفحوص · {accepted} مقبول · {rejected} مرفوض · {hold} محجوز",
+    "batchStatus": "حالة الدفعة",
+    "correctiveActions": "الإجراءات التصحيحية",
+    "noActions": "لم يُسجل إجراء تصحيحي بعد.",
+    "addAction": "تسجيل إجراء تصحيحي",
+    "actionPlaceholder": "ما الذي تم لمعالجة السبب؟",
+    "saveAction": "حفظ الإجراء",
+    "actionSaved": "سُجل الإجراء التصحيحي.",
+    "submit": "إرسال لتحقق الجودة",
+    "resolve": "تحقق وإغلاق",
+    "toMaintenance": "إنشاء طلب صيانة",
+    "reopenReason": "سبب إعادة الفتح",
+    "reopen": "إعادة فتح",
+    "tab": {
+      "inspect": "للفحص",
+      "inspections": "الفحوصات",
+      "issues": "مشاكل الجودة",
+      "categories": "أنواع العيوب"
+    },
+    "dec": {
+      "APPROVE": "اعتماد",
+      "PARTIAL": "إفراج جزئي",
+      "HOLD": "حجز",
+      "REJECT": "رفض"
+    },
+    "effect": {
+      "APPROVE": "تصبح الدفعة كاملة مخزوناً معتمداً.",
+      "PARTIAL": "نتيجة الفرز: تُحجب القطع المرفوضة والمحجوزة ويُفرج عن الباقي.",
+      "HOLD": "تُحجب الدفعة كاملة (حجر) حتى قرار الجودة ولا يمكن شحنها.",
+      "REJECT": "تُرفض الدفعة كاملة ولا يمكن شحنها أبداً."
+    },
+    "dept": {
+      "PRODUCTION": "الإنتاج",
+      "SERVICE": "الخدمة الفنية",
+      "QC": "مراقبة الجودة",
+      "WAREHOUSE": "المستودع"
+    },
+    "issueDone": {
+      "submit": "أُرسل للتحقق.",
+      "resolve": "أُغلقت المشكلة.",
+      "reopen": "أُعيد فتح المشكلة."
+    },
+    "continuesIssue": "هذا القرار استمرار للمشكلة المفتوحة {issue}.",
+    "addNewDefect": "+ عيب مختلف — سجّله"
   }
 }

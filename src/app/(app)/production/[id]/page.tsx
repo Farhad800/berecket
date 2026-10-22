@@ -90,7 +90,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
                   <tbody className="divide-y divide-line">
                     {job.batches.map((b) => (
                       <tr key={b.id}>
-                        <td className="px-4 py-2 font-semibold" dir="ltr">{b.number}{!b.closedAt && <Badge tone="purple" className="ms-2">{t("prod.open")}</Badge>}</td>
+                        <td className="px-4 py-2 font-semibold" dir="ltr"><Link href={`/qc/batches/${b.id}`} className="text-brand-600 hover:underline">{b.number}</Link>{!b.closedAt && <Badge tone="purple" className="ms-2">{t("prod.open")}</Badge>}</td>
                         <td className="px-2 py-2">{b.shift}</td>
                         <td className="px-2 py-2 text-end tabular-nums">{n(batchQty.get(b.id)?.good ?? 0)}</td>
                         <td className="px-2 py-2 text-end tabular-nums">{n(batchQty.get(b.id)?.bad ?? 0)}</td>

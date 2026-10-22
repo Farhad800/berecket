@@ -259,6 +259,8 @@ export async function addCommentAction(_: unknown, fd: FormData) {
       : await db.qualityIssue.count({ where: { id: v.entityId } });
     if (!exists) throw new UserError("That record no longer exists.");
     await db.comment.create({ data: { ...v, authorId: me.id } });
-    if (v.entityType === "Order") revalidatePath(`/orders/${v.entityId}`);
+    revalidatePath(
+      v.entityType === "Order" ? `/orders/${v.entityId}` : v.entityType === "MaintenanceRequest" ? `/service/requests/${v.entityId}` : `/qc/issues/${v.entityId}`,
+    );
   });
 }

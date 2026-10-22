@@ -274,6 +274,18 @@
       "COMPLETED": "Tamamlandı",
       "VERIFIED": "Doğrulandı",
       "CANCELLED": "İptal edildi"
+    },
+    "severity": {
+      "MINOR": "Küçük",
+      "MAJOR": "Büyük",
+      "CRITICAL": "Kritik"
+    },
+    "issue": {
+      "OPEN": "Açık",
+      "IN_PROGRESS": "Devam ediyor",
+      "AWAITING_VERIFICATION": "Doğrulama bekliyor",
+      "RESOLVED": "Çözüldü",
+      "REOPENED": "Yeniden açıldı"
     }
   },
   "order": {
@@ -391,6 +403,17 @@
     },
     "file": {
       "upload": "Dosya eklendi"
+    },
+    "qc": {
+      "approve": "KK partiyi onayladı",
+      "partial": "KK kısmi serbest bıraktı",
+      "hold": "KK partiyi bekletti",
+      "reject": "KK partiyi reddetti",
+      "issue_create": "Kalite sorunu açıldı",
+      "corrective_action": "Düzeltici faaliyet kaydedildi",
+      "issue_submit": "Doğrulamaya gönderildi",
+      "issue_resolve": "Doğrulandı ve kapatıldı",
+      "issue_reopen": "Yeniden açıldı"
     }
   },
   "sched": {
@@ -622,5 +645,87 @@
     "unread": "{n} okunmamış",
     "none": "Bildirim yok.",
     "markAll": "Tümünü okundu say"
+  },
+  "qc": {
+    "policy": "Partiler varsayılan olarak serbesttir; KK rastgele numune alır ve herhangi bir partiyi her an bekletebilir veya reddedebilir.",
+    "criticalBanner": "{n} kritik kalite sorunu açık",
+    "searchBatches": "Parti, ürün kodu veya sipariş…",
+    "searchIssues": "Sorun no, açıklama veya parti…",
+    "needsAttention": "Dikkat gerekenler + son 7 gün",
+    "randomPick": "Rastgele numune önerisi:",
+    "notInspected": "kontrol edilmedi",
+    "inspection": "Kontrol",
+    "decision": "Karar",
+    "inspected": "Kontrol edilen",
+    "accepted": "Kabul",
+    "rejectedShort": "Ret",
+    "hold": "Bekletilen",
+    "inspector": "Kontrolör",
+    "sample": "numune",
+    "full": "tam kontrol",
+    "unresolved": "Çözülmemiş",
+    "severity": "Önem",
+    "actionsCount": "{n} faaliyet",
+    "categoriesHelp": "Kontrollerde kullanılan hata türleri. Geçmiş kayıtlar korunsun diye silmek yerine devre dışı bırakın.",
+    "newCategory": "Yeni hata türü",
+    "categoryName": "Hata türü",
+    "recordInspection": "Kontrol kaydet",
+    "producedInBatch": "Bu partide {n} sağlam adet üretildi",
+    "saved": "Kontrol kaydedildi.",
+    "holdOnlyHint": "Partiyi bekletebilirsiniz. Serbest bırakma veya ret için KK onay yetkisi gerekir.",
+    "sampleOnly": "Numune kontrolü (her parça değil)",
+    "addMinorDefect": "+ Yine de hata kaydet",
+    "defect": "Hata",
+    "defectType": "Hata türü",
+    "responsible": "Sorumlu bölüm",
+    "defectDescription": "Sorun nedir",
+    "recommendedAction": "Önerilen düzeltici faaliyet",
+    "saveDecision": "Kaydet — {decision}",
+    "inWarehouse": "Depoda: {available} kullanılabilir · {quarantine} karantina · {rejected} ret",
+    "noInspections": "Henüz kontrol edilmedi.",
+    "counts": "{inspected} kontrol · {accepted} kabul · {rejected} ret · {hold} bekletme",
+    "batchStatus": "Parti durumu",
+    "correctiveActions": "Düzeltici faaliyetler",
+    "noActions": "Henüz düzeltici faaliyet yok.",
+    "addAction": "Düzeltici faaliyet kaydet",
+    "actionPlaceholder": "Nedeni gidermek için ne yapıldı?",
+    "saveAction": "Faaliyeti kaydet",
+    "actionSaved": "Düzeltici faaliyet kaydedildi.",
+    "submit": "KK doğrulamasına gönder",
+    "resolve": "Doğrula ve kapat",
+    "toMaintenance": "Bakım talebi oluştur",
+    "reopenReason": "Yeniden açma nedeni",
+    "reopen": "Yeniden aç",
+    "tab": {
+      "inspect": "Kontrol edilecek",
+      "inspections": "Kontroller",
+      "issues": "Kalite sorunları",
+      "categories": "Hata türleri"
+    },
+    "dec": {
+      "APPROVE": "Onayla",
+      "PARTIAL": "Kısmi serbest",
+      "HOLD": "Beklet",
+      "REJECT": "Reddet"
+    },
+    "effect": {
+      "APPROVE": "Partinin tamamı onaylı stok olur.",
+      "PARTIAL": "Ayıklama sonucu: ret ve bekletilen parçalar bloke, kalanı serbest.",
+      "HOLD": "KK karar verene kadar partinin tamamı bloke (karantina), sevk edilemez.",
+      "REJECT": "Partinin tamamı reddedilir ve asla sevk edilemez."
+    },
+    "dept": {
+      "PRODUCTION": "Üretim",
+      "SERVICE": "Teknik servis",
+      "QC": "Kalite kontrol",
+      "WAREHOUSE": "Depo"
+    },
+    "issueDone": {
+      "submit": "Doğrulamaya gönderildi.",
+      "resolve": "Sorun kapatıldı.",
+      "reopen": "Sorun yeniden açıldı."
+    },
+    "continuesIssue": "Bu karar açık {issue} sorununun devamıdır.",
+    "addNewDefect": "+ Farklı bir hata — kaydet"
   }
 }

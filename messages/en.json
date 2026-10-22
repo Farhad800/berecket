@@ -274,6 +274,18 @@
       "COMPLETED": "Completed",
       "VERIFIED": "Verified",
       "CANCELLED": "Cancelled"
+    },
+    "severity": {
+      "MINOR": "Minor",
+      "MAJOR": "Major",
+      "CRITICAL": "Critical"
+    },
+    "issue": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In progress",
+      "AWAITING_VERIFICATION": "Awaiting verification",
+      "RESOLVED": "Resolved",
+      "REOPENED": "Reopened"
     }
   },
   "order": {
@@ -391,6 +403,17 @@
     },
     "file": {
       "upload": "File added"
+    },
+    "qc": {
+      "approve": "QC approved the batch",
+      "partial": "QC partial release",
+      "hold": "QC put the batch on hold",
+      "reject": "QC rejected the batch",
+      "issue_create": "Quality issue opened",
+      "corrective_action": "Corrective action recorded",
+      "issue_submit": "Submitted for verification",
+      "issue_resolve": "Verified and resolved",
+      "issue_reopen": "Reopened"
     }
   },
   "sched": {
@@ -622,5 +645,87 @@
     "unread": "{n} unread",
     "none": "No notifications.",
     "markAll": "Mark all read"
+  },
+  "qc": {
+    "policy": "Batches are released by default; QC samples randomly and can hold or reject any batch at any time.",
+    "criticalBanner": "{n} critical quality issues are open",
+    "searchBatches": "Batch, product code or order…",
+    "searchIssues": "Issue no., description or batch…",
+    "needsAttention": "Needs attention + last 7 days",
+    "randomPick": "Random sample suggestion:",
+    "notInspected": "not inspected",
+    "inspection": "Inspection",
+    "decision": "Decision",
+    "inspected": "Inspected",
+    "accepted": "Accepted",
+    "rejectedShort": "Rejected",
+    "hold": "On hold",
+    "inspector": "Inspector",
+    "sample": "sample",
+    "full": "full inspection",
+    "unresolved": "Unresolved",
+    "severity": "Severity",
+    "actionsCount": "{n} actions",
+    "categoriesHelp": "Defect types used in inspections. Disable a type instead of deleting it, so past records stay intact.",
+    "newCategory": "New defect type",
+    "categoryName": "Defect type",
+    "recordInspection": "Record inspection",
+    "producedInBatch": "{n} good pieces produced in this batch",
+    "saved": "Inspection saved.",
+    "holdOnlyHint": "You can put a batch on hold. Releasing or rejecting needs QC approval rights.",
+    "sampleOnly": "Sample inspection (not every piece)",
+    "addMinorDefect": "+ Record a defect anyway",
+    "defect": "Defect",
+    "defectType": "Defect type",
+    "responsible": "Responsible department",
+    "defectDescription": "What is wrong",
+    "recommendedAction": "Recommended corrective action",
+    "saveDecision": "Save — {decision}",
+    "inWarehouse": "In warehouse: {available} available · {quarantine} quarantine · {rejected} rejected",
+    "noInspections": "Not inspected yet.",
+    "counts": "{inspected} inspected · {accepted} accepted · {rejected} rejected · {hold} held",
+    "batchStatus": "Batch status",
+    "correctiveActions": "Corrective actions",
+    "noActions": "No corrective action recorded yet.",
+    "addAction": "Record corrective action",
+    "actionPlaceholder": "What was done to fix the cause?",
+    "saveAction": "Save action",
+    "actionSaved": "Corrective action recorded.",
+    "submit": "Submit for QC verification",
+    "resolve": "Verify & resolve",
+    "toMaintenance": "Create maintenance request",
+    "reopenReason": "Reason to reopen",
+    "reopen": "Reopen",
+    "tab": {
+      "inspect": "To inspect",
+      "inspections": "Inspections",
+      "issues": "Quality issues",
+      "categories": "Defect types"
+    },
+    "dec": {
+      "APPROVE": "Approve",
+      "PARTIAL": "Partial release",
+      "HOLD": "Hold",
+      "REJECT": "Reject"
+    },
+    "effect": {
+      "APPROVE": "The whole batch becomes approved stock.",
+      "PARTIAL": "Sorting result: the rejected and held pieces are blocked, the rest is released.",
+      "HOLD": "The whole batch is blocked (quarantine) until QC decides. It can't be shipped.",
+      "REJECT": "The whole batch is rejected and can never be shipped."
+    },
+    "dept": {
+      "PRODUCTION": "Production",
+      "SERVICE": "Technical service",
+      "QC": "Quality control",
+      "WAREHOUSE": "Warehouse"
+    },
+    "issueDone": {
+      "submit": "Submitted for verification.",
+      "resolve": "Issue resolved.",
+      "reopen": "Issue reopened."
+    },
+    "continuesIssue": "This decision continues open issue {issue}.",
+    "addNewDefect": "+ It's a different defect — record it"
   }
 }
