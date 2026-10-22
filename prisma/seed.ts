@@ -85,7 +85,10 @@ async function main() {
   }
 
   const hasAdmin = await db.user.count({ where: { roleId: admin.id, active: true } });
-  if (!hasAdmin) {
+  // On Vercel the first admin is created through the /setup page instead, so no password ever appears in build logs.
+  if (!hasAdmin && process.env.SEED_SKIP_ADMIN === "1") {
+    console.log("No administrator yet — open /setup on the site to create one.");
+  } else if (!hasAdmin) {
     const username = (process.env.ADMIN_USERNAME ?? "admin").toLowerCase();
     const password = process.env.ADMIN_PASSWORD ?? randomBytes(9).toString("base64url");
     const adminDept = await db.department.findUnique({ where: { code: "ADMIN" } });

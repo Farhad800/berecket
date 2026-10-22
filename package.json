@@ -14,7 +14,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "demo:add": "tsx scripts/demo-data.ts add",
-    "demo:remove": "tsx scripts/demo-data.ts remove"
+    "demo:remove": "tsx scripts/demo-data.ts remove",
+    "vercel-build": "prisma generate && prisma migrate deploy && SEED_SKIP_ADMIN=1 tsx prisma/seed.ts && next build"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
