@@ -1,0 +1,71 @@
+# Nightly encrypted backup of the database and stored files, kept for 30 days as
+# workflow artifacts. Needs three repository secrets (Settings → Secrets → Actions):
+#   DATABASE_URL_UNPOOLED  – Neon direct connection string (from Vercel env / Neon console)
+#   BLOB_READ_WRITE_TOKEN  – Vercel Blob token (from Vercel env)
+#   BACKUP_PASSPHRASE      – long random passphrase; store it safely, it's needed to restore
+# Restore steps: docs/BACKUP-RESTORE.md
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: "30 0 * * *" # 00:30 UTC = 03:30 in Duhok
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    container: postgres:17
+    steps:
+      - name: Dump database (custom format)
+        env:
+          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+        run: |
+          test -n "$DATABASE_URL_UNPOOLED" || { echo "Secret DATABASE_URL_UNPOOLED is missing"; exit 1; }
+          STAMP=$(date -u +%Y-%m-%d)
+          pg_dump --format=custom --no-owner --no-acl --dbname="$DATABASE_URL_UNPOOLED" --file="bereket-db-$STAMP.dump"
+          pg_restore --list "bereket-db-$STAMP.dump" | grep -c "TABLE DATA" | xargs echo "tables in backup:"
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          apt-get update -qq && apt-get install -y -qq gnupg >/dev/null
+          test -n "$BACKUP_PASSPHRASE" || { echo "Secret BACKUP_PASSPHRASE is missing"; exit 1; }
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" --symmetric --cipher-algo AES256 "bereket-db-$STAMP.dump"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: database-${{ env.STAMP }}
+          path: bereket-db-*.dump.gpg
+          retention-days: 30
+          if-no-files-found: error
+
+  files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download stored files
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          test -n "$BLOB_READ_WRITE_TOKEN" || { echo "Secret BLOB_READ_WRITE_TOKEN is missing"; exit 1; }
+          mkdir -p /tmp/blob && cp scripts/backup-files.mjs /tmp/blob/ && cd /tmp/blob
+          npm init -y >/dev/null && npm install --no-audit --no-fund @vercel/blob@2 >/dev/null
+          node backup-files.mjs "$GITHUB_WORKSPACE/files-backup" && cd "$GITHUB_WORKSPACE"
+          STAMP=$(date -u +%Y-%m-%d); echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          tar -czf "bereket-files-$STAMP.tar.gz" files-backup
+      - name: Encrypt
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" --symmetric --cipher-algo AES256 "bereket-files-$STAMP.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: files-${{ env.STAMP }}
+          path: bereket-files-*.tar.gz.gpg
+          retention-days: 30
+          if-no-files-found: error
