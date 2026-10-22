@@ -1,13 +1,13 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
-import { AlertOctagon, Clock } from "lucide-react";
-import { pageUser } from "@/lib/auth";
+import { AlertOctagon, ClipboardList, Clock } from "lucide-react";
+import { can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { factoryDay, formatDateTime, formatNumber, currentShift } from "@/lib/time";
 import { getJobTotals } from "@/lib/production";
 import { JOB_TONE } from "@/lib/tones";
-import { Badge, Card, EmptyState, PageHeader, cn } from "@/components/ui";
+import { Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import { StackedProgress } from "@/components/progress";
 import ListToolbar from "@/components/list-toolbar";
 
@@ -16,7 +16,7 @@ export const metadata = { title: "Production" };
 const TABS = ["now", "planned", "done"] as const;
 
 export default async function ProductionPage({ searchParams }: { searchParams: Promise<{ tab?: string; machine?: string; q?: string; status?: string }> }) {
-  await pageUser("production:view");
+  const me = await pageUser("production:view");
   const t = await getTranslations();
   const locale = await getLocale();
   const sp = await searchParams;
@@ -44,7 +44,7 @@ export default async function ProductionPage({ searchParams }: { searchParams: P
     db.productionJob.findMany({
       where,
       orderBy: tab === "done" ? { actualEnd: "desc" } : [{ status: "asc" }, { plannedStart: "asc" }],
-      take: 100,
+      take: 500,
       include: {
         machine: { select: { code: true, status: true } },
         mold: { select: { code: true } },
@@ -68,7 +68,7 @@ export default async function ProductionPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHeader title={t("nav.production")} subtitle={t("prod.shiftNow", { shift: shiftNow })} />
+      <PageHeader title={t("nav.production")} subtitle={t("prod.shiftNow", { shift: shiftNow })} actions={can(me, "production:create") && <LinkButton href="/production/daily"><ClipboardList className="size-4" /> {t("daily.title")}</LinkButton>} />
 
       <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_2fr]">
         <Card>

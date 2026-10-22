@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Archive, ArchiveRestore, Pencil, Plus } from "lucide-react";
+import { Archive, ArchiveRestore, Pencil, Plus, Trash2 } from "lucide-react";
 import RecordForm, { type FieldDef } from "./record-form";
-import { setArchivedAction } from "@/app/actions/masterdata";
+import { deleteMasterAction, setArchivedAction } from "@/app/actions/masterdata";
 import { Alert, Badge, Button, Card, EmptyState, type Tone } from "./ui";
 
 export type MasterRow = {
@@ -49,6 +49,13 @@ export default function MasterList({
   const toggleArchive = (r: MasterRow) =>
     start(async () => {
       const res = await setArchivedAction(kind, r.id, !r.archived);
+      setError(res.ok ? null : res.error);
+    });
+
+  const remove = (r: MasterRow) =>
+    start(async () => {
+      if (!confirm(t("deleteConfirm", { name: r.title }))) return;
+      const res = await deleteMasterAction(kind, r.id);
       setError(res.ok ? null : res.error);
     });
 
@@ -107,6 +114,11 @@ export default function MasterList({
                       <Button size="sm" variant="ghost" onClick={() => toggleArchive(r)} disabled={pending}>
                         {r.archived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}
                         {r.archived ? t("restore") : t("archive")}
+                      </Button>
+                    )}
+                    {canArchive && (
+                      <Button size="sm" variant="ghost" className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950" onClick={() => remove(r)} disabled={pending}>
+                        <Trash2 className="size-3.5" /> {t("delete")}
                       </Button>
                     )}
                   </div>

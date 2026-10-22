@@ -59,7 +59,9 @@
     "back": "Back",
     "restore": "Restore",
     "archive": "Archive",
-    "archived": "Archived"
+    "archived": "Archived",
+    "delete": "Delete",
+    "deleteConfirm": "Delete {name} permanently? This only works if it has never been used."
   },
   "auth": {
     "signIn": "Sign in",
@@ -363,8 +365,14 @@
       "holdHelp": "Production planning stops until the order is resumed.",
       "cancelHelp": "Planned jobs that haven't started are cancelled too.",
       "closeHelp": "Marks the order delivered even though not every piece was shipped. Use only with management approval.",
-      "confirmAction": "Confirm"
-    }
+      "confirmAction": "Confirm",
+      "delete": "Delete order",
+      "deleteHelp": "Only for orders entered by mistake, before any production. The order disappears completely; a record of who deleted it and why stays in the audit log."
+    },
+    "deletedMsg": "Order deleted. The deletion is recorded in the audit log.",
+    "addMany": "Add several products",
+    "addManyTitle": "Tick the products to add — then type each quantity",
+    "addSelected": "Add {n} products"
   },
   "comments": {
     "title": "Comments",
@@ -382,7 +390,8 @@
       "hold": "Put on hold",
       "resume": "Resumed",
       "cancel": "Cancelled",
-      "close": "Closed with exception"
+      "close": "Closed with exception",
+      "delete": "Order deleted"
     },
     "job": {
       "create": "Production job scheduled",
@@ -472,25 +481,29 @@
       "create": "Customer added",
       "update": "Customer updated",
       "archive": "Customer archived",
-      "restore": "Customer restored"
+      "restore": "Customer restored",
+      "delete": "Customer deleted"
     },
     "product": {
       "create": "Product added",
       "update": "Product updated",
       "archive": "Product archived",
-      "restore": "Product restored"
+      "restore": "Product restored",
+      "delete": "Product deleted"
     },
     "machine": {
       "create": "Machine added",
       "update": "Machine updated",
       "archive": "Machine archived",
-      "restore": "Machine restored"
+      "restore": "Machine restored",
+      "delete": "Machine deleted"
     },
     "mold": {
       "create": "Mold added",
       "update": "Mold updated",
       "archive": "Mold archived",
-      "restore": "Mold restored"
+      "restore": "Mold restored",
+      "delete": "Mold deleted"
     },
     "location": {
       "save": "Storage location saved"
@@ -1296,5 +1309,25 @@
       "movements": "Stock movements",
       "shipments": "Shipments"
     }
+  },
+  "daily": {
+    "title": "Daily entry sheet",
+    "subtitle": "{date} · {n} jobs running or due today. Type the quantities and save once.",
+    "none": "No jobs are running or planned for today.",
+    "filter": "Filter by machine, job, product or order…",
+    "shift": "Shift",
+    "newBatch": "Start a new batch (lot) for each job",
+    "colJob": "Machine · job · product",
+    "colProgress": "Made / planned",
+    "todaySoFar": "{n} today so far",
+    "willStart": "Starts when you save",
+    "machineDown": "Machine down",
+    "summary": "{jobs} jobs · {pcs} good pieces to save",
+    "saveAll": "Save all",
+    "saved": "Saved {n} jobs, {pcs} good pieces.",
+    "started": "{n} planned jobs were started.",
+    "notSaved": "{n} not saved — fix and save again:",
+    "finished": "Finished",
+    "completed": "{n} jobs marked finished."
   }
 }

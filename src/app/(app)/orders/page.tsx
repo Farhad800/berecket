@@ -6,7 +6,7 @@ import { pageUser, can } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { factoryDay, formatDate, formatNumber } from "@/lib/time";
 import { getLineProgress, OPEN_STATUSES, PRIORITY_TONE, STATUS_TONE } from "@/lib/orders";
-import { Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
+import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import { StackedProgress } from "@/components/progress";
 
@@ -18,7 +18,7 @@ const PAGE = 50;
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; priority?: string; due?: string; customer?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; priority?: string; due?: string; customer?: string; page?: string; deleted?: string }>;
 }) {
   const me = await pageUser("orders:view");
   const t = await getTranslations();
@@ -67,6 +67,7 @@ export default async function OrdersPage({
         subtitle={t("order.count", { n: total })}
         actions={can(me, "orders:create") && <LinkButton href="/orders/new"><Plus className="size-4" /> {t("order.new")}</LinkButton>}
       />
+      {sp.deleted && <div className="mb-4"><Alert tone="green">{t("order.deletedMsg")}</Alert></div>}
       <ListToolbar
         placeholder={t("order.searchPlaceholder")}
         filters={[

@@ -183,3 +183,53 @@ export async function setArchivedAction(kind: keyof typeof ARCHIVABLE, id: strin
     revalidatePath(cfg.path);
   });
 }
+
+/**
+ * Permanently deletes a customer, product, machine or mold — but only if nothing in the
+ * factory's history refers to it. Records that were used are archived instead, so past
+ * orders, production and maintenance keep their meaning.
+ */
+export async function deleteMasterAction(kind: keyof typeof ARCHIVABLE, id: string) {
+  return run(async () => {
+    const cfg = ARCHIVABLE[kind];
+    if (!cfg) throw new UserError("Unknown record type.");
+    const me = await requirePermission(cfg.perm);
+    const used = (what: string) => {
+      throw new UserError(`It can't be deleted because ${what}. Use Archive instead — it disappears from lists but history stays correct.`);
+    };
+    await db.$transaction(async (tx) => {
+      if (kind === "customer") {
+        const c = await tx.customer.findUniqueOrThrow({ where: { id } });
+        if (await tx.order.count({ where: { customerId: id } })) used("it has orders");
+        await tx.customer.delete({ where: { id } });
+        await audit({ userId: me.id, action: "customer.delete", entityType: "Customer", entityId: id, before: { code: c.code, name: c.name } }, tx);
+      } else if (kind === "product") {
+        const p = await tx.product.findUniqueOrThrow({ where: { id } });
+        if (await tx.orderLine.count({ where: { productId: id } })) used("it is on orders");
+        if (await tx.batch.count({ where: { productId: id } })) used("it has production batches");
+        await tx.mold.updateMany({ where: { productId: id }, data: { productId: null } });
+        await tx.product.delete({ where: { id } });
+        await audit({ userId: me.id, action: "product.delete", entityType: "Product", entityId: id, before: { code: p.code, name: p.name } }, tx);
+      } else if (kind === "machine") {
+        const m = await tx.machine.findUniqueOrThrow({ where: { id } });
+        if (await tx.productionJob.count({ where: { machineId: id } })) used("production jobs were planned on it");
+        if (await tx.maintenanceRequest.count({ where: { machineId: id } })) used("it has maintenance requests");
+        if (await tx.serviceReport.count({ where: { machineId: id } })) used("it has service reports");
+        if (await tx.downtime.count({ where: { machineId: id } })) used("it has downtime records");
+        await tx.mold.updateMany({ where: { currentMachineId: id }, data: { currentMachineId: null, status: "AVAILABLE" } });
+        await tx.preventiveTask.deleteMany({ where: { machineId: id } });
+        await tx.machine.delete({ where: { id } });
+        await audit({ userId: me.id, action: "machine.delete", entityType: "Machine", entityId: id, before: { code: m.code, name: m.name } }, tx);
+      } else {
+        const m = await tx.mold.findUniqueOrThrow({ where: { id } });
+        if (await tx.productionJob.count({ where: { moldId: id } })) used("production jobs used it");
+        if (await tx.maintenanceRequest.count({ where: { moldId: id } })) used("it has maintenance requests");
+        if (await tx.serviceReport.count({ where: { OR: [{ moldId: id }, { moldRemovedId: id }, { moldInstalledId: id }] } })) used("it appears in service reports");
+        await tx.preventiveTask.deleteMany({ where: { moldId: id } });
+        await tx.mold.delete({ where: { id } });
+        await audit({ userId: me.id, action: "mold.delete", entityType: "Mold", entityId: id, before: { code: m.code, name: m.name } }, tx);
+      }
+    });
+    revalidatePath(cfg.path);
+  });
+}

@@ -71,13 +71,17 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const overdue = OPEN_STATUSES.includes(order.status) && order.requestedDeliveryDate < start;
 
   // Which manual actions this person may take right now.
-  const allowed: ("confirm" | "hold" | "resume" | "cancel" | "close")[] = [];
+  const allowed: ("confirm" | "hold" | "resume" | "cancel" | "close" | "delete")[] = [];
   if (order.status === "DRAFT" && can(me, "orders:approve")) allowed.push("confirm");
   if (OPEN_STATUSES.includes(order.status) && order.status !== "ON_HOLD" && can(me, "orders:edit")) allowed.push("hold");
   if (order.status === "ON_HOLD" && can(me, "orders:edit")) allowed.push("resume");
   if (!["DELIVERED", "CANCELLED"].includes(order.status) && can(me, "orders:edit")) allowed.push("cancel");
   const anyMade = [...progress.values()].some((p) => p.produced > 0 || p.shipped > 0);
   if (OPEN_STATUSES.includes(order.status) && anyMade && can(me, "orders:approve")) allowed.push("close");
+  // Deleting is only offered while nothing has happened to the order yet (the server re-checks everything).
+  const untouched = !anyMade && order.shipments.length === 0 && receipts.length === 0 && batches.length === 0 && requests.length === 0 && serviceReports.length === 0
+    && order.lines.every((l) => l.jobs.every((j) => j.status === "PLANNED" || j.status === "CANCELLED"));
+  if (untouched && can(me, "orders:archive")) allowed.push("delete");
   const editable = !["DELIVERED", "CANCELLED"].includes(order.status) && can(me, "orders:edit");
   const n = (v: number) => formatNumber(v, locale);
 

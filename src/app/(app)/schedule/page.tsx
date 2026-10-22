@@ -68,7 +68,7 @@ export default async function SchedulePage({
       where: { order: { status: { in: SCHEDULABLE }, ...(sp.order ? { id: sp.order } : {}) } },
       include: { order: { select: { id: true, number: true, priority: true, requestedDeliveryDate: true, customer: { select: { name: true } } } }, product: { select: { id: true, code: true, name: true } } },
       orderBy: [{ order: { requestedDeliveryDate: "asc" } }, { lineNo: "asc" }],
-      take: 200,
+      take: 2000,
     }),
     db.mold.findMany({ where: { archivedAt: null, status: { not: "RETIRED" } }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true, productId: true, cavities: true } }),
   ]);
@@ -252,8 +252,8 @@ export default async function SchedulePage({
               {needsPlanning.length === 0 ? (
                 <p className="text-sm text-muted">{t("sched.allPlanned")}</p>
               ) : (
-                <ul className="divide-y divide-line">
-                  {needsPlanning.slice(0, 30).map(({ l, p }) => {
+                <ul className="max-h-[70vh] divide-y divide-line overflow-y-auto">
+                  {needsPlanning.map(({ l, p }) => {
                     const late = l.order.requestedDeliveryDate < factoryDay().start;
                     return (
                       <li key={l.id} className="flex items-center justify-between gap-2 py-2 text-sm">

@@ -48,6 +48,7 @@ function parseLines(raw: Record<string, unknown>) {
     return r.data;
   });
   if (parsed.length === 0) throw new UserError("Add at least one product line.");
+  if (parsed.length > 500) throw new UserError("An order can have up to 500 product lines.");
   return parsed;
 }
 
@@ -263,4 +264,49 @@ export async function addCommentAction(_: unknown, fd: FormData) {
       v.entityType === "Order" ? `/orders/${v.entityId}` : v.entityType === "MaintenanceRequest" ? `/service/requests/${v.entityId}` : `/qc/issues/${v.entityId}`,
     );
   });
+}
+
+/**
+ * Permanently deletes an order that was entered by mistake. Only possible while nothing has
+ * happened to it yet (no production, QC, receipts or shipments, no started jobs). Orders with
+ * history must be cancelled or closed instead, so the factory's records stay complete.
+ */
+export async function deleteOrderAction(orderId: string, reason?: string) {
+  const res = await run(async () => {
+    const me = await requirePermission("orders:archive");
+    const why = reason?.trim();
+    if (!why || why.length < 3) throw new UserError("Please give a reason.");
+    await db.$transaction(async (tx) => {
+      const o = await tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: { customer: { select: { name: true } }, lines: { include: { product: { select: { code: true } }, jobs: { select: { id: true, status: true } } } } },
+      });
+      const lineIds = o.lines.map((l) => l.id);
+      const jobIds = o.lines.flatMap((l) => l.jobs.map((j) => j.id));
+      const blocked = (what: string) => {
+        throw new UserError(`This order can't be deleted because ${what}. Cancel it instead — it stays in the records as cancelled.`);
+      };
+      if (o.lines.some((l) => l.jobs.some((j) => !["PLANNED", "CANCELLED"].includes(j.status)))) blocked("production has started");
+      if (await tx.batch.count({ where: { orderLineId: { in: lineIds } } })) blocked("it has production batches");
+      if (await tx.shipment.count({ where: { orderId } })) blocked("it has shipments");
+      if (await tx.warehouseReceipt.count({ where: { orderLineId: { in: lineIds } } })) blocked("goods were received for it");
+      if (await tx.maintenanceRequest.count({ where: { jobId: { in: jobIds } } })) blocked("maintenance requests refer to its jobs");
+      if (await tx.downtime.count({ where: { jobId: { in: jobIds } } })) blocked("downtime was recorded on its jobs");
+      if (await tx.serviceReport.count({ where: { orderId } })) blocked("service reports refer to it");
+
+      await tx.productionJob.deleteMany({ where: { id: { in: jobIds } } });
+      await tx.comment.deleteMany({ where: { entityType: "Order", entityId: orderId } });
+      await tx.notification.deleteMany({ where: { link: `/orders/${orderId}` } });
+      await tx.order.delete({ where: { id: orderId } }); // order lines are removed with it
+      await audit({
+        userId: me.id, action: "order.delete", entityType: "Order", entityId: orderId, reason: why,
+        before: { number: o.number, customer: o.customer.name, status: o.status, lines: o.lines.map((l) => `${l.product.code} × ${l.quantity}`), plannedJobs: jobIds.length },
+      }, tx);
+    });
+    revalidatePath("/orders");
+    revalidatePath("/schedule");
+    revalidatePath("/dashboard");
+  });
+  if (res.ok) redirect("/orders?deleted=1");
+  return res;
 }

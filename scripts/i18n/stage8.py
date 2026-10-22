@@ -54,6 +54,35 @@ group("history", {
  "location.save":("Storage location saved","حُفظ موقع تخزين","Depo yeri kaydedildi"),"preventive.done":("Preventive task done","أُنجزت مهمة وقائية","Önleyici görev yapıldı"),
  "service.report":("Service report filed","قُدّم تقرير خدمة","Servis raporu girildi"),
 })
+group("common", {"delete":("Delete","حذف","Sil"),"deleteConfirm":("Delete {name} permanently? This only works if it has never been used.","حذف {name} نهائياً؟ يعمل هذا فقط إذا لم يُستخدم أبداً.","{name} kalıcı olarak silinsin mi? Yalnızca hiç kullanılmadıysa mümkündür.")})
+group("order", {
+ "deletedMsg":("Order deleted. The deletion is recorded in the audit log.","حُذف الطلب. سُجّل الحذف في سجل التدقيق.","Sipariş silindi. Silme işlemi denetim kaydına yazıldı."),
+ "addMany":("Add several products","إضافة عدة منتجات","Birden çok ürün ekle"),
+ "addManyTitle":("Tick the products to add — then type each quantity","حدد المنتجات المراد إضافتها — ثم اكتب كمية كل منها","Eklenecek ürünleri işaretleyin — sonra miktarlarını yazın"),
+ "addSelected":("Add {n} products","إضافة {n} منتج","{n} ürün ekle"),
+})
+group("order.act", {"delete":("Delete order","حذف الطلب","Siparişi sil"),"deleteHelp":("Only for orders entered by mistake, before any production. The order disappears completely; a record of who deleted it and why stays in the audit log.","فقط للطلبات المُدخلة بالخطأ قبل أي إنتاج. يختفي الطلب كلياً؛ ويبقى سجل بمن حذفه ولماذا في سجل التدقيق.","Yalnızca yanlışlıkla girilen, üretim başlamamış siparişler için. Sipariş tamamen silinir; kimin neden sildiği denetim kaydında kalır.")})
+group("daily", {
+ "title":("Daily entry sheet","ورقة الإدخال اليومي","Günlük giriş sayfası"),
+ "subtitle":("{date} · {n} jobs running or due today. Type the quantities and save once.","{date} · {n} أمر قيد التشغيل أو مستحق اليوم. اكتب الكميات واحفظ مرة واحدة.","{date} · bugün çalışan veya vadesi gelen {n} iş. Miktarları yazın ve bir kez kaydedin."),
+ "none":("No jobs are running or planned for today.","لا توجد أوامر قيد التشغيل أو مخططة لليوم.","Bugün çalışan veya planlanan iş yok."),
+ "filter":("Filter by machine, job, product or order…","تصفية حسب الآلة أو الأمر أو المنتج أو الطلب…","Makine, iş, ürün veya siparişe göre süz…"),
+ "shift":("Shift","الوردية","Vardiya"),
+ "newBatch":("Start a new batch (lot) for each job","بدء دفعة جديدة لكل أمر","Her iş için yeni parti başlat"),
+ "colJob":("Machine · job · product","الآلة · الأمر · المنتج","Makine · iş · ürün"),
+ "colProgress":("Made / planned","المنتج / المخطط","Üretilen / planlanan"),
+ "todaySoFar":("{n} today so far","{n} اليوم حتى الآن","bugün şimdiye kadar {n}"),
+ "willStart":("Starts when you save","يبدأ عند الحفظ","Kaydedince başlar"),
+ "machineDown":("Machine down","الآلة متوقفة","Makine arızalı"),
+ "summary":("{jobs} jobs · {pcs} good pieces to save","{jobs} أمر · {pcs} قطعة سليمة للحفظ","{jobs} iş · kaydedilecek {pcs} sağlam adet"),
+ "saveAll":("Save all","حفظ الكل","Tümünü kaydet"),
+ "finished":("Finished","انتهى","Bitti"),
+ "completed":("{n} jobs marked finished.","{n} أمر انتهى.","{n} iş bitti olarak işaretlendi."),
+ "saved":("Saved {n} jobs, {pcs} good pieces.","حُفظ {n} أمر، {pcs} قطعة سليمة.","{n} iş, {pcs} sağlam adet kaydedildi."),
+ "started":("{n} planned jobs were started.","بدأ {n} أمر مخطط.","{n} planlı iş başlatıldı."),
+ "notSaved":("{n} not saved — fix and save again:","{n} لم تُحفظ — صحّحها واحفظ مجدداً:","{n} kaydedilmedi — düzeltip tekrar kaydedin:"),
+})
+group("history", {"order.delete":("Order deleted","حُذف الطلب","Sipariş silindi"),"customer.delete":("Customer deleted","حُذف عميل","Müşteri silindi"),"product.delete":("Product deleted","حُذف منتج","Ürün silindi"),"machine.delete":("Machine deleted","حُذفت آلة","Makine silindi"),"mold.delete":("Mold deleted","حُذف قالب","Kalıp silindi")})
 
 for i,loc in enumerate(["en","ar","tr"]):
     p=f"messages/{loc}.json"; d=json.load(open(p,encoding="utf-8"))

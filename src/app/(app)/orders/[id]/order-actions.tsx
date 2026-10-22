@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Pause, Play, XCircle, PackageCheck } from "lucide-react";
-import { orderTransitionAction } from "@/app/actions/orders";
+import { CheckCircle2, Pause, Play, XCircle, PackageCheck, Trash2 } from "lucide-react";
+import { deleteOrderAction, orderTransitionAction } from "@/app/actions/orders";
 import { Alert, Button, Card, Input } from "@/components/ui";
 
-type Act = "confirm" | "hold" | "resume" | "cancel" | "close";
-const NEEDS_REASON: Act[] = ["hold", "cancel", "close"];
+type Act = "confirm" | "hold" | "resume" | "cancel" | "close" | "delete";
+const NEEDS_REASON: Act[] = ["hold", "cancel", "close", "delete"];
 
 export default function OrderActions({ orderId, allowed }: { orderId: string; allowed: Act[] }) {
   const t = useTranslations("order");
@@ -18,13 +18,13 @@ export default function OrderActions({ orderId, allowed }: { orderId: string; al
 
   const go = (a: Act, why?: string) =>
     start(async () => {
-      const res = await orderTransitionAction(orderId, a, why);
+      const res = a === "delete" ? await deleteOrderAction(orderId, why) : await orderTransitionAction(orderId, a, why);
       if (res.ok) { setAsking(null); setReason(""); setError(null); }
       else setError(res.error);
     });
 
   if (allowed.length === 0) return null;
-  const icon = { confirm: CheckCircle2, hold: Pause, resume: Play, cancel: XCircle, close: PackageCheck };
+  const icon = { confirm: CheckCircle2, hold: Pause, resume: Play, cancel: XCircle, close: PackageCheck, delete: Trash2 };
 
   return (
     <div className="space-y-2">
@@ -36,7 +36,7 @@ export default function OrderActions({ orderId, allowed }: { orderId: string; al
             <Button
               key={a}
               size="sm"
-              variant={a === "confirm" || a === "resume" ? "primary" : a === "cancel" ? "danger" : "secondary"}
+              variant={a === "confirm" || a === "resume" ? "primary" : a === "cancel" || a === "delete" ? "danger" : "secondary"}
               disabled={pending}
               onClick={() => (NEEDS_REASON.includes(a) ? setAsking(a) : go(a))}
             >
@@ -51,7 +51,7 @@ export default function OrderActions({ orderId, allowed }: { orderId: string; al
           <p className="mb-2 text-xs text-muted">{t(`act.${asking}Help`)}</p>
           <div className="flex flex-wrap gap-2">
             <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t("reasonPlaceholder")} className="flex-1" autoFocus />
-            <Button size="sm" disabled={pending || reason.trim().length < 3} onClick={() => go(asking, reason)} variant={asking === "cancel" ? "danger" : "primary"}>
+            <Button size="sm" disabled={pending || reason.trim().length < 3} onClick={() => go(asking, reason)} variant={asking === "cancel" || asking === "delete" ? "danger" : "primary"}>
               {t("act.confirmAction")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setAsking(null)}>✕</Button>

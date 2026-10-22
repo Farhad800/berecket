@@ -59,7 +59,9 @@
     "back": "Geri",
     "restore": "Geri yükle",
     "archive": "Arşivle",
-    "archived": "Arşivlenmiş"
+    "archived": "Arşivlenmiş",
+    "delete": "Sil",
+    "deleteConfirm": "{name} kalıcı olarak silinsin mi? Yalnızca hiç kullanılmadıysa mümkündür."
   },
   "auth": {
     "signIn": "Giriş yap",
@@ -363,8 +365,14 @@
       "holdHelp": "Sipariş devam ettirilene kadar planlama durur.",
       "cancelHelp": "Başlamamış planlı işler de iptal edilir.",
       "closeHelp": "Tüm adetler sevk edilmese de sipariş teslim sayılır. Yalnızca yönetim onayıyla kullanın.",
-      "confirmAction": "Onayla"
-    }
+      "confirmAction": "Onayla",
+      "delete": "Siparişi sil",
+      "deleteHelp": "Yalnızca yanlışlıkla girilen, üretim başlamamış siparişler için. Sipariş tamamen silinir; kimin neden sildiği denetim kaydında kalır."
+    },
+    "deletedMsg": "Sipariş silindi. Silme işlemi denetim kaydına yazıldı.",
+    "addMany": "Birden çok ürün ekle",
+    "addManyTitle": "Eklenecek ürünleri işaretleyin — sonra miktarlarını yazın",
+    "addSelected": "{n} ürün ekle"
   },
   "comments": {
     "title": "Yorumlar",
@@ -382,7 +390,8 @@
       "hold": "Beklemeye alındı",
       "resume": "Devam ettirildi",
       "cancel": "İptal edildi",
-      "close": "İstisna ile kapatıldı"
+      "close": "İstisna ile kapatıldı",
+      "delete": "Sipariş silindi"
     },
     "job": {
       "create": "Üretim işi planlandı",
@@ -472,25 +481,29 @@
       "create": "Müşteri eklendi",
       "update": "Müşteri güncellendi",
       "archive": "Müşteri arşivlendi",
-      "restore": "Müşteri geri alındı"
+      "restore": "Müşteri geri alındı",
+      "delete": "Müşteri silindi"
     },
     "product": {
       "create": "Ürün eklendi",
       "update": "Ürün güncellendi",
       "archive": "Ürün arşivlendi",
-      "restore": "Ürün geri alındı"
+      "restore": "Ürün geri alındı",
+      "delete": "Ürün silindi"
     },
     "machine": {
       "create": "Makine eklendi",
       "update": "Makine güncellendi",
       "archive": "Makine arşivlendi",
-      "restore": "Makine geri alındı"
+      "restore": "Makine geri alındı",
+      "delete": "Makine silindi"
     },
     "mold": {
       "create": "Kalıp eklendi",
       "update": "Kalıp güncellendi",
       "archive": "Kalıp arşivlendi",
-      "restore": "Kalıp geri alındı"
+      "restore": "Kalıp geri alındı",
+      "delete": "Kalıp silindi"
     },
     "location": {
       "save": "Depo yeri kaydedildi"
@@ -1296,5 +1309,25 @@
       "movements": "Stok hareketleri",
       "shipments": "Sevkiyatlar"
     }
+  },
+  "daily": {
+    "title": "Günlük giriş sayfası",
+    "subtitle": "{date} · bugün çalışan veya vadesi gelen {n} iş. Miktarları yazın ve bir kez kaydedin.",
+    "none": "Bugün çalışan veya planlanan iş yok.",
+    "filter": "Makine, iş, ürün veya siparişe göre süz…",
+    "shift": "Vardiya",
+    "newBatch": "Her iş için yeni parti başlat",
+    "colJob": "Makine · iş · ürün",
+    "colProgress": "Üretilen / planlanan",
+    "todaySoFar": "bugün şimdiye kadar {n}",
+    "willStart": "Kaydedince başlar",
+    "machineDown": "Makine arızalı",
+    "summary": "{jobs} iş · kaydedilecek {pcs} sağlam adet",
+    "saveAll": "Tümünü kaydet",
+    "saved": "{n} iş, {pcs} sağlam adet kaydedildi.",
+    "started": "{n} planlı iş başlatıldı.",
+    "notSaved": "{n} kaydedilmedi — düzeltip tekrar kaydedin:",
+    "finished": "Bitti",
+    "completed": "{n} iş bitti olarak işaretlendi."
   }
 }
