@@ -83,7 +83,7 @@ BLOB_READ_WRITE_TOKEN=<token of the store> node scripts/restore-files.mjs files-
 ```
 
 6. In Vercel, point `DATABASE_URL` / `DATABASE_URL_UNPOOLED` (and `BLOB_READ_WRITE_TOKEN` if the store changed) to the restored database, then **Redeploy**. Migrations run automatically; they are already applied, so nothing changes.
-7. Sign in and verify a few recent orders, a batch with photos, and the audit log.
+7. Sign in and verify a few recent orders, a maintenance request with photos, and the audit log.
 
 ### C. Copy a backup to look at old data without touching production
 

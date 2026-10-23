@@ -35,6 +35,7 @@ go-live reset when testing ends.
 - QC inspects daily production entries (accept/reject pieces, defect type, quality issues + corrective actions). Rejected pieces leave stock.
 - Maintenance/service stay (no job links). Downtime records dropped (were tied to jobs).
 Checklist:
-- [ ] schema + migration  - [ ] orders  - [ ] daily production  - [ ] QC + warehouse
-- [ ] cleanup (nav, perms, dashboard, reports, search, history, service, go-live tools, demo, i18n)
-- [ ] tests (new acceptance), docs, deploy
+- [x] schema + migration  - [x] orders  - [x] daily production  - [x] QC + warehouse
+- [x] cleanup (nav, perms, dashboard, reports, search, history, service, go-live tools, demo, i18n stage9)
+- [x] tests: acceptance 56/56 (fresh DB), security 28/28, unit 6/6; docs updated
+- [ ] deploy (migration wipes old test orders/production/stock on the live DB — expected)

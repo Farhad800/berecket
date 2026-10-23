@@ -33,7 +33,7 @@ Day-to-day running of the Bereket Plastic FMS. No programming needed for anythin
 
 ## 2b. Deleting versus archiving
 
-- **Delete** (customers, products, machines, molds, orders) removes a record that was created by mistake and **never used**. Machines and molds need the *Assets: archive* permission, orders *Orders: archive*; deleting an order also needs a reason. Every delete is written to the audit log with what was deleted.
+- **Delete** (products, machines, molds, orders) removes a record that was created by mistake and **never used**. Machines and molds need the *Assets: archive* permission, orders *Orders: archive*; deleting an order also needs a reason. Every delete is written to the audit log with what was deleted.
 - As soon as a record has history (an order with production, a machine with jobs or repairs…), the system refuses to delete it and says why. Use **Archive** instead (master data) or **Cancel** (orders): the record disappears from everyday lists and pickers but past orders, reports and traceability stay correct.
 
 ## 3. Starting real use (go-live)
@@ -43,7 +43,7 @@ When testing is finished:
 1. Make sure a backup exists (Actions → Nightly backup → *Run workflow*, wait for green).
 2. Administration → **System**:
    - **Demo employee accounts** → *Remove demo accounts* (accounts starting with `demo.`).
-   - **Clear test data before going live** → choose *Test transactions only* (keeps customers, products, machines, molds) or *Everything*. Type `RESET`, enter your password, confirm.
+   - **Clear test data before going live** → choose *Test transactions only* (keeps products, machines, molds) or *Everything*. Type `RESET`, enter your password, confirm.
 3. What is never deleted: employees, roles, departments, defect types, storage locations, the audit log. Numbering (ORD-, JOB-, LOT-…) starts again from 0001.
 4. Check machine statuses and mold positions (Machines & Molds) match the shop floor.
 
@@ -51,11 +51,11 @@ This action is recorded in the audit log. Developers can do the same from the co
 
 ### Demonstration data (training / testing environments only)
 
-`npm run demo:add` creates one demo employee per department (password `Demo12345!`) plus demo customers, products, Toyo machines and molds whose codes start with `DEMO-`. `npm run demo:remove` deletes them again. Both refuse to run against production unless `ALLOW_DEMO=1` is set.
+`npm run demo:add` creates one demo employee per department (password `Demo12345!`) plus demo products, Toyo machines and molds whose codes start with `DEMO-`. `npm run demo:remove` deletes them again. Both refuse to run against production unless `ALLOW_DEMO=1` is set.
 
 ## 4. Audit log
 
-Insights → **Audit log** (permission *Audit: view*). Shows who did what and when, with old → new values and reasons: logins, employee and role changes, order changes and deadline moves, production reports and corrections, maintenance steps, every QC decision, receipts, stock adjustments, shipment confirmations, report exports, go-live resets. Filter by time, person and record type; *Excel (CSV)* exports it (permission *Audit: export*). Entries can't be edited or deleted by anyone.
+Insights → **Audit log** (permission *Audit: view*). Shows who did what and when, with old → new values and reasons: logins, employee and role changes, order changes, completions and deletions, daily production entries and corrections, maintenance steps, every QC decision, stock out and adjustments, report exports, go-live resets. Filter by time, person and record type; *Excel (CSV)* exports it (permission *Audit: export*). Entries can't be edited or deleted by anyone.
 
 ## 5. Photos and documents (attachments)
 

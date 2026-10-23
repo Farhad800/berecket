@@ -11,11 +11,11 @@ Works in any browser on PC, tablet and phone, and can be installed to the home s
 | Stage | Scope | Status |
 |---|---|---|
 | 1 | Login, roles & permissions, employees, dashboard, branding, languages, install-to-home-screen | ✅ done |
-| 2 | Customers, products, machines & molds, multi-line orders, production calendar | ✅ done |
-| 3 | Production jobs, batches, quantities, downtime | ✅ done |
+| 2 | Products, machines & molds, multi-product orders | ✅ done (simplified 23 Oct 2026) |
+| 3 | Daily production entries per shift | ✅ done (simplified 23 Oct 2026) |
 | 4 | Technical service, mold changes, maintenance requests | ✅ done |
 | 5 | QC inspections, holds/rejections, corrective actions | ✅ done |
-| 6 | Warehouse receipts, stock ledger, shipments | ✅ done |
+| 6 | Warehouse stock ledger (in from production, out, adjustments) | ✅ done (simplified 23 Oct 2026) |
 | 7 | Notifications, reports, CSV/PDF export, search | ✅ done |
 | 8 | Full end-to-end tests, deployment, backups, operations guide | ✅ done |
 

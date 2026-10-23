@@ -21,7 +21,7 @@
 - React escapes all text; user comments are shown as text, never HTML.
 - CSV exports neutralise spreadsheet formulas (`=`, `+`, `-`, `@` at the start of a cell).
 - Uploads: type checked from the file's bytes (JPG/PNG/WEBP/HEIC/PDF only), 8 MB limit, stored in a private Blob store, served only after a permission check with `nosniff` and a sandboxing Content-Security-Policy.
-- Important operations run in database transactions (shipment confirmation + stock deduction, receipts, QC stock moves) with row locks; receipts are idempotent.
+- Important operations run in database transactions (daily production + stock in, stock out, QC rejects, corrections) with row locks on the product so stock can never go below zero.
 - Audit log of sensitive actions with before/after values; no one can edit or delete it.
 
 **Transport and headers**
