@@ -2,7 +2,6 @@ import { getTranslations } from "next-intl/server";
 import { pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { currentShift, toFactoryDateInput, toFactoryDateTimeInput } from "@/lib/time";
-import { OPEN_STATUSES } from "@/lib/orders";
 import { Card, PageHeader } from "@/components/ui";
 import RecordForm from "@/components/record-form";
 import { createServiceReportAction } from "@/app/actions/service";
@@ -13,10 +12,9 @@ export default async function NewServiceReportPage({ searchParams }: { searchPar
   await pageUser("service:create");
   const t = await getTranslations();
   const sp = await searchParams;
-  const [machines, molds, orders, requests] = await Promise.all([
+  const [machines, molds, requests] = await Promise.all([
     db.machine.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
     db.mold.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true, currentMachineId: true, currentMachine: { select: { code: true } } } }),
-    db.order.findMany({ where: { status: { in: OPEN_STATUSES } }, orderBy: { number: "desc" }, take: 200, select: { id: true, number: true, customer: { select: { name: true } } } }),
     db.maintenanceRequest.findMany({ where: { status: { in: ["OPEN", "IN_PROGRESS", "WAITING_PARTS"] } }, orderBy: { createdAt: "desc" }, select: { id: true, number: true, title: true, machineId: true } }),
   ]);
   const req = requests.find((r) => r.id === sp.request);
@@ -46,7 +44,6 @@ export default async function NewServiceReportPage({ searchParams }: { searchPar
             { name: "machineId", label: t("sched.machine"), type: "combo", required: true, options: machines.map((m) => ({ value: m.id, label: m.code, hint: m.name })) },
             { name: "moldId", label: t("svc.moldOnMachine"), type: "combo", options: moldOpts },
             { name: "maintenanceRequestId", label: t("svc.relatedRequest"), type: "combo", options: requests.map((r) => ({ value: r.id, label: r.number, hint: r.title })) },
-            { name: "orderId", label: t("svc.relatedOrder"), type: "combo", options: orders.map((o) => ({ value: o.id, label: o.number, hint: o.customer.name })) },
             { name: "workPerformed", label: t("svc.workPerformed"), type: "textarea", required: true },
             { name: "moldRemovedId", label: t("svc.moldRemoved"), type: "combo", options: moldOpts },
             { name: "moldInstalledId", label: t("svc.moldInstalled"), type: "combo", options: moldOpts },

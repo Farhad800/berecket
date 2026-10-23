@@ -57,7 +57,7 @@ export default async function ServicePage({
       where,
       orderBy: [{ machineDown: "desc" }, { createdAt: "desc" }],
       take: 100,
-      include: { machine: { select: { code: true } }, mold: { select: { code: true } }, job: { select: { number: true } } },
+      include: { machine: { select: { code: true } }, mold: { select: { code: true } } },
     });
     const users = await db.user.findMany({ select: { id: true, fullName: true } });
     const name = (id: string | null) => users.find((u) => u.id === id)?.fullName;
@@ -90,7 +90,7 @@ export default async function ServicePage({
                         {r.isPreventive && <Badge tone="purple">{t("svc.preventive")}</Badge>}
                       </div>
                       <p className="truncate text-sm">{r.title}</p>
-                      <p className="text-xs text-muted" dir="ltr">{r.machine.code}{r.mold ? ` · ${r.mold.code}` : ""}{r.job ? ` · ${r.job.number}` : ""}</p>
+                      <p className="text-xs text-muted" dir="ltr">{r.machine.code}{r.mold ? ` · ${r.mold.code}` : ""}</p>
                     </div>
                     <div className="text-xs text-muted sm:text-end">
                       <p>{formatDateTime(r.createdAt, locale)}</p>

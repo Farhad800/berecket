@@ -21,9 +21,7 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
     include: {
       machine: true,
       mold: true,
-      job: { select: { id: true, number: true } },
       serviceReports: { orderBy: { startTime: "desc" }, select: { id: true, number: true, startTime: true, workPerformed: true, technicianId: true } },
-      downtimes: { select: { startedAt: true, endedAt: true } },
     },
   });
   if (!r) notFound();
@@ -36,7 +34,6 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   ]);
   const name = (uid: string | null) => users.find((u) => u.id === uid)?.fullName ?? "—";
   const technicians = users.filter((u) => u.active && u.role.permissions.length > 0).map((u) => ({ id: u.id, name: u.fullName }));
-  const downMin = r.downtimes.reduce((s, d) => s + ((d.endedAt?.getTime() ?? Date.now()) - d.startedAt.getTime()) / 60000, 0);
 
   const allowed: ("start" | "waitParts" | "complete" | "verify" | "reopen" | "cancel")[] = [];
   if (can(me, "maintenance:edit")) {
@@ -71,10 +68,8 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
             <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <Fact label={t("sched.machine")} value={`${r.machine.code} · ${t(`status.machine.${r.machine.status}`)}`} />
               <Fact label={t("sched.mold")} value={r.mold?.code ?? "—"} />
-              <Fact label={t("svc.relatedJob")} value={r.job ? <Link className="text-brand-600 hover:underline" href={`/production/${r.job.id}`} dir="ltr">{r.job.number}</Link> : "—"} />
               <Fact label={t("svc.reportedBy")} value={`${name(r.reportedById)} · ${formatDateTime(r.createdAt, locale)}`} />
               <Fact label={t("svc.assignedTo")} value={name(r.assignedToId)} />
-              <Fact label={t("prod.downtime")} value={t("prod.minutes", { n: Math.round(downMin) })} />
               {r.readyAt && <Fact label={t("svc.readyAt")} value={formatDateTime(r.readyAt, locale)} />}
               {r.verifiedAt && <Fact label={t("svc.verified")} value={`${name(r.verifiedById)} · ${formatDateTime(r.verifiedAt, locale)}`} />}
             </dl>

@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { pageUser, can } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatDateTime } from "@/lib/time";
-import { ISSUE_TONE, QC_TONE, SEVERITY_TONE } from "@/lib/tones";
+import { formatDate, formatDateTime } from "@/lib/time";
+import { ISSUE_TONE, ENTRY_QC_TONE, SEVERITY_TONE } from "@/lib/tones";
 import { Badge, Card, PageHeader } from "@/components/ui";
 import Comments from "@/components/comments";
 import Attachments from "@/components/attachments";
@@ -26,18 +26,19 @@ export default async function IssuePage({ params }: { params: Promise<{ id: stri
     where: { id },
     include: {
       category: true,
-      batch: { include: { product: true, job: { include: { machine: true, mold: true } }, orderLine: { include: { order: true } } } },
+      entry: { include: { product: true } },
       inspection: true,
       actions: { orderBy: { performedAt: "asc" } },
     },
   });
   if (!i) notFound();
-  const [users, comments, files, history, mr] = await Promise.all([
+  const [users, comments, files, history, mr, machines] = await Promise.all([
     db.user.findMany({ select: { id: true, fullName: true } }),
     db.comment.findMany({ where: { entityType: "QualityIssue", entityId: id }, orderBy: { createdAt: "asc" } }),
     db.attachment.findMany({ where: { entityType: "QualityIssue", entityId: id }, orderBy: { createdAt: "asc" } }),
     db.auditLog.findMany({ where: { entityType: "QualityIssue", entityId: id }, orderBy: { createdAt: "desc" }, include: { user: { select: { fullName: true } } } }),
     i.maintenanceRequestId ? db.maintenanceRequest.findUnique({ where: { id: i.maintenanceRequestId }, select: { id: true, number: true, status: true } }) : null,
+    db.machine.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true } }),
   ]);
   const name = (uid: string | null) => users.find((u) => u.id === uid)?.fullName ?? "—";
   const canAct = [...(DEPT_PERMS[i.responsibleDept] ?? []), "qc:edit"].some((p) => me.permissions.has(p));
@@ -56,12 +57,9 @@ export default async function IssuePage({ params }: { params: Promise<{ id: stri
             <p className="whitespace-pre-wrap">{i.description}</p>
             {i.recommendedAction && <p className="mt-2 rounded-lg bg-surface-2 p-3 text-sm"><b>{t("qc.recommendedAction")}:</b> {i.recommendedAction}</p>}
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-              <F label={t("prod.batch")} v={<Link href={`/qc/batches/${i.batch.id}`} className="text-brand-600 hover:underline" dir="ltr">{i.batch.number}</Link>} />
-              <F label={t("qc.batchStatus")} v={<Badge tone={QC_TONE[i.batch.qcStatus]}>{t(`status.qc.${i.batch.qcStatus}`)}</Badge>} />
-              <F label={t("md.product")} v={`${i.batch.product.code}`} />
-              <F label={t("order.customer")} v={<Link href={`/orders/${i.batch.orderLine.order.id}`} className="hover:underline" dir="ltr">{i.batch.orderLine.order.number}</Link>} />
-              <F label={t("sched.machine")} v={i.batch.job.machine?.code ?? "—"} />
-              <F label={t("sched.mold")} v={i.batch.job.mold?.code ?? "—"} />
+              <F label={t("md.product")} v={<Link href={`/qc/entries/${i.entry.id}`} className="text-brand-600 hover:underline">{i.entry.product.code} · {i.entry.product.name}</Link>} />
+              <F label={t("prod.day")} v={`${formatDate(i.entry.day, locale)} · ${t("rep.col.shift")} ${i.entry.shift}`} />
+              <F label={t("rep.col.qc")} v={<Badge tone={ENTRY_QC_TONE[i.entry.qcStatus]}>{t(`status.entryQc.${i.entry.qcStatus}`)}</Badge>} />
               <F label={t("svc.reportedBy")} v={`${name(i.createdById)} · ${formatDateTime(i.createdAt, locale)}`} />
               {mr && <F label={t("svc.relatedRequest")} v={<Link href={`/service/requests/${mr.id}`} className="text-brand-600 hover:underline" dir="ltr">{mr.number} · {t(`status.maint.${mr.status}`)}</Link>} />}
               {i.resolvedAt && <F label={t("status.issue.RESOLVED")} v={`${name(i.verifiedById)} · ${formatDateTime(i.resolvedAt, locale)}`} />}
@@ -81,7 +79,7 @@ export default async function IssuePage({ params }: { params: Promise<{ id: stri
               </ol>
             )}
             <div className="mt-4">
-              <IssueConsole issueId={i.id} status={i.status} canAct={canAct} canVerify={can(me, "qc:approve")} canMaint={can(me, "maintenance:create")} hasMaint={!!i.maintenanceRequestId} />
+              <IssueConsole issueId={i.id} status={i.status} canAct={canAct} canVerify={can(me, "qc:approve")} canMaint={can(me, "maintenance:create")} hasMaint={!!i.maintenanceRequestId} machines={machines} />
             </div>
           </Card>
 

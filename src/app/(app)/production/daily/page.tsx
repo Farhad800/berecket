@@ -1,67 +1,55 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
-import { can, pageUser } from "@/lib/auth";
+import { pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { currentShift, factoryDay, formatDate } from "@/lib/time";
-import { getJobTotals } from "@/lib/production";
-import { Alert, EmptyState, PageHeader } from "@/components/ui";
-import DailySheet, { type SheetRow } from "./daily-sheet";
+import { currentShift, formatDate } from "@/lib/time";
+import { dayValue, todayYmd } from "@/lib/production";
+import { openOrderDemand } from "@/lib/orders";
+import { getStock } from "@/lib/stock";
+import { EmptyState, LinkButton, PageHeader } from "@/components/ui";
+import DailySheet from "./daily-sheet";
 
 export const metadata = { title: "Daily production entry" };
 
-/** One screen to enter the shift's quantities for every running or due job. */
-export default async function DailyEntryPage() {
-  const me = await pageUser("production:view");
+/** The sheet the factory fills in every day: product + quantity, per shift. */
+export default async function DailyEntryPage({ searchParams }: { searchParams: Promise<{ day?: string; shift?: string }> }) {
+  await pageUser("production:create");
   const t = await getTranslations();
   const locale = await getLocale();
-  const { start, end } = factoryDay();
+  const sp = await searchParams;
+  const today = todayYmd();
+  const day = sp.day && /^\d{4}-\d{2}-\d{2}$/.test(sp.day) && sp.day <= today ? sp.day : today;
+  const shift = (["A", "B", "C"] as const).find((s) => s === sp.shift) ?? currentShift();
 
-  const jobs = await db.productionJob.findMany({
-    where: {
-      OR: [{ status: { in: ["IN_PROGRESS", "PAUSED"] } }, { status: "PLANNED", plannedStart: { lt: end } }],
-      orderLine: { order: { status: { notIn: ["CANCELLED", "DRAFT"] } } },
-    },
-    orderBy: [{ machine: { code: "asc" } }, { plannedStart: "asc" }],
-    take: 1000,
-    include: {
-      machine: { select: { code: true, status: true } },
-      orderLine: { include: { product: { select: { code: true, name: true } }, order: { select: { number: true, customer: { select: { name: true } } } } } },
-      batches: { where: { closedAt: null }, select: { number: true }, take: 1 },
-    },
-  });
-  const [totals, today] = await Promise.all([
-    getJobTotals(jobs.map((j) => j.id)),
-    db.productionEntry.groupBy({ by: ["jobId"], where: { jobId: { in: jobs.map((j) => j.id) }, reportedAt: { gte: start, lt: end } }, _sum: { qtyGood: true } }),
+  const [products, demand, stock, entered] = await Promise.all([
+    db.product.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
+    openOrderDemand(),
+    getStock(),
+    db.productionEntry.groupBy({ by: ["productId", "shift"], where: { day: dayValue(day) }, _sum: { quantity: true } }),
   ]);
-  const todayBy = new Map(today.map((x) => [x.jobId, x._sum.qtyGood ?? 0]));
-
-  const rows: SheetRow[] = jobs.map((j) => ({
-    id: j.id,
-    job: j.number,
-    status: j.status,
-    machine: j.machine?.code ?? "—",
-    machineDown: ["DOWN", "MAINTENANCE"].includes(j.machine?.status ?? ""),
-    product: `${j.orderLine.product.code} · ${j.orderLine.product.name}`,
-    order: `${j.orderLine.order.number} · ${j.orderLine.order.customer.name}`,
-    planned: j.plannedQty,
-    produced: totals.get(j.id)?.good ?? 0,
-    today: todayBy.get(j.id) ?? 0,
-    batch: j.batches[0]?.number ?? null,
+  if (products.length === 0) {
+    return (
+      <>
+        <PageHeader title={t("daily.title")} />
+        <EmptyState><p className="mb-3">{t("order.needProducts")}</p><LinkButton href="/products" variant="secondary">{t("nav.products")}</LinkButton></EmptyState>
+      </>
+    );
+  }
+  const rows = products.map((p) => ({
+    id: p.id, code: p.code, name: p.name,
+    ordered: demand.get(p.id) ?? 0,
+    stock: stock.get(p.id) ?? 0,
+    entered: Object.fromEntries((["A", "B", "C"] as const).map((s) => [s, entered.find((e) => e.productId === p.id && e.shift === s)?._sum.quantity ?? 0])) as Record<"A" | "B" | "C", number>,
   }));
 
   return (
     <>
-      <Link href="/production" className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline dark:text-brand-300">
+      <Link href={`/production?day=${day}`} className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline dark:text-brand-300">
         <ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.production")}
       </Link>
-      <PageHeader title={t("daily.title")} subtitle={t("daily.subtitle", { date: formatDate(new Date(), locale), n: rows.length })} />
-      {!can(me, "production:create") && <div className="mb-4"><Alert tone="blue">{t("common.readOnly")}</Alert></div>}
-      {rows.length === 0 ? (
-        <EmptyState>{t("daily.none")}</EmptyState>
-      ) : (
-        <DailySheet rows={rows} shift={currentShift()} canEnter={can(me, "production:create")} canStart={can(me, "production:edit")} />
-      )}
+      <PageHeader title={t("daily.title")} subtitle={t("daily.subtitle", { date: formatDate(dayValue(day), locale) })} />
+      <DailySheet rows={rows} day={day} today={today} shift={shift} />
     </>
   );
 }

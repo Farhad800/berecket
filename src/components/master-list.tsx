@@ -31,7 +31,7 @@ export default function MasterList({
   canArchive,
   newLabel,
 }: {
-  kind: "customer" | "product" | "machine" | "mold";
+  kind: "product" | "machine" | "mold";
   rows: MasterRow[];
   fields: FieldDef[];
   editFields?: FieldDef[];

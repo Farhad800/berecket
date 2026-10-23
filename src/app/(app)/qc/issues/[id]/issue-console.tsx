@@ -9,13 +9,14 @@ import { Alert, Button, Card, Input, Textarea } from "@/components/ui";
 import { addCorrectiveActionAction, issueToMaintenanceAction, issueTransitionAction } from "@/app/actions/qc";
 
 export default function IssueConsole({
-  issueId, status, canAct, canVerify, canMaint, hasMaint,
-}: { issueId: string; status: string; canAct: boolean; canVerify: boolean; canMaint: boolean; hasMaint: boolean }) {
+  issueId, status, canAct, canVerify, canMaint, hasMaint, machines,
+}: { issueId: string; status: string; canAct: boolean; canVerify: boolean; canMaint: boolean; hasMaint: boolean; machines: { id: string; code: string }[] }) {
   const t = useTranslations("qc");
   const router = useRouter();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [reason, setReason] = useState("");
   const [pending, start] = useTransition();
+  const [machine, setMachine] = useState("");
   const add = useFormAction(addCorrectiveActionAction, { resetOnSuccess: true, onSuccess: () => setMsg({ ok: true, text: t("actionSaved") }) });
   const resolved = status === "RESOLVED";
 
@@ -48,12 +49,18 @@ export default function IssueConsole({
           <Button size="sm" disabled={pending} onClick={() => go("resolve")}><ShieldCheck className="size-4" /> {t("resolve")}</Button>
         )}
         {canMaint && !hasMaint && !resolved && (
-          <Button size="sm" variant="secondary" disabled={pending} onClick={() => start(async () => {
-            const r = await issueToMaintenanceAction(issueId);
-            if (r.ok) router.push(`/service/requests/${(r.data as { id: string }).id}`); else setMsg({ ok: false, text: r.error });
-          })}>
-            <Wrench className="size-4" /> {t("toMaintenance")}
-          </Button>
+          <span className="flex flex-wrap items-center gap-2">
+            <select value={machine} onChange={(e) => setMachine(e.target.value)} aria-label={t("whichMachine")} className="min-h-9 rounded-lg border border-line bg-surface px-2 text-xs">
+              <option value="">{t("whichMachine")}</option>
+              {machines.map((m) => <option key={m.id} value={m.id}>{m.code}</option>)}
+            </select>
+            <Button size="sm" variant="secondary" disabled={pending || !machine} onClick={() => start(async () => {
+              const r = await issueToMaintenanceAction(issueId, machine);
+              if (r.ok) router.push(`/service/requests/${(r.data as { id: string }).id}`); else setMsg({ ok: false, text: r.error });
+            })}>
+              <Wrench className="size-4" /> {t("toMaintenance")}
+            </Button>
+          </span>
         )}
       </div>
       {canVerify && ["RESOLVED", "AWAITING_VERIFICATION"].includes(status) && (

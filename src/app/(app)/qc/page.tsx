@@ -1,11 +1,11 @@
 import Link from "next/link";
-import type { BatchQcStatus, IssueStatus, Prisma, Severity } from "@prisma/client";
+import type { EntryQcStatus, IssueStatus, Prisma, Severity } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { AlertOctagon, Shuffle } from "lucide-react";
 import { pageUser, can } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatDateTime, formatNumber } from "@/lib/time";
-import { ISSUE_TONE, QC_TONE, SEVERITY_TONE } from "@/lib/tones";
+import { formatDate, formatDateTime, formatNumber } from "@/lib/time";
+import { ENTRY_QC_TONE, ISSUE_TONE, SEVERITY_TONE } from "@/lib/tones";
 import { Badge, Card, EmptyState, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import CategoryManager from "./category-manager";
@@ -31,7 +31,7 @@ export default async function QcPage({
 
   const [criticalOpen, pendingCount] = await Promise.all([
     db.qualityIssue.count({ where: { severity: "CRITICAL", status: { not: "RESOLVED" } } }),
-    db.batch.count({ where: { qcStatus: "PENDING" } }),
+    db.productionEntry.count({ where: { qcStatus: "NOT_INSPECTED", product: { qcRequired: true } } }),
   ]);
   const tabs = (
     <div className="mb-3 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
@@ -57,63 +57,51 @@ export default async function QcPage({
     </>
   );
 
-  const batchSearch: Prisma.BatchWhereInput = q ? { OR: [
-    { number: { contains: q, mode: "insensitive" } },
-    { product: { code: { contains: q, mode: "insensitive" } } },
-    { orderLine: { order: { number: { contains: q, mode: "insensitive" } } } },
-  ] } : {};
+  const entrySearch: Prisma.ProductionEntryWhereInput = q ? { product: { OR: [{ code: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] } } : {};
 
   if (tab === "inspect") {
-    const statuses: BatchQcStatus[] = ["PENDING", "RELEASED", "APPROVED", "PARTIAL", "HOLD", "REJECTED"];
-    const status = statuses.includes(sp.status as BatchQcStatus) ? (sp.status as BatchQcStatus) : undefined;
-    const batches = await db.batch.findMany({
-      where: { ...batchSearch, ...(status ? { qcStatus: status } : { OR: [{ qcStatus: { in: ["PENDING", "HOLD", "PARTIAL"] } }, { createdAt: { gte: new Date(Date.now() - 7 * 86_400_000) } }] }) },
-      orderBy: [{ createdAt: "desc" }],
-      take: 150,
-      include: {
-        product: { select: { code: true, name: true } },
-        orderLine: { select: { order: { select: { number: true } } } },
-        job: { select: { machine: { select: { code: true } } } },
-        _count: { select: { inspections: true } },
-      },
+    const statuses: EntryQcStatus[] = ["NOT_INSPECTED", "APPROVED", "REJECTED"];
+    const status = statuses.includes(sp.status as EntryQcStatus) ? (sp.status as EntryQcStatus) : undefined;
+    const since = new Date(Date.now() - 14 * 86_400_000);
+    const entries = await db.productionEntry.findMany({
+      where: { ...entrySearch, ...(status ? { qcStatus: status } : { day: { gte: since } }) },
+      orderBy: [{ day: "desc" }, { shift: "desc" }],
+      take: 300,
+      include: { product: { select: { code: true, name: true, qcRequired: true } } },
     });
-    const qty = new Map<string, number>();
-    for (const r of await db.productionEntry.groupBy({ by: ["batchId"], where: { batchId: { in: batches.map((b) => b.id) } }, _sum: { qtyGood: true } })) qty.set(r.batchId, r._sum.qtyGood ?? 0);
-    const rank = { PENDING: 0, HOLD: 1, PARTIAL: 2, RELEASED: 3, REJECTED: 4, APPROVED: 5 } as const;
-    batches.sort((a, b) => rank[a.qcStatus] - rank[b.qcStatus] || b.createdAt.getTime() - a.createdAt.getTime());
-    // Random sampling suggestion: one released, never-inspected batch from the last 7 days.
-    const uninspected = batches.filter((b) => b.qcStatus === "RELEASED" && b._count.inspections === 0 && (qty.get(b.id) ?? 0) > 0);
+    // Products marked "inspection required" that QC hasn't checked yet come first.
+    entries.sort((a, b) => Number(b.product.qcRequired && b.qcStatus === "NOT_INSPECTED") - Number(a.product.qcRequired && a.qcStatus === "NOT_INSPECTED"));
+    // Random sampling suggestion: one not-yet-inspected entry from the last 7 days.
+    const week = Date.now() - 7 * 86_400_000;
+    const uninspected = entries.filter((e) => e.qcStatus === "NOT_INSPECTED" && e.day.getTime() >= week);
     const pick = uninspected.length ? uninspected[Math.floor(Math.random() * uninspected.length)] : null;
 
     return (
       <>
         {header}
-        <ListToolbar placeholder={t("qc.searchBatches")} filters={[{ name: "status", label: t("qc.needsAttention"), options: statuses.map((s) => ({ value: s, label: t(`status.qc.${s}`) })) }]} />
+        <ListToolbar placeholder={t("qc.searchEntries")} filters={[{ name: "status", label: t("qc.last14"), options: statuses.map((s) => ({ value: s, label: t(`status.entryQc.${s}`) })) }]} />
         {pick && can(me, "qc:create") && (
-          <Link href={`/qc/batches/${pick.id}`} className="mb-4 flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 p-3 text-sm dark:border-brand-800 dark:bg-brand-900">
+          <Link href={`/qc/entries/${pick.id}`} className="mb-4 flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 p-3 text-sm dark:border-brand-800 dark:bg-brand-900">
             <Shuffle className="size-5 text-brand-600" />
-            <span>{t("qc.randomPick")} <b dir="ltr">{pick.number}</b> · {pick.product.name}</span>
+            <span>{t("qc.randomPick")} <b>{pick.product.name}</b> · {formatDate(pick.day, locale)} · {t("rep.col.shift")} {pick.shift}</span>
           </Link>
         )}
-        {batches.length === 0 ? <EmptyState>{t("common.empty")}</EmptyState> : (
+        {entries.length === 0 ? <EmptyState>{t("common.empty")}</EmptyState> : (
           <Card className="p-0 sm:p-0">
             <ul className="divide-y divide-line">
-              {batches.map((b) => (
-                <li key={b.id}>
-                  <Link href={`/qc/batches/${b.id}`} className="grid gap-1 px-4 py-3 hover:bg-surface-2 sm:grid-cols-[1fr_auto] sm:items-center">
+              {entries.map((e) => (
+                <li key={e.id}>
+                  <Link href={`/qc/entries/${e.id}`} className="grid gap-1 px-4 py-3 hover:bg-surface-2 sm:grid-cols-[1fr_auto] sm:items-center">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold" dir="ltr">{b.number}</span>
-                        <Badge tone={QC_TONE[b.qcStatus]}>{t(`status.qc.${b.qcStatus}`)}</Badge>
-                        {b._count.inspections === 0 && b.qcStatus === "RELEASED" && <Badge>{t("qc.notInspected")}</Badge>}
+                        <span className="font-semibold">{e.product.name}</span>
+                        <span className="text-xs text-muted" dir="ltr">{e.product.code}</span>
+                        <Badge tone={ENTRY_QC_TONE[e.qcStatus]}>{t(`status.entryQc.${e.qcStatus}`)}</Badge>
+                        {e.product.qcRequired && e.qcStatus === "NOT_INSPECTED" && <Badge tone="amber">{t("md.qcRequiredShort")}</Badge>}
                       </div>
-                      <p className="truncate text-sm">{b.product.name} <span className="text-xs text-muted" dir="ltr">{b.product.code}</span></p>
-                      <p className="text-xs text-muted" dir="ltr">{b.orderLine.order.number} · {b.job.machine?.code ?? "—"} · {t("sched.shift")} {b.shift}</p>
+                      <p className="text-xs text-muted">{formatDate(e.day, locale)} · {t("rep.col.shift")} {e.shift}</p>
                     </div>
-                    <div className="text-sm sm:text-end">
-                      <p className="font-semibold tabular-nums">{n(qty.get(b.id) ?? 0)} {t("md.pcs")}</p>
-                      <p className="text-xs text-muted">{formatDateTime(b.createdAt, locale)}</p>
-                    </div>
+                    <p className="font-semibold tabular-nums sm:text-end">{n(e.quantity)} {t("md.pcs")}</p>
                   </Link>
                 </li>
               ))}
@@ -126,17 +114,17 @@ export default async function QcPage({
 
   if (tab === "inspections") {
     const inspections = await db.qcInspection.findMany({
-      where: q ? { OR: [{ number: { contains: q, mode: "insensitive" } }, { batch: batchSearch }] } : {},
+      where: q ? { OR: [{ number: { contains: q, mode: "insensitive" } }, { entry: entrySearch }] } : {},
       orderBy: { inspectedAt: "desc" },
       take: 150,
-      include: { batch: { select: { id: true, number: true, product: { select: { code: true } } } } },
+      include: { entry: { select: { id: true, day: true, shift: true, product: { select: { code: true } } } } },
     });
     const users = await db.user.findMany({ select: { id: true, fullName: true } });
-    const decisionTone = { APPROVE: "green", PARTIAL: "amber", HOLD: "red", REJECT: "red" } as const;
+    const decisionTone = { APPROVE: "green", REJECT: "red" } as const;
     return (
       <>
         {header}
-        <ListToolbar placeholder={t("qc.searchBatches")} />
+        <ListToolbar placeholder={t("qc.searchEntries")} />
         {inspections.length === 0 ? <EmptyState>{t("common.empty")}</EmptyState> : (
           <Card className="p-0 sm:p-0">
             <div className="table-wrap">
@@ -144,7 +132,7 @@ export default async function QcPage({
                 <thead className="bg-surface-2 text-xs text-muted">
                   <tr>
                     <th className="px-4 py-2 text-start">{t("qc.inspection")}</th>
-                    <th className="px-2 py-2 text-start">{t("prod.batch")}</th>
+                    <th className="px-2 py-2 text-start">{t("order.product")}</th>
                     <th className="px-2 py-2 text-start">{t("qc.decision")}</th>
                     <th className="px-2 py-2 text-end">{t("qc.inspected")}</th>
                     <th className="px-2 py-2 text-end">{t("qc.rejectedShort")}</th>
@@ -155,7 +143,7 @@ export default async function QcPage({
                   {inspections.map((i) => (
                     <tr key={i.id} className="hover:bg-surface-2">
                       <td className="px-4 py-2"><span dir="ltr">{i.number}</span><div className="text-xs text-muted">{formatDateTime(i.inspectedAt, locale)}</div></td>
-                      <td className="px-2 py-2"><Link href={`/qc/batches/${i.batch.id}`} className="font-semibold text-brand-600 hover:underline" dir="ltr">{i.batch.number}</Link><div className="text-xs text-muted" dir="ltr">{i.batch.product.code}</div></td>
+                      <td className="px-2 py-2"><Link href={`/qc/entries/${i.entry.id}`} className="font-semibold text-brand-600 hover:underline" dir="ltr">{i.entry.product.code}</Link><div className="text-xs text-muted">{formatDate(i.entry.day, locale)} · {i.entry.shift}</div></td>
                       <td className="px-2 py-2"><Badge tone={decisionTone[i.decision]}>{t(`qc.dec.${i.decision}`)}</Badge>{i.sampleOnly && <span className="ms-1 text-xs text-muted">{t("qc.sample")}</span>}</td>
                       <td className="px-2 py-2 text-end tabular-nums">{n(i.qtyInspected)}</td>
                       <td className="px-2 py-2 text-end tabular-nums">{n(i.qtyRejected)}</td>
@@ -179,11 +167,11 @@ export default async function QcPage({
       where: {
         ...(status ? { status } : { status: { not: "RESOLVED" } }),
         ...(severity ? { severity } : {}),
-        ...(q ? { OR: [{ number: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }, { batch: batchSearch }] } : {}),
+        ...(q ? { OR: [{ number: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }, { entry: entrySearch }] } : {}),
       },
       orderBy: { createdAt: "desc" },
       take: 150,
-      include: { category: true, batch: { select: { number: true, product: { select: { code: true } } } }, _count: { select: { actions: true } } },
+      include: { category: true, entry: { select: { day: true, shift: true, product: { select: { code: true } } } }, _count: { select: { actions: true } } },
     });
     const sevRank = { CRITICAL: 0, MAJOR: 1, MINOR: 2 } as const;
     issues.sort((a, b) => sevRank[a.severity] - sevRank[b.severity]);
@@ -210,7 +198,7 @@ export default async function QcPage({
                       <span className="text-sm">{i.category.name}</span>
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm">{i.description}</p>
-                    <p className="text-xs text-muted"><span dir="ltr">{i.batch.number} · {i.batch.product.code}</span> · {t(`qc.dept.${i.responsibleDept}`)} · {t("qc.actionsCount", { n: i._count.actions })} · {formatDateTime(i.createdAt, locale)}</p>
+                    <p className="text-xs text-muted"><span dir="ltr">{i.entry.product.code}</span> · {formatDate(i.entry.day, locale)} · {t(`qc.dept.${i.responsibleDept}`)} · {t("qc.actionsCount", { n: i._count.actions })} · {formatDateTime(i.createdAt, locale)}</p>
                   </Link>
                 </li>
               ))}

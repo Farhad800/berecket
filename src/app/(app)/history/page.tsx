@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
-import { AlertTriangle, ArrowLeftRight, CalendarClock, Clock, Wrench } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, CalendarClock, Wrench } from "lucide-react";
 import { pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate, formatDateTime, formatNumber } from "@/lib/time";
@@ -11,7 +11,7 @@ export const metadata = { title: "Mold & Machine History" };
 const DAYS = 90;
 const REPEAT_LIMIT = 3; // breakdowns in 90 days that flag a repeated failure
 
-type Ev = { at: Date; kind: "report" | "request" | "downtime" | "moldchange"; title: string; sub?: string; href?: string; tone?: "red" | "amber" | "blue" | "green" | "gray" | "purple"; badge?: string };
+type Ev = { at: Date; kind: "report" | "request" | "moldchange"; title: string; sub?: string; href?: string; tone?: "red" | "amber" | "blue" | "green" | "gray" | "purple"; badge?: string };
 
 export default async function HistoryPage({ searchParams }: { searchParams: Promise<{ machine?: string; mold?: string; days?: string }> }) {
   await pageUser("maintenance:view");
@@ -30,13 +30,13 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   // ── Overview: one row per machine
   if (!sp.machine && !sp.mold) {
     const [downs, breakdowns, openReq, changes] = await Promise.all([
-      db.downtime.findMany({ where: { startedAt: { gte: since } }, select: { machineId: true, startedAt: true, endedAt: true } }),
-      db.downtime.groupBy({ by: ["machineId"], where: { startedAt: { gte: since }, category: "BREAKDOWN" }, _count: true }),
+      db.maintenanceRequest.findMany({ where: { createdAt: { gte: since }, machineDown: true }, select: { machineId: true, createdAt: true, readyAt: true } }),
+      db.maintenanceRequest.groupBy({ by: ["machineId"], where: { createdAt: { gte: since }, machineDown: true, isPreventive: false }, _count: true }),
       db.maintenanceRequest.groupBy({ by: ["machineId"], where: { status: { in: ["OPEN", "IN_PROGRESS", "WAITING_PARTS"] } }, _count: true }),
       db.serviceReport.groupBy({ by: ["machineId"], where: { startTime: { gte: since }, OR: [{ moldInstalledId: { not: null } }, { moldRemovedId: { not: null } }] }, _count: true }),
     ]);
     const mins = new Map<string, number>();
-    for (const d of downs) mins.set(d.machineId, (mins.get(d.machineId) ?? 0) + ((d.endedAt?.getTime() ?? Date.now()) - d.startedAt.getTime()) / 60000);
+    for (const d of downs) mins.set(d.machineId, (mins.get(d.machineId) ?? 0) + ((d.readyAt?.getTime() ?? Date.now()) - d.createdAt.getTime()) / 60000);
     const cnt = (arr: { machineId: string; _count: number }[], id: string) => arr.find((x) => x.machineId === id)?._count ?? 0;
 
     return (
@@ -104,14 +104,13 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   if (!subject) return <EmptyState>{t("common.empty")}</EmptyState>;
   const id = subject.id;
 
-  const [reports, requests, downtimes, preventive, users] = await Promise.all([
+  const [reports, requests, preventive, users] = await Promise.all([
     db.serviceReport.findMany({
       where: { startTime: { gte: since }, ...(isMold ? { OR: [{ moldId: id }, { moldRemovedId: id }, { moldInstalledId: id }] } : { machineId: id }) },
       orderBy: { startTime: "desc" }, take: 200,
       include: { machine: { select: { code: true } }, moldRemoved: { select: { code: true } }, moldInstalled: { select: { code: true } } },
     }),
     db.maintenanceRequest.findMany({ where: { createdAt: { gte: since }, ...(isMold ? { moldId: id } : { machineId: id }) }, orderBy: { createdAt: "desc" }, take: 200 }),
-    isMold ? Promise.resolve([]) : db.downtime.findMany({ where: { machineId: id, startedAt: { gte: since } }, orderBy: { startedAt: "desc" }, take: 300 }),
     db.preventiveTask.findMany({ where: { active: true, ...(isMold ? { moldId: id } : { machineId: id }) }, orderBy: { nextDueAt: "asc" } }),
     db.user.findMany({ select: { id: true, fullName: true } }),
   ]);
@@ -130,20 +129,14 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
     });
   }
   for (const r of requests) events.push({ at: r.createdAt, kind: "request", title: r.title, sub: `${r.number} · ${name(r.reportedById)}`, href: `/service/requests/${r.id}`, tone: MAINT_TONE[r.status] as Ev["tone"], badge: t(`status.maint.${r.status}`) });
-  const mins = (d: { startedAt: Date; endedAt: Date | null }) => Math.round(((d.endedAt?.getTime() ?? Date.now()) - d.startedAt.getTime()) / 60000);
-  for (const d of downtimes) events.push({ at: d.startedAt, kind: "downtime", title: `${t(`prod.cat.${d.category}`)} · ${t("prod.minutes", { n: mins(d) })}`, sub: d.reason, tone: d.category === "BREAKDOWN" ? "red" : "amber" });
   events.sort((a, b) => b.at.getTime() - a.at.getTime());
 
-  const byCat = new Map<string, number>();
-  for (const d of downtimes) byCat.set(d.category, (byCat.get(d.category) ?? 0) + mins(d));
-  const totalDown = [...byCat.values()].reduce((a, b) => a + b, 0);
-  // One breakdown = one event: a stop already linked to a request isn't counted twice.
-  const breakdowns =
-    requests.filter((r) => r.machineDown && !r.isPreventive).length +
-    downtimes.filter((d) => d.category === "BREAKDOWN" && !d.maintenanceRequestId).length;
+  // Machine stopped time = from a "machine down" request until it was ready again.
+  const totalDown = requests.filter((r) => r.machineDown).reduce((s, r) => s + ((r.readyAt?.getTime() ?? Date.now()) - r.createdAt.getTime()) / 60000, 0);
+  const breakdowns = requests.filter((r) => r.machineDown && !r.isPreventive).length;
   const repeated = !isMold && breakdowns >= REPEAT_LIMIT;
   const moldChanges = reports.filter((r) => r.moldInstalledId || r.moldRemovedId).length;
-  const icons = { report: Wrench, request: Wrench, downtime: Clock, moldchange: ArrowLeftRight };
+  const icons = { report: Wrench, request: Wrench, moldchange: ArrowLeftRight };
   const base = `/history?${isMold ? "mold" : "machine"}=${id}&`;
 
   return (
@@ -188,19 +181,6 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
           )}
         </Card>
         <div className="space-y-4">
-          {!isMold && byCat.size > 0 && (
-            <Card>
-              <h2 className="mb-3 font-semibold">{t("hist.downtimeByReason")}</h2>
-              <ul className="space-y-2 text-sm">
-                {[...byCat.entries()].sort((a, b) => b[1] - a[1]).map(([cat, m]) => (
-                  <li key={cat}>
-                    <div className="flex justify-between"><span>{t(`prod.cat.${cat}`)}</span><span className="tabular-nums">{t("prod.minutes", { n: n(m) })}</span></div>
-                    <div className="mt-1 h-1.5 rounded-full bg-surface-2"><div className="h-full rounded-full bg-amber-500" style={{ width: `${(m / totalDown) * 100}%` }} /></div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
           <Card>
             <h2 className="mb-3 flex items-center gap-2 font-semibold"><CalendarClock className="size-4" /> {t("svc.tab.preventive")}</h2>
             {preventive.length === 0 ? <p className="text-sm text-muted">{t("svc.noPreventive")}</p> : (

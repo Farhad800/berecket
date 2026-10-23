@@ -16,7 +16,6 @@ export default async function ServiceReportPage({ params }: { params: Promise<{ 
     where: { id },
     include: {
       machine: true, mold: true, moldRemoved: true, moldInstalled: true,
-      order: { select: { id: true, number: true } },
       maintenanceRequest: { select: { id: true, number: true, title: true } },
     },
   });
@@ -36,7 +35,6 @@ export default async function ServiceReportPage({ params }: { params: Promise<{ 
     [t("svc.endTime"), formatDateTime(r.endTime, locale)],
     [t("svc.downtimeMinutes"), t("prod.minutes", { n: r.downtimeMinutes })],
     [t("svc.relatedRequest"), r.maintenanceRequest ? <Link key="r" href={`/service/requests/${r.maintenanceRequest.id}`} className="text-brand-600 hover:underline">{r.maintenanceRequest.number} · {r.maintenanceRequest.title}</Link> : "—"],
-    [t("svc.relatedOrder"), r.order ? <Link key="o" href={`/orders/${r.order.id}`} className="text-brand-600 hover:underline" dir="ltr">{r.order.number}</Link> : "—"],
   ];
   const texts: [string, string | null][] = [
     [t("svc.workPerformed"), r.workPerformed],
