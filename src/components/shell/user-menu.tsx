@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { ChevronDown, KeyRound, LogOut } from "lucide-react";
 import { logoutAction } from "@/app/actions/auth";
 import LanguageSwitcher from "@/components/language-switcher";
+import { removePushSubscriptionAction } from "@/app/actions/push";
+import { getEndpoint } from "@/components/push/client";
 
 export default function UserMenu({ name, role }: { name: string; role: string }) {
   const t = useTranslations();
@@ -45,7 +47,14 @@ export default function UserMenu({ name, role }: { name: string; role: string })
           <Link href="/change-password" className="flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm hover:bg-surface-2">
             <KeyRound className="size-4" /> {t("auth.changePassword")}
           </Link>
-          <form action={logoutAction}>
+          <form
+            action={async () => {
+              // A signed-out phone must stop getting this employee's notifications.
+              const ep = await getEndpoint().catch(() => null);
+              if (ep) await removePushSubscriptionAction(ep).catch(() => {});
+              await logoutAction();
+            }}
+          >
             <button className="flex min-h-10 w-full items-center gap-2 rounded-lg px-2 text-sm text-red-600 hover:bg-surface-2">
               <LogOut className="size-4" /> {t("common.signOut")}
             </button>

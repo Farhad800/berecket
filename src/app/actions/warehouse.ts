@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 import { audit } from "@/lib/audit";
 import { run, formObject, UserError } from "@/lib/action";
 import { getStock, lockProduct } from "@/lib/stock";
@@ -47,6 +48,10 @@ export async function stockOutAction(_: unknown, fd: FormData) {
         await tx.stockMovement.create({ data: { productId: r.productId, type: "OUT", qty: -r.qty, reference: reference ?? null, createdById: me.id } });
       }
       await audit({ userId: me.id, action: "stock.out", entityType: "StockMovement", reason: reference ?? null, after: { lines: rows.map((r) => `${code(r.productId)} × ${r.qty}`) } }, tx);
+      await notify({
+        type: "stock.out", data: { pcs: rows.reduce((s, r) => s + r.qty, 0), products: rows.length, ref: reference ?? "—", by: me.fullName },
+        link: "/inventory?tab=movements", toPermission: "warehouse:view", exceptUserId: me.id,
+      }, tx);
     });
     refresh();
     return { lines: rows.length, pieces: rows.reduce((s, r) => s + r.qty, 0) };
@@ -73,6 +78,10 @@ export async function adjustStockAction(_: unknown, fd: FormData) {
       if (have + v.qty < 0) throw new UserError(`Only ${have.toLocaleString("en")} pcs of ${p.code} in stock.`);
       await tx.stockMovement.create({ data: { productId: v.productId, type: "ADJUST", qty: v.qty, reason: `${v.kind}: ${v.reason}`, createdById: me.id } });
       await audit({ userId: me.id, action: "stock.adjust", entityType: "StockMovement", reason: v.reason, before: { stock: have }, after: { product: p.code, qty: v.qty, kind: v.kind, stock: have + v.qty } }, tx);
+      await notify({
+        type: "stock.adjusted", data: { product: p.code, qty: `${v.qty > 0 ? "+" : "−"}${Math.abs(v.qty).toLocaleString("en")}`, reason: v.reason, by: me.fullName },
+        link: "/inventory?tab=movements", toPermission: "warehouse:view", exceptUserId: me.id,
+      }, tx);
     });
     refresh();
   });

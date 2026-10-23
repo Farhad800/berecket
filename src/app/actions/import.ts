@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 import { audit } from "@/lib/audit";
 import { run, UserError } from "@/lib/action";
 import { planImport, readFile, type Plan, type SheetKey } from "@/lib/import";
@@ -41,6 +42,11 @@ export async function importMasterDataAction(_: unknown, fd: FormData) {
       const p = await planImport(parsed.sheets, parsed.errors, true, tx);
       if (p.errors.length) return p;
       await audit({ userId: me.id, action: "masterdata.import", entityType: "System", reason: file.name, after: p.counts }, tx);
+      const n = (k: SheetKey) => p.counts[k].create + p.counts[k].update;
+      if (!p.empty) await notify({
+        type: "masterdata.imported", data: { products: n("products"), molds: n("molds"), machines: n("machines"), by: me.fullName },
+        link: "/products", toPermission: "products:view", exceptUserId: me.id,
+      }, tx);
       return p;
     }, { timeout: 120_000, maxWait: 10_000 });
     if (!plan.errors.length) { revalidatePath("/products"); revalidatePath("/assets"); }

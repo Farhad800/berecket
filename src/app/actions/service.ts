@@ -60,11 +60,10 @@ export async function createRequestAction(_: unknown, fd: FormData) {
       if (down) await tx.machine.update({ where: { id: v.machineId }, data: { status: "DOWN" } });
       await audit({ userId: me.id, action: "maintenance.create", entityType: "MaintenanceRequest", entityId: r.id, after: { number: r.number, machineDown: down } }, tx);
       await notify({
-        type: "maintenance.new",
-        title: `${r.number}: ${r.machine.code} — ${r.title}`,
-        body: down ? "Machine is down." : undefined,
+        type: down ? "maintenance.newDown" : "maintenance.new",
+        data: { number: r.number, machine: r.machine.code, problem: r.title, by: me.fullName },
         link: `/service/requests/${r.id}`,
-        toPermission: "maintenance:edit",
+        toPermission: "maintenance:view",
         exceptUserId: me.id,
       }, tx);
       return r;
@@ -111,9 +110,8 @@ export async function requestTransitionAction(requestId: string, action: ReqActi
           const released = await releaseMachineIfClear(r.machineId, tx);
           // Tell Production the machine can run again (and whoever reported it).
           await notify({
-            type: "maintenance.completed",
-            title: released && r.machineDown ? `${r.machine.code} is ready to run again` : `${r.number} repair completed`,
-            body: `${r.title} — ${text}`,
+            type: released && r.machineDown ? "maintenance.ready" : "maintenance.completed",
+            data: { number: r.number, machine: r.machine.code, problem: r.title, text: text ?? "", by: me.fullName },
             link: `/service/requests/${r.id}`,
             toPermission: "production:edit",
             toUserIds: [r.reportedById],
@@ -122,7 +120,7 @@ export async function requestTransitionAction(requestId: string, action: ReqActi
           }, tx);
           await notify({
             type: "maintenance.verify",
-            title: `${r.number} is waiting for verification`,
+            data: { number: r.number, machine: r.machine.code, problem: r.title, by: me.fullName },
             link: `/service/requests/${r.id}`,
             toPermission: "maintenance:approve",
             exceptUserId: me.id,
@@ -138,7 +136,7 @@ export async function requestTransitionAction(requestId: string, action: ReqActi
           if (!["COMPLETED", "VERIFIED"].includes(r.status)) throw new UserError("Only completed work can be reopened.");
           await tx.maintenanceRequest.update({ where: { id: r.id }, data: { status: "IN_PROGRESS", completedAt: null, verifiedAt: null, verifiedById: null, readyAt: null } });
           if (r.machineDown) await tx.machine.update({ where: { id: r.machineId }, data: { status: "MAINTENANCE" } });
-          await notify({ type: "maintenance.reopened", title: `${r.number} reopened`, body: text, link: `/service/requests/${r.id}`, toPermission: "maintenance:edit", exceptUserId: me.id }, tx);
+          await notify({ type: "maintenance.reopened", data: { number: r.number, machine: r.machine.code, text: text ?? "", by: me.fullName }, link: `/service/requests/${r.id}`, toPermission: "maintenance:edit", exceptUserId: me.id }, tx);
           break;
         case "cancel":
           if (r.status !== "OPEN") throw new UserError("Only requests that haven't been started can be cancelled.");
@@ -159,7 +157,7 @@ export async function assignRequestAction(requestId: string, userId: string) {
     if (!tech) throw new UserError("That employee isn't active.");
     const r = await db.maintenanceRequest.update({ where: { id: requestId }, data: { assignedToId: userId } });
     await audit({ userId: me.id, action: "maintenance.assign", entityType: "MaintenanceRequest", entityId: requestId, after: { assignedTo: tech.fullName } });
-    if (userId !== me.id) await notify({ type: "maintenance.assigned", title: `${r.number} assigned to you`, body: r.title, link: `/service/requests/${r.id}`, toUserIds: [userId] });
+    if (userId !== me.id) await notify({ type: "maintenance.assigned", data: { number: r.number, problem: r.title, by: me.fullName }, link: `/service/requests/${r.id}`, toUserIds: [userId] });
     refreshService(requestId);
   });
 }
@@ -229,6 +227,7 @@ export async function createServiceReportAction(_: unknown, fd: FormData) {
         if (mr?.status === "OPEN") await tx.maintenanceRequest.update({ where: { id: mr.id }, data: { status: "IN_PROGRESS", assignedToId: mr.assignedToId ?? me.id } });
       }
       await audit({ userId: me.id, action: "service.report", entityType: "ServiceReport", entityId: r.id, after: { number: r.number, machine: machine.code, moldRemoved: v.moldRemovedId ?? null, moldInstalled: v.moldInstalledId ?? null, downtime } }, tx);
+      await notify({ type: "service.report", data: { number: r.number, machine: machine.code, work: v.workPerformed.slice(0, 200), by: me.fullName }, link: `/service/reports/${r.id}`, toPermission: "service:view", exceptUserId: me.id }, tx);
       return r;
     });
     id = sr.id;

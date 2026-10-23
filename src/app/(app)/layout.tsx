@@ -6,6 +6,8 @@ import UserMenu from "@/components/shell/user-menu";
 import AutoRefresh from "@/components/shell/auto-refresh";
 import GlobalSearch from "@/components/shell/global-search";
 import { Logo } from "@/components/ui";
+import PushAgent from "@/components/push/push-agent";
+import { pushPublicKey } from "@/lib/push";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const me = await pageUser();
@@ -30,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <main className="mx-auto w-full max-w-7xl flex-1 px-3 py-5 pb-24 sm:px-6">{children}</main>
       </div>
       <AutoRefresh seconds={30} />
+      <PushAgent publicKey={pushPublicKey()} unread={unread} />
     </div>
   );
 }

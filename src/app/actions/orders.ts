@@ -60,8 +60,8 @@ export async function createOrderAction(_: unknown, fd: FormData) {
       const pieces = lines.reduce((s, l) => s + l.quantity, 0);
       await audit({ userId: me.id, action: "order.create", entityType: "Order", entityId: o.id, after: { number: o.number, products: lines.length, pieces } }, tx);
       await notify({
-        type: "order.new", title: `New order ${o.number}: ${lines.length} products, ${pieces.toLocaleString("en")} pcs`,
-        link: `/orders/${o.id}`, toPermission: "production:create", exceptUserId: me.id,
+        type: "order.new", data: { number: o.number, products: lines.length, pcs: pieces, by: me.fullName },
+        link: `/orders/${o.id}`, toPermission: "orders:view", exceptUserId: me.id,
       }, tx);
       return o;
     });
@@ -92,6 +92,10 @@ export async function updateOrderAction(_: unknown, fd: FormData) {
         before: { lines: before.lines.map((l) => `${l.product.code} × ${l.quantity}`) },
         after: { lines: lines.map((l) => `${code(l.productId)} × ${l.quantity}`) },
       }, tx);
+      await notify({
+        type: "order.changed", data: { number: before.number, products: lines.length, pcs: lines.reduce((s, l) => s + l.quantity, 0), by: me.fullName },
+        link: `/orders/${id}`, toPermission: "orders:view", exceptUserId: me.id,
+      }, tx);
     });
     revalidatePath(`/orders/${id}`);
     revalidatePath("/orders");
@@ -120,6 +124,10 @@ export async function orderTransitionAction(orderId: string, action: "complete" 
         });
       }
       await audit({ userId: me.id, action: `order.${action}`, entityType: "Order", entityId: orderId, reason: why || null, before: { status: o.status } }, tx);
+      await notify({
+        type: action === "complete" ? "order.completed" : action === "cancel" ? "order.cancelled" : "order.reopened",
+        data: { number: o.number, by: me.fullName, reason: why || "—" }, link: `/orders/${orderId}`, toPermission: "orders:view", exceptUserId: me.id,
+      }, tx);
     });
     revalidatePath(`/orders/${orderId}`);
     revalidatePath("/orders");
@@ -142,6 +150,7 @@ export async function deleteOrderAction(orderId: string, reason?: string) {
         userId: me.id, action: "order.delete", entityType: "Order", entityId: orderId, reason: why,
         before: { number: o.number, status: o.status, lines: o.lines.map((l) => `${l.product.code} × ${l.quantity}`) },
       }, tx);
+      await notify({ type: "order.deleted", data: { number: o.number, by: me.fullName, reason: why }, link: "/orders", toPermission: "orders:view", exceptUserId: me.id }, tx);
     });
     revalidatePath("/orders");
     revalidatePath("/dashboard");

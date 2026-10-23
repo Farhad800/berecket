@@ -5,6 +5,7 @@ import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 import { audit, diff } from "@/lib/audit";
 import { run, formObject, UserError } from "@/lib/action";
 
@@ -49,6 +50,7 @@ export async function saveProductAction(_: unknown, fd: FormData) {
     } else {
       const p = await db.product.create({ data });
       await audit({ userId: me.id, action: "product.create", entityType: "Product", entityId: p.id, after: { code: p.code, name: p.name } });
+      await notify({ type: "product.added", data: { name: p.name, code: p.code, by: me.fullName }, link: `/products?q=${encodeURIComponent(p.code)}`, toPermission: "products:view", exceptUserId: me.id });
     }
     revalidatePath("/products");
     revalidatePath("/assets");
@@ -81,6 +83,7 @@ export async function saveMachineAction(_: unknown, fd: FormData) {
     } else {
       const m = await db.machine.create({ data });
       await audit({ userId: me.id, action: "machine.create", entityType: "Machine", entityId: m.id, after: { code: m.code } });
+      await notify({ type: "machine.added", data: { name: m.name, code: m.code, by: me.fullName }, link: "/assets", toPermission: "assets:view", exceptUserId: me.id });
     }
     revalidatePath("/assets");
   });
@@ -111,6 +114,7 @@ export async function saveMoldAction(_: unknown, fd: FormData) {
     } else {
       const m = await db.mold.create({ data });
       await audit({ userId: me.id, action: "mold.create", entityType: "Mold", entityId: m.id, after: { code: m.code } });
+      await notify({ type: "mold.added", data: { name: m.name, code: m.code, by: me.fullName }, link: "/assets?tab=molds", toPermission: "assets:view", exceptUserId: me.id });
     }
     revalidatePath("/assets");
   });
@@ -129,14 +133,15 @@ export async function setArchivedAction(kind: keyof typeof ARCHIVABLE, id: strin
     if (!cfg) throw new UserError("Unknown record type.");
     const me = await requirePermission(cfg.perm);
     const archivedAt = archived ? new Date() : null;
-    if (kind === "product") {
-      await db.product.update({ where: { id }, data: { archivedAt } });
-    } else if (kind === "machine") {
-      await db.machine.update({ where: { id }, data: { archivedAt } });
-    } else {
-      await db.mold.update({ where: { id }, data: { archivedAt } });
-    }
+    const rec =
+      kind === "product" ? await db.product.update({ where: { id }, data: { archivedAt } })
+      : kind === "machine" ? await db.machine.update({ where: { id }, data: { archivedAt } })
+      : await db.mold.update({ where: { id }, data: { archivedAt } });
     await audit({ userId: me.id, action: `${kind}.${archived ? "archive" : "restore"}`, entityType: kind[0].toUpperCase() + kind.slice(1), entityId: id });
+    await notify({
+      type: `${kind}.${archived ? "archived" : "restored"}`, data: { name: rec.name, code: rec.code, by: me.fullName },
+      link: kind === "product" ? "/products" : kind === "mold" ? "/assets?tab=molds" : "/assets", toPermission: kind === "product" ? "products:view" : "assets:view", exceptUserId: me.id,
+    });
     revalidatePath(cfg.path);
   });
 }
@@ -162,6 +167,7 @@ export async function deleteMasterAction(kind: keyof typeof ARCHIVABLE, id: stri
         if (await tx.stockMovement.count({ where: { productId: id } })) used("it has stock movements");
         await tx.product.delete({ where: { id } });
         await audit({ userId: me.id, action: "product.delete", entityType: "Product", entityId: id, before: { code: p.code, name: p.name } }, tx);
+        await notify({ type: "product.removed", data: { name: p.name, code: p.code, by: me.fullName }, link: "/products", toPermission: "products:view", exceptUserId: me.id }, tx);
       } else if (kind === "machine") {
         const m = await tx.machine.findUniqueOrThrow({ where: { id } });
         if (await tx.maintenanceRequest.count({ where: { machineId: id } })) used("it has maintenance requests");
@@ -170,6 +176,7 @@ export async function deleteMasterAction(kind: keyof typeof ARCHIVABLE, id: stri
         await tx.preventiveTask.deleteMany({ where: { machineId: id } });
         await tx.machine.delete({ where: { id } });
         await audit({ userId: me.id, action: "machine.delete", entityType: "Machine", entityId: id, before: { code: m.code, name: m.name } }, tx);
+        await notify({ type: "machine.removed", data: { name: m.name, code: m.code, by: me.fullName }, link: "/assets", toPermission: "assets:view", exceptUserId: me.id }, tx);
       } else {
         const m = await tx.mold.findUniqueOrThrow({ where: { id } });
         if (await tx.maintenanceRequest.count({ where: { moldId: id } })) used("it has maintenance requests");
@@ -178,6 +185,7 @@ export async function deleteMasterAction(kind: keyof typeof ARCHIVABLE, id: stri
         await tx.product.updateMany({ where: { moldId: id }, data: { moldId: null } });
         await tx.mold.delete({ where: { id } });
         await audit({ userId: me.id, action: "mold.delete", entityType: "Mold", entityId: id, before: { code: m.code, name: m.name } }, tx);
+        await notify({ type: "mold.removed", data: { name: m.name, code: m.code, by: me.fullName }, link: "/assets?tab=molds", toPermission: "assets:view", exceptUserId: me.id }, tx);
       }
     });
     revalidatePath(cfg.path);
@@ -245,6 +253,7 @@ export async function addLabelsAction(_: unknown, fd: FormData) {
       }
       if (data.length) await tx.product.createMany({ data });
       await audit({ userId: me.id, action: "product.bulk_create", entityType: "Mold", entityId: mold.id, after: { mold: mold.code, created: data.length, skipped: skipped.length } }, tx);
+      if (data.length) await notify({ type: "labels.added", data: { n: data.length, mold: mold.code, by: me.fullName }, link: `/products?mold=${mold.id}`, toPermission: "products:view", exceptUserId: me.id }, tx);
       revalidatePath("/products");
       revalidatePath("/assets");
       return { created: data.length, skipped } satisfies LabelsResult;

@@ -60,9 +60,10 @@ model User {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
-  sessions      Session[]
-  notifications Notification[]
-  auditLogs     AuditLog[]
+  sessions          Session[]
+  notifications     Notification[]
+  pushSubscriptions PushSubscription[]
+  auditLogs         AuditLog[]
 
   @@index([roleId])
 }
@@ -496,8 +497,26 @@ model Notification {
   title     String
   body      String?
   link      String?
+  /// Values for the translated text (messages nt.<type>), so each person reads it in their own language.
+  data      Json?
   readAt    DateTime?
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt])
+}
+
+/// A phone or computer that receives push notifications for a user (Web Push).
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  failures   Int      @default(0)
+
+  @@index([userId])
 }

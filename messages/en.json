@@ -1333,5 +1333,204 @@
       "molds": "Molds",
       "products": "Products / labels"
     }
+  },
+  "push": {
+    "askTitle": "Get notifications on this device",
+    "askBody": "New orders, production, QC results, stock and breakdowns will pop up even when the app is closed.",
+    "turnOn": "Turn on notifications",
+    "turnOff": "Turn off on this device",
+    "later": "Not now",
+    "thisDevice": "Notifications on this device",
+    "on": "On",
+    "off": "Off",
+    "explain": "Pop-up notifications, also when the app or browser is closed.",
+    "devicesN": "Turned on for you on {n} device(s).",
+    "test": "Send a test",
+    "testTitle": "Bereket FMS test",
+    "testBody": "Notifications work on this device.",
+    "testSent": "Test sent — it should pop up in a few seconds.",
+    "nowOn": "Done — this device will now get notifications.",
+    "dismissed": "The browser's question was closed without an answer. Press the button again and choose Allow.",
+    "failed": "Couldn't turn notifications on. Try again.",
+    "blocked": "Notifications are blocked for this site. Open the browser's site settings (the lock icon next to the address), set Notifications to Allow, then reload. On Android you can also check Settings → Apps → Chrome → Notifications.",
+    "iosInstall": "On iPhone, notifications work only from the installed app: tap Share → Add to Home Screen, open Bereket FMS from the home screen, then turn notifications on here.",
+    "unsupported": "This browser can't receive push notifications. Use Chrome, Edge, Firefox or Safari (installed app on iPhone).",
+    "notConfigured": "Push notifications aren't set up on the server yet."
+  },
+  "nt": {
+    "order": {
+      "new": {
+        "title": "New order {number}",
+        "body": "{products} products · {pcs} pcs · by {by}"
+      },
+      "changed": {
+        "title": "Order {number} changed",
+        "body": "Now {products} products · {pcs} pcs · by {by}"
+      },
+      "completed": {
+        "title": "Order {number} completed",
+        "body": "by {by}"
+      },
+      "cancelled": {
+        "title": "Order {number} cancelled",
+        "body": "{reason} · by {by}"
+      },
+      "reopened": {
+        "title": "Order {number} reopened",
+        "body": "{reason} · by {by}"
+      },
+      "deleted": {
+        "title": "Order {number} deleted",
+        "body": "{reason} · by {by}"
+      }
+    },
+    "production": {
+      "saved": {
+        "title": "Production entered: {pcs} pcs",
+        "body": "{products} products · {day} · shift {shift} · by {by}"
+      },
+      "corrected": {
+        "title": "Production corrected: {product}",
+        "body": "{before} → {after} pcs · {day} shift {shift} · {reason} · by {by}"
+      },
+      "deleted": {
+        "title": "Production entry deleted: {product}",
+        "body": "{before} pcs · {day} shift {shift} · {reason} · by {by}"
+      }
+    },
+    "qc": {
+      "approved": {
+        "title": "QC approved {product}",
+        "body": "{day} · shift {shift} · by {by}"
+      },
+      "rejected": {
+        "title": "QC rejected {pcs} pcs of {product}",
+        "body": "{day} · shift {shift} · removed from stock · by {by}"
+      },
+      "issue": {
+        "title": "Quality issue {number}: {defect} on {product}",
+        "body": "{entry} · {text}"
+      },
+      "critical": {
+        "title": "CRITICAL quality issue {number}: {defect} on {product}",
+        "body": "{entry} · {text}"
+      },
+      "verify": {
+        "title": "{number} is ready for QC verification",
+        "body": "{product} · by {by}"
+      }
+    },
+    "stock": {
+      "out": {
+        "title": "Goods out: {pcs} pcs",
+        "body": "{products} products · {ref} · by {by}"
+      },
+      "adjusted": {
+        "title": "Stock adjusted: {product} {qty}",
+        "body": "{reason} · by {by}"
+      }
+    },
+    "product": {
+      "added": {
+        "title": "New product: {name}",
+        "body": "{code} · by {by}"
+      },
+      "removed": {
+        "title": "Product deleted: {name}",
+        "body": "{code} · by {by}"
+      },
+      "archived": {
+        "title": "Product archived: {name}",
+        "body": "{code} · by {by}"
+      },
+      "restored": {
+        "title": "Product restored: {name}",
+        "body": "{code} · by {by}"
+      }
+    },
+    "machine": {
+      "added": {
+        "title": "New machine: {name}",
+        "body": "{code} · by {by}"
+      },
+      "removed": {
+        "title": "Machine deleted: {name}",
+        "body": "{code} · by {by}"
+      },
+      "archived": {
+        "title": "Machine archived: {name}",
+        "body": "{code} · by {by}"
+      },
+      "restored": {
+        "title": "Machine restored: {name}",
+        "body": "{code} · by {by}"
+      }
+    },
+    "mold": {
+      "added": {
+        "title": "New mold: {name}",
+        "body": "{code} · by {by}"
+      },
+      "removed": {
+        "title": "Mold deleted: {name}",
+        "body": "{code} · by {by}"
+      },
+      "archived": {
+        "title": "Mold archived: {name}",
+        "body": "{code} · by {by}"
+      },
+      "restored": {
+        "title": "Mold restored: {name}",
+        "body": "{code} · by {by}"
+      }
+    },
+    "labels": {
+      "added": {
+        "title": "{n} labels added to mold {mold}",
+        "body": "by {by}"
+      }
+    },
+    "masterdata": {
+      "imported": {
+        "title": "Excel import: {products} products, {molds} molds, {machines} machines",
+        "body": "by {by}"
+      }
+    },
+    "maintenance": {
+      "new": {
+        "title": "{number}: {machine} — {problem}",
+        "body": "New maintenance request · by {by}"
+      },
+      "newDown": {
+        "title": "Machine {machine} is DOWN — {problem}",
+        "body": "{number} · by {by}"
+      },
+      "completed": {
+        "title": "{number} repair completed",
+        "body": "{problem} — {text}"
+      },
+      "ready": {
+        "title": "{machine} is ready to run again",
+        "body": "{number} · {text}"
+      },
+      "verify": {
+        "title": "{number} is waiting for verification",
+        "body": "{machine} · {problem}"
+      },
+      "reopened": {
+        "title": "{number} reopened",
+        "body": "{machine} · {text} · by {by}"
+      },
+      "assigned": {
+        "title": "{number} assigned to you",
+        "body": "{problem} · by {by}"
+      }
+    },
+    "service": {
+      "report": {
+        "title": "Service report {number}: {machine}",
+        "body": "{work} · by {by}"
+      }
+    }
   }
 }

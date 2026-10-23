@@ -91,3 +91,8 @@ SETUP_TOKEN=<random> npm start     # then open /setup once
 ```
 
 Without `BLOB_READ_WRITE_TOKEN`, files are stored in `./.uploads` — include that folder in your backups.
+
+## Push notifications (Web Push)
+Set on Vercel (Production + Preview): `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (type *Sensitive* — server only), `VAPID_SUBJECT` (`mailto:` contact).
+Generate a new pair with `npx web-push generate-vapid-keys`. Changing the keys means every device has to turn notifications on again
+(the app re-registers devices automatically when permission is already granted).

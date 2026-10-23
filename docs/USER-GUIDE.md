@@ -36,6 +36,13 @@ d.
 
 n.
 
+## Notifications on your phone and computer
+- After signing in, tap **Turn on notifications** (or open the bell → *Notifications on this device*). Allow when the browser asks. Do this once on each phone and computer.
+- New and removed orders, daily production, QC results, goods out, stock adjustments, machine breakdowns, repairs and new or deleted products/molds/machines then pop up **even when the app or browser is closed**. You never get a notification for something you did yourself.
+- **iPhone:** first install the app (Safari → Share → *Add to Home Screen*), open it from the home screen, then turn notifications on.
+- **Blocked?** Open the browser's site settings (lock icon next to the address) → Notifications → Allow. On Android also check Settings → Apps → Chrome → Notifications.
+- Signing out stops notifications on that device until you sign in again.
+
 ## Management / everyone
 - **Dashboard**: live figures — tap any card to open the records behind it.
 - **Reports & Analytics**: 11 reports (production output, daily entries, orders, ordered vs. stock, maintenance, mold changes, defects, rejection rates, corrective actions, stock, stock movements). Pick dates and filters; export to Excel (CSV) or PDF if your role allows.

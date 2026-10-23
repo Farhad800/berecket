@@ -1,5 +1,8 @@
 import "server-only";
+import { after } from "next/server";
 import { db, type Tx } from "./db";
+import { pushNotifications } from "./push";
+import { notifText, type NotifData } from "./notif-text";
 import type { Permission } from "./permissions";
 
 /**
@@ -9,7 +12,9 @@ import type { Permission } from "./permissions";
 export async function notify(
   n: {
     type: string;
-    title: string;
+    /** Values for the translated text nt.<type>; the stored English title/body are a fallback. */
+    data?: NotifData;
+    title?: string;
     body?: string;
     link?: string;
     toPermission?: Permission;
@@ -41,7 +46,19 @@ export async function notify(
     recipients = ok.map((u) => u.id);
   }
   if (recipients.length === 0) return;
-  await tx.notification.createMany({
-    data: recipients.map((userId) => ({ userId, type: n.type, title: n.title.slice(0, 200), body: n.body?.slice(0, 1000) ?? null, link: n.link ?? null })),
+  const en = n.data ? notifText(n.type, n.data, "en") : null;
+  const title = (en?.title ?? n.title ?? n.type).slice(0, 200);
+  const body = (en?.body ?? n.body)?.slice(0, 1000) ?? null;
+  const created = await tx.notification.createManyAndReturn({
+    data: recipients.map((userId) => ({ userId, type: n.type, title, body, link: n.link ?? null, data: n.data ?? undefined })),
+    select: { id: true },
   });
+  // Push to phones/computers once the request has finished (and the transaction has committed).
+  const newIds = created.map((c) => c.id);
+  const send = () => pushNotifications(newIds).catch((e) => console.error("[push]", e));
+  try {
+    after(send);
+  } catch {
+    void send(); // outside a request (scripts)
+  }
 }

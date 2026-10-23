@@ -48,15 +48,14 @@ async function createIssue(
   const deptPerm = { PRODUCTION: "production:edit", SERVICE: "maintenance:edit", QC: "qc:edit", WAREHOUSE: "warehouse:edit" } as const;
   await notify({
     type: p.severity === "CRITICAL" ? "qc.critical" : "qc.issue",
-    title: `${p.severity === "CRITICAL" ? "CRITICAL — " : ""}${issue.number}: ${cat.name} on ${entry.product.code}`,
-    body: `${label} · ${p.description}`.slice(0, 500),
+    data: { number: issue.number, defect: cat.name, product: entry.product.code, entry: label, text: p.description.slice(0, 300) },
     link: `/qc/issues/${issue.id}`,
     toPermission: deptPerm[p.responsibleDept],
     exceptUserId: me.id,
     requires: "qc:view",
   }, tx);
   if (p.severity === "CRITICAL") {
-    await notify({ type: "qc.critical", title: `CRITICAL quality issue ${issue.number}`, body: `${cat.name} · ${label}`, link: `/qc/issues/${issue.id}`, toPermission: "qc:approve", exceptUserId: me.id }, tx);
+    await notify({ type: "qc.critical", data: { number: issue.number, defect: cat.name, product: entry.product.code, entry: label, text: p.description.slice(0, 300) }, link: `/qc/issues/${issue.id}`, toPermission: "qc:approve", exceptUserId: me.id }, tx);
   }
   return issue;
 }
@@ -126,11 +125,13 @@ export async function recordInspectionAction(_: unknown, fd: FormData) {
         userId: me.id, action: decision === "REJECT" ? "qc.reject" : "qc.approve", entityType: "ProductionEntry", entityId: entry.id, reason: v.notes ?? null,
         before: { qcStatus: entry.qcStatus }, after: { qcStatus: status, inspection: insp.number, inspected: v.qtyInspected, rejected: v.qtyRejected, sample, entry: label },
       }, tx);
-      if (decision === "REJECT") {
-        for (const perm of ["production:create", "warehouse:create"] as const) {
-          await notify({ type: "qc.rejected", title: `QC rejected ${v.qtyRejected.toLocaleString("en")} pcs of ${entry.product.code}`, body: `${label} · removed from stock`, link: `/qc/entries/${entry.id}`, toPermission: perm, exceptUserId: me.id, requires: "qc:view" }, tx);
-        }
-      }
+      const d = entry.day.toISOString().slice(0, 10);
+      await notify(
+        decision === "REJECT"
+          ? { type: "qc.rejected", data: { pcs: v.qtyRejected, product: entry.product.code, day: d, shift: entry.shift, by: me.fullName }, link: `/qc/entries/${entry.id}`, toPermission: "production:view", exceptUserId: me.id, requires: "qc:view" }
+          : { type: "qc.approved", data: { product: entry.product.code, day: d, shift: entry.shift, by: me.fullName }, link: `/qc/entries/${entry.id}`, toPermission: "production:view", exceptUserId: me.id, requires: "qc:view" },
+        tx,
+      );
       return { issueId };
     });
     refreshQc(v.entryId);
@@ -200,7 +201,7 @@ export async function issueTransitionAction(issueId: string, action: "submit" | 
         if (!["OPEN", "IN_PROGRESS", "REOPENED"].includes(issue.status)) throw new UserError("This issue can't be submitted now.");
         if (issue._count.actions === 0) throw new UserError("Record at least one corrective action first.");
         await tx.qualityIssue.update({ where: { id: issueId }, data: { status: "AWAITING_VERIFICATION" } });
-        await notify({ type: "qc.verify", title: `${issue.number} ready for QC verification`, body: issue.entry.product.code, link: `/qc/issues/${issueId}`, toPermission: "qc:approve", exceptUserId: me.id }, tx);
+        await notify({ type: "qc.verify", data: { number: issue.number, product: issue.entry.product.code, by: me.fullName }, link: `/qc/issues/${issueId}`, toPermission: "qc:approve", exceptUserId: me.id }, tx);
       } else if (action === "resolve") {
         if (issue.status !== "AWAITING_VERIFICATION" && !(issue._count.actions > 0 && ["IN_PROGRESS"].includes(issue.status))) {
           throw new UserError("Corrective action must be recorded before the issue can be resolved.");
@@ -235,7 +236,7 @@ export async function issueToMaintenanceAction(issueId: string, machineId: strin
       });
       await tx.qualityIssue.update({ where: { id: issueId }, data: { maintenanceRequestId: mr.id } });
       await audit({ userId: me.id, action: "maintenance.create", entityType: "MaintenanceRequest", entityId: mr.id, after: { number: mr.number, fromIssue: issue.number } }, tx);
-      await notify({ type: "maintenance.new", title: `${mr.number}: ${mr.title}`, link: `/service/requests/${mr.id}`, toPermission: "maintenance:edit", exceptUserId: me.id }, tx);
+      await notify({ type: "maintenance.new", data: { number: mr.number, machine: machine.code, problem: mr.title, by: me.fullName }, link: `/service/requests/${mr.id}`, toPermission: "maintenance:edit", exceptUserId: me.id }, tx);
       return mr.id;
     });
     refreshQc(undefined, issueId);

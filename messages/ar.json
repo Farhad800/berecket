@@ -1333,5 +1333,204 @@
       "molds": "القوالب",
       "products": "المنتجات / الملصقات"
     }
+  },
+  "push": {
+    "askTitle": "تلقَّ الإشعارات على هذا الجهاز",
+    "askBody": "ستظهر الطلبات الجديدة والإنتاج ونتائج الجودة والمخزون والأعطال حتى عندما يكون التطبيق مغلقاً.",
+    "turnOn": "تفعيل الإشعارات",
+    "turnOff": "إيقاف على هذا الجهاز",
+    "later": "ليس الآن",
+    "thisDevice": "الإشعارات على هذا الجهاز",
+    "on": "مفعّلة",
+    "off": "متوقفة",
+    "explain": "إشعارات منبثقة حتى عندما يكون التطبيق أو المتصفح مغلقاً.",
+    "devicesN": "مفعّلة لك على {n} جهاز.",
+    "test": "إرسال تجربة",
+    "testTitle": "تجربة نظام بركة",
+    "testBody": "الإشعارات تعمل على هذا الجهاز.",
+    "testSent": "أُرسلت التجربة — ستظهر خلال ثوانٍ.",
+    "nowOn": "تم — سيتلقى هذا الجهاز الإشعارات الآن.",
+    "dismissed": "أُغلق سؤال المتصفح دون إجابة. اضغط الزر مجدداً واختر «سماح».",
+    "failed": "تعذّر تفعيل الإشعارات. حاول مجدداً.",
+    "blocked": "الإشعارات محظورة لهذا الموقع. افتح إعدادات الموقع في المتصفح (رمز القفل بجانب العنوان) واجعل الإشعارات «سماح» ثم أعد التحميل. على أندرويد تحقق أيضاً من الإعدادات ← التطبيقات ← Chrome ← الإشعارات.",
+    "iosInstall": "على الآيفون تعمل الإشعارات فقط من التطبيق المثبّت: اضغط مشاركة ← إضافة إلى الشاشة الرئيسية، افتح Bereket FMS من الشاشة الرئيسية ثم فعّل الإشعارات هنا.",
+    "unsupported": "هذا المتصفح لا يدعم الإشعارات. استخدم Chrome أو Edge أو Firefox أو Safari (التطبيق المثبّت على الآيفون).",
+    "notConfigured": "الإشعارات غير مهيأة على الخادم بعد."
+  },
+  "nt": {
+    "order": {
+      "new": {
+        "title": "طلب جديد {number}",
+        "body": "{products} منتج · {pcs} قطعة · بواسطة {by}"
+      },
+      "changed": {
+        "title": "تم تعديل الطلب {number}",
+        "body": "الآن {products} منتج · {pcs} قطعة · بواسطة {by}"
+      },
+      "completed": {
+        "title": "اكتمل الطلب {number}",
+        "body": "بواسطة {by}"
+      },
+      "cancelled": {
+        "title": "أُلغي الطلب {number}",
+        "body": "{reason} · بواسطة {by}"
+      },
+      "reopened": {
+        "title": "أُعيد فتح الطلب {number}",
+        "body": "{reason} · بواسطة {by}"
+      },
+      "deleted": {
+        "title": "حُذف الطلب {number}",
+        "body": "{reason} · بواسطة {by}"
+      }
+    },
+    "production": {
+      "saved": {
+        "title": "أُدخل إنتاج: {pcs} قطعة",
+        "body": "{products} منتج · {day} · وردية {shift} · بواسطة {by}"
+      },
+      "corrected": {
+        "title": "تصحيح إنتاج: {product}",
+        "body": "{before} ← {after} قطعة · {day} وردية {shift} · {reason} · بواسطة {by}"
+      },
+      "deleted": {
+        "title": "حُذف إدخال إنتاج: {product}",
+        "body": "{before} قطعة · {day} وردية {shift} · {reason} · بواسطة {by}"
+      }
+    },
+    "qc": {
+      "approved": {
+        "title": "الجودة قبلت {product}",
+        "body": "{day} · وردية {shift} · بواسطة {by}"
+      },
+      "rejected": {
+        "title": "الجودة رفضت {pcs} قطعة من {product}",
+        "body": "{day} · وردية {shift} · أُزيلت من المخزون · بواسطة {by}"
+      },
+      "issue": {
+        "title": "مشكلة جودة {number}: {defect} في {product}",
+        "body": "{entry} · {text}"
+      },
+      "critical": {
+        "title": "مشكلة جودة حرجة {number}: {defect} في {product}",
+        "body": "{entry} · {text}"
+      },
+      "verify": {
+        "title": "{number} جاهزة لتحقق الجودة",
+        "body": "{product} · بواسطة {by}"
+      }
+    },
+    "stock": {
+      "out": {
+        "title": "إخراج بضاعة: {pcs} قطعة",
+        "body": "{products} منتج · {ref} · بواسطة {by}"
+      },
+      "adjusted": {
+        "title": "تسوية مخزون: {product} {qty}",
+        "body": "{reason} · بواسطة {by}"
+      }
+    },
+    "product": {
+      "added": {
+        "title": "منتج جديد: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "removed": {
+        "title": "حُذف منتج: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "archived": {
+        "title": "أُرشف منتج: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "restored": {
+        "title": "أُعيد منتج: {name}",
+        "body": "{code} · بواسطة {by}"
+      }
+    },
+    "machine": {
+      "added": {
+        "title": "آلة جديدة: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "removed": {
+        "title": "حُذفت آلة: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "archived": {
+        "title": "أُرشفت آلة: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "restored": {
+        "title": "أُعيدت آلة: {name}",
+        "body": "{code} · بواسطة {by}"
+      }
+    },
+    "mold": {
+      "added": {
+        "title": "قالب جديد: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "removed": {
+        "title": "حُذف قالب: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "archived": {
+        "title": "أُرشف قالب: {name}",
+        "body": "{code} · بواسطة {by}"
+      },
+      "restored": {
+        "title": "أُعيد قالب: {name}",
+        "body": "{code} · بواسطة {by}"
+      }
+    },
+    "labels": {
+      "added": {
+        "title": "أُضيف {n} ملصق إلى القالب {mold}",
+        "body": "بواسطة {by}"
+      }
+    },
+    "masterdata": {
+      "imported": {
+        "title": "استيراد إكسل: {products} منتج، {molds} قالب، {machines} آلة",
+        "body": "بواسطة {by}"
+      }
+    },
+    "maintenance": {
+      "new": {
+        "title": "{number}: {machine} — {problem}",
+        "body": "طلب صيانة جديد · بواسطة {by}"
+      },
+      "newDown": {
+        "title": "الآلة {machine} متوقفة — {problem}",
+        "body": "{number} · بواسطة {by}"
+      },
+      "completed": {
+        "title": "اكتمل إصلاح {number}",
+        "body": "{problem} — {text}"
+      },
+      "ready": {
+        "title": "{machine} جاهزة للعمل مجدداً",
+        "body": "{number} · {text}"
+      },
+      "verify": {
+        "title": "{number} بانتظار التحقق",
+        "body": "{machine} · {problem}"
+      },
+      "reopened": {
+        "title": "أُعيد فتح {number}",
+        "body": "{machine} · {text} · بواسطة {by}"
+      },
+      "assigned": {
+        "title": "أُسند إليك {number}",
+        "body": "{problem} · بواسطة {by}"
+      }
+    },
+    "service": {
+      "report": {
+        "title": "تقرير خدمة {number}: {machine}",
+        "body": "{work} · بواسطة {by}"
+      }
+    }
   }
 }

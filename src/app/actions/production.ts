@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 import { audit } from "@/lib/audit";
 import { run, formObject, UserError } from "@/lib/action";
 import { dayValue, todayYmd } from "@/lib/production";
@@ -55,6 +56,10 @@ export async function saveDailyEntriesAction(_: unknown, fd: FormData) {
           await tx.stockMovement.create({ data: { productId: r.productId, type: "PRODUCTION", qty: r.qty, entryId: entry.id, createdById: me.id } });
           await audit({ userId: me.id, action: "production.report", entityType: "ProductionEntry", entityId: entry.id, after: { day, shift, product: code.get(r.productId), qty: r.qty, total: entry.quantity } }, tx);
         }
+        await notify({
+          type: "production.saved", data: { pcs: rows.reduce((s, r) => s + r.qty, 0), products: rows.length, day, shift, by: me.fullName },
+          link: `/production?day=${day}`, toPermission: "production:view", exceptUserId: me.id,
+        }, tx);
       },
       { timeout: 60_000 },
     );
@@ -95,6 +100,12 @@ export async function correctEntryAction(_: unknown, fd: FormData) {
       await audit({
         userId: me.id, action: v.quantity === 0 ? "production.delete" : "production.correct", entityType: "ProductionEntry", entityId: e.id, reason: v.reason,
         before: { day: e.day.toISOString().slice(0, 10), shift: e.shift, product: e.product.code, qty: e.quantity }, after: { qty: v.quantity },
+      }, tx);
+      const d = e.day.toISOString().slice(0, 10);
+      await notify({
+        type: v.quantity === 0 ? "production.deleted" : "production.corrected",
+        data: { product: e.product.code, before: e.quantity, after: v.quantity, day: d, shift: e.shift, by: me.fullName, reason: v.reason },
+        link: `/production?day=${d}`, toPermission: "production:view", exceptUserId: me.id,
       }, tx);
     });
     refresh();

@@ -1333,5 +1333,204 @@
       "molds": "Kalıplar",
       "products": "Ürünler / etiketler"
     }
+  },
+  "push": {
+    "askTitle": "Bu cihazda bildirim alın",
+    "askBody": "Yeni siparişler, üretim, KK sonuçları, stok ve arızalar uygulama kapalıyken bile görünür.",
+    "turnOn": "Bildirimleri aç",
+    "turnOff": "Bu cihazda kapat",
+    "later": "Şimdi değil",
+    "thisDevice": "Bu cihazdaki bildirimler",
+    "on": "Açık",
+    "off": "Kapalı",
+    "explain": "Uygulama veya tarayıcı kapalıyken de açılır bildirimler.",
+    "devicesN": "Sizin için {n} cihazda açık.",
+    "test": "Test gönder",
+    "testTitle": "Bereket FMS testi",
+    "testBody": "Bildirimler bu cihazda çalışıyor.",
+    "testSent": "Test gönderildi — birkaç saniye içinde görünmeli.",
+    "nowOn": "Tamam — bu cihaz artık bildirim alacak.",
+    "dismissed": "Tarayıcının sorusu cevapsız kapatıldı. Düğmeye tekrar basıp İzin ver'i seçin.",
+    "failed": "Bildirimler açılamadı. Tekrar deneyin.",
+    "blocked": "Bu site için bildirimler engelli. Tarayıcının site ayarlarını açın (adresin yanındaki kilit simgesi), Bildirimler'i İzin ver yapın ve yenileyin. Android'de Ayarlar → Uygulamalar → Chrome → Bildirimler'i de kontrol edin.",
+    "iosInstall": "iPhone'da bildirimler yalnızca yüklü uygulamada çalışır: Paylaş → Ana Ekrana Ekle'ye dokunun, Bereket FMS'i ana ekrandan açın ve bildirimleri burada açın.",
+    "unsupported": "Bu tarayıcı bildirim alamaz. Chrome, Edge, Firefox veya Safari (iPhone'da yüklü uygulama) kullanın.",
+    "notConfigured": "Bildirimler sunucuda henüz ayarlanmadı."
+  },
+  "nt": {
+    "order": {
+      "new": {
+        "title": "Yeni sipariş {number}",
+        "body": "{products} ürün · {pcs} adet · {by}"
+      },
+      "changed": {
+        "title": "{number} siparişi değişti",
+        "body": "Şimdi {products} ürün · {pcs} adet · {by}"
+      },
+      "completed": {
+        "title": "{number} siparişi tamamlandı",
+        "body": "{by} tarafından"
+      },
+      "cancelled": {
+        "title": "{number} siparişi iptal edildi",
+        "body": "{reason} · {by}"
+      },
+      "reopened": {
+        "title": "{number} siparişi yeniden açıldı",
+        "body": "{reason} · {by}"
+      },
+      "deleted": {
+        "title": "{number} siparişi silindi",
+        "body": "{reason} · {by}"
+      }
+    },
+    "production": {
+      "saved": {
+        "title": "Üretim girildi: {pcs} adet",
+        "body": "{products} ürün · {day} · vardiya {shift} · {by}"
+      },
+      "corrected": {
+        "title": "Üretim düzeltildi: {product}",
+        "body": "{before} → {after} adet · {day} vardiya {shift} · {reason} · {by}"
+      },
+      "deleted": {
+        "title": "Üretim girişi silindi: {product}",
+        "body": "{before} adet · {day} vardiya {shift} · {reason} · {by}"
+      }
+    },
+    "qc": {
+      "approved": {
+        "title": "KK onayladı: {product}",
+        "body": "{day} · vardiya {shift} · {by}"
+      },
+      "rejected": {
+        "title": "KK {product} ürününden {pcs} adet reddetti",
+        "body": "{day} · vardiya {shift} · stoktan düşüldü · {by}"
+      },
+      "issue": {
+        "title": "Kalite sorunu {number}: {product} üzerinde {defect}",
+        "body": "{entry} · {text}"
+      },
+      "critical": {
+        "title": "KRİTİK kalite sorunu {number}: {product} üzerinde {defect}",
+        "body": "{entry} · {text}"
+      },
+      "verify": {
+        "title": "{number} KK doğrulaması için hazır",
+        "body": "{product} · {by}"
+      }
+    },
+    "stock": {
+      "out": {
+        "title": "Mal çıkışı: {pcs} adet",
+        "body": "{products} ürün · {ref} · {by}"
+      },
+      "adjusted": {
+        "title": "Stok düzeltildi: {product} {qty}",
+        "body": "{reason} · {by}"
+      }
+    },
+    "product": {
+      "added": {
+        "title": "Yeni ürün: {name}",
+        "body": "{code} · {by}"
+      },
+      "removed": {
+        "title": "Ürün silindi: {name}",
+        "body": "{code} · {by}"
+      },
+      "archived": {
+        "title": "Ürün arşivlendi: {name}",
+        "body": "{code} · {by}"
+      },
+      "restored": {
+        "title": "Ürün geri alındı: {name}",
+        "body": "{code} · {by}"
+      }
+    },
+    "machine": {
+      "added": {
+        "title": "Yeni makine: {name}",
+        "body": "{code} · {by}"
+      },
+      "removed": {
+        "title": "Makine silindi: {name}",
+        "body": "{code} · {by}"
+      },
+      "archived": {
+        "title": "Makine arşivlendi: {name}",
+        "body": "{code} · {by}"
+      },
+      "restored": {
+        "title": "Makine geri alındı: {name}",
+        "body": "{code} · {by}"
+      }
+    },
+    "mold": {
+      "added": {
+        "title": "Yeni kalıp: {name}",
+        "body": "{code} · {by}"
+      },
+      "removed": {
+        "title": "Kalıp silindi: {name}",
+        "body": "{code} · {by}"
+      },
+      "archived": {
+        "title": "Kalıp arşivlendi: {name}",
+        "body": "{code} · {by}"
+      },
+      "restored": {
+        "title": "Kalıp geri alındı: {name}",
+        "body": "{code} · {by}"
+      }
+    },
+    "labels": {
+      "added": {
+        "title": "{mold} kalıbına {n} etiket eklendi",
+        "body": "{by} tarafından"
+      }
+    },
+    "masterdata": {
+      "imported": {
+        "title": "Excel içe aktarma: {products} ürün, {molds} kalıp, {machines} makine",
+        "body": "{by} tarafından"
+      }
+    },
+    "maintenance": {
+      "new": {
+        "title": "{number}: {machine} — {problem}",
+        "body": "Yeni bakım talebi · {by}"
+      },
+      "newDown": {
+        "title": "{machine} makinesi ARIZALI — {problem}",
+        "body": "{number} · {by}"
+      },
+      "completed": {
+        "title": "{number} onarımı tamamlandı",
+        "body": "{problem} — {text}"
+      },
+      "ready": {
+        "title": "{machine} yeniden çalışmaya hazır",
+        "body": "{number} · {text}"
+      },
+      "verify": {
+        "title": "{number} doğrulama bekliyor",
+        "body": "{machine} · {problem}"
+      },
+      "reopened": {
+        "title": "{number} yeniden açıldı",
+        "body": "{machine} · {text} · {by}"
+      },
+      "assigned": {
+        "title": "{number} size atandı",
+        "body": "{problem} · {by}"
+      }
+    },
+    "service": {
+      "report": {
+        "title": "Servis raporu {number}: {machine}",
+        "body": "{work} · {by}"
+      }
+    }
   }
 }
