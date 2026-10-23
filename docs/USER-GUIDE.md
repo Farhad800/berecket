@@ -1,6 +1,11 @@
 # Quick guide for each department
 
-Sign in at **https://bereket-fms.vercel.app** with your own username. Your first password is temporary — choose your own. On a phone, tap **Install** (or browser menu → *Add to Home Screen*) to use it like an app. Change language with the globe icon. Everyone can *see* all factory records; buttons appear only for what your role may do. Search any number (order, product, machine, mold, inspection…) from the box at the top or press **/*## Sales
+Sign in at **https://bereket-fms.vercel.app** with your own username. Your first password is temporary — choose your own. On a phone, tap **Install** (or browser menu → *Add to Home Screen*) to use it like an app. Change language with the globe icon. Everyone can *see* all factory records; buttons appear only for what your role may do. Search any number (order, product, machine, mold, inspection…) from the box at the top or press **/*## Setting up products, molds and machines (once)
+- **Many at once — Excel:** Products → **Import from Excel** → *Download Excel template*. Fill the sheets *Machines*, *Molds* and *Products* (one row per label, with its mold code; product code can stay empty and is then made automatically, e.g. `MD-CAP28-001`). Upload → **Check file** shows how many are new/updated and lists any mistakes by row → **Import**. Importing the same file again updates rows instead of copying them.
+- **All labels of one mold — paste:** Machines & Molds → Molds → **Add labels** on the mold → paste the label names, one per line (a whole column copied from Excel works) → *Save*. Labels already on that mold are skipped.
+- Every printed label is its own product, linked to the mold it is made on. Products, the order sheet, the daily production sheet and the stock sheet all have a **mold** filter so 500+ labels stay easy to find.
+
+## Sales
 1. **Orders → New order**: the whole product list is shown as one sheet. Type the amount next to each product you need and leave the rest empty (Enter jumps to the next box; *Show only chosen* hides the empty ones). Press **Save order**. Up to 500 products per order. No customer or date is needed.
 2. While an order is **Open** you can *Edit* it (change amounts, add or remove products). Mark it **Completed** when everything has been delivered, or **Cancel** it (reason needed). A completed or cancelled order can be *Reopened*.
 3. An order typed by mistake can be removed with **Delete order** (reason needed; recorded in the audit log).

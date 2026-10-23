@@ -6,8 +6,9 @@ import { PackageMinus, Search } from "lucide-react";
 import { useFormAction } from "@/components/use-form-action";
 import { Alert, Button, Input, cn } from "@/components/ui";
 import { stockOutAction, type OutResult } from "@/app/actions/warehouse";
+import MoldSelect, { moldMatch, newGroup } from "@/components/mold-select";
 
-type Row = { id: string; code: string; name: string; stock: number };
+type Row = { id: string; code: string; name: string; mold: string | null; stock: number };
 const nf = (n: number) => n.toLocaleString("en");
 
 /** Stock per product; warehouse staff can type pieces going out for many products at once. */
@@ -15,13 +16,14 @@ export default function StockOut({ rows, canOut }: { rows: Row[]; canOut: boolea
   const t = useTranslations();
   const [filter, setFilter] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [mold, setMold] = useState("");
   const [vals, setVals] = useState<Record<string, string>>({});
   const { onSubmit, pending, error, state } = useFormAction(stockOutAction, { onSuccess: () => setVals({}), resetOnSuccess: true });
   const result = state?.ok ? (state.data as OutResult) : null;
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    return rows.filter((r) => (showAll || r.stock !== 0 || Number(vals[r.id]) > 0) && (!q || `${r.code} ${r.name}`.toLowerCase().includes(q)));
-  }, [rows, filter, showAll, vals]);
+    return rows.filter((r) => (showAll || r.stock !== 0 || Number(vals[r.id]) > 0) && moldMatch(r.mold, mold) && (!q || `${r.code} ${r.name} ${r.mold ?? ""}`.toLowerCase().includes(q)));
+  }, [rows, filter, showAll, vals, mold]);
   const filled = Object.entries(vals).filter(([, v]) => Number(v) > 0);
   const pieces = filled.reduce((s, [, v]) => s + Number(v), 0);
 
@@ -32,6 +34,7 @@ export default function StockOut({ rows, canOut }: { rows: Row[]; canOut: boolea
           <Search className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted start-3" />
           <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("order.filterProducts")} aria-label={t("order.filterProducts")} className="min-h-11 w-full rounded-lg border border-line bg-surface ps-9 pe-3 text-sm" />
         </label>
+        <MoldSelect rows={rows} value={mold} onChange={setMold} />
         <label className="flex min-h-11 items-center gap-2 text-sm">
           <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} className="size-5 accent-brand-600" /> {t("wh.showEmpty")}
         </label>
@@ -43,8 +46,9 @@ export default function StockOut({ rows, canOut }: { rows: Row[]; canOut: boolea
           <span>{t("order.product")}</span><span className="text-end">{t("order.inStock")}</span>{canOut && <span className="text-end">{t("wh.goingOut")}</span>}
         </div>
         <ul className="divide-y divide-line">
-          {shown.map((r) => (
+          {shown.map((r, i) => (
             <li key={r.id} className={cn("grid items-center gap-3 px-4 py-2", canOut ? "grid-cols-[1fr_7rem_8rem]" : "grid-cols-[1fr_7rem]", Number(vals[r.id]) > 0 && "bg-brand-50/60 dark:bg-brand-900/30")}>
+              {r.mold && newGroup(shown, i) && <p className="col-span-full -mx-4 -mt-2 mb-1 bg-surface-2 px-4 py-1 text-xs font-bold text-muted" dir="ltr">{r.mold}</p>}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{r.name}</p>
                 <p className="text-xs text-muted" dir="ltr">{r.code}</p>

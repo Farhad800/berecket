@@ -3,7 +3,8 @@ import type { Prisma } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
 import { pageUser, can } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { PageHeader, cn, type Tone } from "@/components/ui";
+import { FileSpreadsheet } from "lucide-react";
+import { LinkButton, PageHeader, cn, type Tone } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import MasterList from "@/components/master-list";
 import { saveMachineAction, saveMoldAction } from "@/app/actions/masterdata";
@@ -20,6 +21,7 @@ export default async function AssetsPage({ searchParams }: { searchParams: Promi
   const tab = sp.tab === "molds" ? "molds" : "machines";
   const q = sp.q?.trim();
   const archived = sp.archived === "1" ? { not: null } : null;
+  const canImport = can(me, "assets:create") || can(me, "products:create");
   const perms = { canCreate: can(me, "assets:create"), canEdit: can(me, "assets:edit"), canArchive: can(me, "assets:archive") };
 
   const tabs = (
@@ -69,7 +71,7 @@ export default async function AssetsPage({ searchParams }: { searchParams: Promi
     ];
     return (
       <>
-        <PageHeader title={t("nav.assets")} subtitle={`${machines.length}`} />
+        <PageHeader title={t("nav.assets")} subtitle={`${machines.length}`} actions={canImport ? <LinkButton href="/import" variant="secondary"><FileSpreadsheet className="size-4" /> {t("imp.button")}</LinkButton> : undefined} />
         {tabs}
         <ListToolbar
           filters={[
@@ -104,16 +106,16 @@ export default async function AssetsPage({ searchParams }: { searchParams: Promi
     );
   }
 
-  const [molds, products, machines] = await Promise.all([
+  const canAddLabels = can(me, "products:create");
+  const [molds, machines] = await Promise.all([
     db.mold.findMany({
       where: {
         archivedAt: archived,
         ...(q ? { OR: [{ code: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] } : {}),
       },
       orderBy: { code: "asc" },
-      include: { product: { select: { code: true, name: true } }, currentMachine: { select: { code: true } } },
+      include: { _count: { select: { products: { where: { archivedAt: null } } } }, currentMachine: { select: { code: true } } },
     }),
-    db.product.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
     db.machine.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
   ]);
   const statuses = ["AVAILABLE", "IN_USE", "IN_REPAIR", "RETIRED"];
@@ -121,14 +123,13 @@ export default async function AssetsPage({ searchParams }: { searchParams: Promi
     { name: "code", label: t("md.moldCode"), required: true, ltr: true },
     { name: "name", label: t("md.moldName"), required: true },
     { name: "cavities", label: t("md.cavities"), type: "number" as const, required: true, min: 1, ltr: true },
-    { name: "productId", label: t("md.product"), type: "combo" as const, options: products.map((p) => ({ value: p.id, label: p.name, hint: p.code })) },
     { name: "currentMachineId", label: t("md.currentMachine"), type: "combo" as const, options: machines.map((m) => ({ value: m.id, label: m.code, hint: m.name })) },
     { name: "status", label: t("common.status"), type: "select" as const, required: true, options: statuses.map((s) => ({ value: s, label: t(`status.mold.${s}`) })) },
     { name: "notes", label: t("md.notes"), type: "textarea" as const },
   ];
   return (
     <>
-      <PageHeader title={t("nav.assets")} subtitle={`${molds.length}`} />
+      <PageHeader title={t("nav.assets")} subtitle={`${molds.length}`} actions={canImport ? <LinkButton href="/import" variant="secondary"><FileSpreadsheet className="size-4" /> {t("imp.button")}</LinkButton> : undefined} />
       {tabs}
       <ListToolbar filters={[{ name: "archived", label: t("common.active"), options: [{ value: "1", label: t("common.archived") }] }]} />
       <MasterList
@@ -145,9 +146,13 @@ export default async function AssetsPage({ searchParams }: { searchParams: Promi
           badges: [{ label: t(`status.mold.${m.status}`), tone: MOLD_TONE[m.status] }],
           facts: [
             { label: t("md.cavities"), value: String(m.cavities) },
-            ...(m.product ? [{ label: t("md.product"), value: `${m.product.code} · ${m.product.name}` }] : []),
+            { label: t("md.labels"), value: m._count.products.toLocaleString("en") },
             ...(m.currentMachine ? [{ label: t("md.currentMachine"), value: m.currentMachine.code }] : []),
             { label: t("md.shots"), value: m.shotCount.toLocaleString("en") },
+          ],
+          links: [
+            { href: `/products?mold=${m.id}`, label: t("md.viewLabels") },
+            ...(canAddLabels ? [{ href: `/assets/molds/${m.id}/labels`, label: t("md.addLabels") }] : []),
           ],
           initial: { ...m },
         }))}

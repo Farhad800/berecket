@@ -6,8 +6,9 @@ import { Save, Search, X } from "lucide-react";
 import { useFormAction } from "@/components/use-form-action";
 import { Alert, Button, cn } from "@/components/ui";
 import { createOrderAction, updateOrderAction } from "@/app/actions/orders";
+import MoldSelect, { moldMatch, newGroup } from "@/components/mold-select";
 
-type Product = { id: string; code: string; name: string };
+type Product = { id: string; code: string; name: string; mold?: string | null };
 
 /**
  * The order sheet: every product with an amount box. The Sales Manager types the amounts
@@ -20,14 +21,15 @@ export default function OrderForm({ products, initial }: { products: Product[]; 
   );
   const [filter, setFilter] = useState("");
   const [onlyChosen, setOnlyChosen] = useState(false);
+  const [mold, setMold] = useState("");
   const { onSubmit, pending, error } = useFormAction(initial ? updateOrderAction : createOrderAction);
 
   const chosen = products.filter((p) => Number(qty[p.id]) > 0);
   const pieces = chosen.reduce((s, p) => s + Number(qty[p.id]), 0);
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    return products.filter((p) => (!onlyChosen || Number(qty[p.id]) > 0) && (!q || `${p.code} ${p.name}`.toLowerCase().includes(q)));
-  }, [products, filter, onlyChosen, qty]);
+    return products.filter((p) => (!onlyChosen || Number(qty[p.id]) > 0) && moldMatch(p.mold, mold) && (!q || `${p.code} ${p.name} ${p.mold ?? ""}`.toLowerCase().includes(q)));
+  }, [products, filter, onlyChosen, qty, mold]);
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
@@ -52,6 +54,7 @@ export default function OrderForm({ products, initial }: { products: Product[]; 
           <Search className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted start-3" />
           <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("order.filterProducts")} aria-label={t("order.filterProducts")} className="min-h-11 w-full rounded-lg border border-line bg-surface ps-9 pe-3 text-sm" />
         </label>
+        <MoldSelect rows={products} value={mold} onChange={setMold} />
         <label className="flex min-h-11 items-center gap-2 text-sm">
           <input type="checkbox" checked={onlyChosen} onChange={(e) => setOnlyChosen(e.target.checked)} className="size-5 accent-brand-600" /> {t("order.onlyChosen")}
         </label>
@@ -62,8 +65,9 @@ export default function OrderForm({ products, initial }: { products: Product[]; 
           <span>{t("order.product")}</span><span className="text-end">{t("order.quantity")} ({t("md.pcs")})</span>
         </div>
         <ul className="divide-y divide-line">
-          {shown.map((p) => (
+          {shown.map((p, i) => (
             <li key={p.id} className={cn("grid grid-cols-[1fr_9rem] items-center gap-3 px-4 py-2", Number(qty[p.id]) > 0 && "bg-brand-50/60 dark:bg-brand-900/30")}>
+              {p.mold && newGroup(shown, i) && <p className="col-span-2 -mx-4 -mt-2 mb-1 bg-surface-2 px-4 py-1 text-xs font-bold text-muted" dir="ltr">{p.mold}</p>}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{p.name}</p>
                 <p className="text-xs text-muted" dir="ltr">{p.code}</p>

@@ -212,7 +212,27 @@
     "product": "Product",
     "currentMachine": "Mounted on machine",
     "newMold": "New mold",
-    "shots": "Shot count"
+    "shots": "Shot count",
+    "mold": "Mold",
+    "labels": "Labels",
+    "labelsN": "{n} labels",
+    "productsN": "{n} products",
+    "viewLabels": "View labels",
+    "addLabels": "Add labels",
+    "moldOfProductHint": "The mold this product is made on. Every label on the same mold is its own product.",
+    "productNameHint": "For labelled products: the label name, e.g. “Zakho Water 500 ml”.",
+    "searchProducts": "Product, label, code or mold…",
+    "allMolds": "All molds",
+    "noMold": "Without a mold",
+    "showingFirst": "Showing the first {n} of {total}. Choose a mold or search to see the rest.",
+    "existingLabels": "Labels already on this mold",
+    "noLabelsYet": "No labels yet.",
+    "pasteLabels": "Labels — one per line",
+    "pasteLabelsHint": "Type or paste the label names, one per line (you can copy a whole column from Excel). Codes are given automatically ({code}-001, -002…). To use your own codes, paste two columns: code and name.",
+    "sameForAll": "Optional — applied to every label in this list:",
+    "saveLabels": "Save {n} labels",
+    "labelsSaved": "{n} labels saved as products.",
+    "labelsSkipped": "{n} were already there and were skipped."
   },
   "status": {
     "machine": {
@@ -463,7 +483,8 @@
       "update": "Product updated",
       "archive": "Product archived",
       "restore": "Product restored",
-      "delete": "Product deleted"
+      "delete": "Product deleted",
+      "bulk_create": "Labels added to a mold"
     },
     "machine": {
       "create": "Machine added",
@@ -487,6 +508,9 @@
     },
     "service": {
       "report": "Service report filed"
+    },
+    "masterdata": {
+      "import": "Imported from Excel"
     }
   },
   "sched": {
@@ -1279,5 +1303,35 @@
     "produced": "Produced",
     "onlyOrdered": "Only products in open orders",
     "noOrdered": "No product is in an open order. Untick the box to see all products."
+  },
+  "imp": {
+    "button": "Import from Excel",
+    "title": "Import from Excel",
+    "subtitle": "Add or update many machines, molds and products (labels) at once.",
+    "step1": "1. Download the template",
+    "step1Hint": "An Excel file with three sheets: Machines, Molds and Products. Fill it in, or paste your existing lists into it.",
+    "download": "Download Excel template",
+    "tip1": "One row per label on the Products sheet, with the mold code.",
+    "tip2": "Product code can stay empty — it is created automatically from the mold code.",
+    "tip3": "Importing the same file again updates rows instead of making copies.",
+    "tip4": "Nothing is saved until every row is correct.",
+    "step2": "2. Upload the filled-in file",
+    "choose": "Choose the Excel or CSV file",
+    "check": "Check file",
+    "reading": "Reading…",
+    "new": "New",
+    "updated": "Updated",
+    "unchanged": "Unchanged",
+    "hasErrors": "{n} problems found. Fix them in Excel and check the file again — nothing was saved.",
+    "row": "row {n}",
+    "ready": "The file is correct.",
+    "import": "Import {n} rows",
+    "done": "Imported. Open:",
+    "nothing": "Nothing new to import — everything in the file is already in the system.",
+    "sheet": {
+      "machines": "Machines",
+      "molds": "Molds",
+      "products": "Products / labels"
+    }
   }
 }

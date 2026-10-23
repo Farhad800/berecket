@@ -7,9 +7,10 @@ import { Save, Search } from "lucide-react";
 import { useFormAction } from "@/components/use-form-action";
 import { Alert, Button, cn } from "@/components/ui";
 import { saveDailyEntriesAction, type SheetResult } from "@/app/actions/production";
+import MoldSelect, { moldMatch, newGroup } from "@/components/mold-select";
 
 type Shift = "A" | "B" | "C";
-export type SheetRow = { id: string; code: string; name: string; ordered: number; stock: number; entered: Record<Shift, number> };
+export type SheetRow = { id: string; code: string; name: string; mold: string | null; ordered: number; stock: number; entered: Record<Shift, number> };
 const nf = (n: number) => n.toLocaleString("en");
 
 export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow[]; day: string; today: string; shift: Shift }) {
@@ -18,6 +19,7 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
   const [vals, setVals] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState("");
   const [onlyOrdered, setOnlyOrdered] = useState(rows.some((r) => r.ordered > 0));
+  const [mold, setMold] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const { onSubmit, pending, error, state } = useFormAction(saveDailyEntriesAction, { onSuccess: () => setVals({}) });
   const result = state?.ok ? (state.data as SheetResult) : null;
@@ -27,8 +29,8 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
 
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    return rows.filter((r) => (!onlyOrdered || r.ordered > 0 || Number(vals[r.id]) > 0) && (!q || `${r.code} ${r.name}`.toLowerCase().includes(q)));
-  }, [rows, filter, onlyOrdered, vals]);
+    return rows.filter((r) => (!onlyOrdered || r.ordered > 0 || Number(vals[r.id]) > 0) && moldMatch(r.mold, mold) && (!q || `${r.code} ${r.name} ${r.mold ?? ""}`.toLowerCase().includes(q)));
+  }, [rows, filter, onlyOrdered, vals, mold]);
   const filled = Object.entries(vals).filter(([, v]) => Number(v) > 0);
   const pieces = filled.reduce((s, [, v]) => s + Number(v), 0);
 
@@ -43,7 +45,7 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
     <form ref={formRef} onSubmit={onSubmit} className="pb-24">
       <input type="hidden" name="day" value={day} />
       <input type="hidden" name="shift" value={shift} />
-      <div className="mb-3 grid gap-2 rounded-2xl border border-line bg-surface p-3 sm:grid-cols-[auto_auto_1fr_auto] sm:items-end">
+      <div className="mb-3 grid gap-2 rounded-2xl border border-line bg-surface p-3 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-end">
         <label className="text-xs font-semibold text-muted">
           {t("prod.day")}
           <input type="date" value={day} max={today} onChange={(e) => e.target.value && go(e.target.value, shift)} className="mt-1 block min-h-11 rounded-lg border border-line bg-surface px-3 text-sm text-ink" dir="ltr" />
@@ -58,6 +60,7 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
           <Search className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted start-3" />
           <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("order.filterProducts")} aria-label={t("order.filterProducts")} className="min-h-11 w-full rounded-lg border border-line bg-surface ps-9 pe-3 text-sm" />
         </label>
+        <MoldSelect rows={rows} value={mold} onChange={setMold} />
         <label className="flex min-h-11 items-center gap-2 text-sm">
           <input type="checkbox" checked={onlyOrdered} onChange={(e) => setOnlyOrdered(e.target.checked)} className="size-5 accent-brand-600" /> {t("daily.onlyOrdered")}
         </label>
@@ -75,8 +78,9 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
           <span className="text-end">{t("daily.produced")}</span>
         </div>
         <ul className="divide-y divide-line">
-          {shown.map((r) => (
+          {shown.map((r, i) => (
             <li key={r.id} className={cn("grid grid-cols-[minmax(0,1fr)_8rem] items-center gap-x-3 gap-y-1 px-4 py-2 md:grid-cols-[minmax(0,1fr)_7rem_7rem_7rem_9rem]", Number(vals[r.id]) > 0 && "bg-brand-50/60 dark:bg-brand-900/30")}>
+              {r.mold && newGroup(shown, i) && <p className="col-span-full -mx-4 -mt-2 mb-1 bg-surface-2 px-4 py-1 text-xs font-bold text-muted" dir="ltr">{r.mold}</p>}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{r.name}</p>
                 <p className="text-xs text-muted">

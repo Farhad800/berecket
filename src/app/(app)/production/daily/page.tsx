@@ -23,7 +23,7 @@ export default async function DailyEntryPage({ searchParams }: { searchParams: P
   const shift = (["A", "B", "C"] as const).find((s) => s === sp.shift) ?? currentShift();
 
   const [products, demand, stock, entered] = await Promise.all([
-    db.product.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
+    db.product.findMany({ where: { archivedAt: null }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, code: true, name: true, mold: { select: { code: true } } } }),
     openOrderDemand(),
     getStock(),
     db.productionEntry.groupBy({ by: ["productId", "shift"], where: { day: dayValue(day) }, _sum: { quantity: true } }),
@@ -37,7 +37,7 @@ export default async function DailyEntryPage({ searchParams }: { searchParams: P
     );
   }
   const rows = products.map((p) => ({
-    id: p.id, code: p.code, name: p.name,
+    id: p.id, code: p.code, name: p.name, mold: p.mold?.code ?? null,
     ordered: demand.get(p.id) ?? 0,
     stock: stock.get(p.id) ?? 0,
     entered: Object.fromEntries((["A", "B", "C"] as const).map((s) => [s, entered.find((e) => e.productId === p.id && e.shift === s)?._sum.quantity ?? 0])) as Record<"A" | "B" | "C", number>,

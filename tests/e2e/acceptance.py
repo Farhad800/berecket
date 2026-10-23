@@ -74,7 +74,7 @@ with sync_playwright() as p:
         btn(A,"Save")
     for code in ["TOYO-01","TOYO-02"]:
         A.goto(B+"/assets"); A.click("text=New machine"); A.fill("#code",code); A.fill("#name","Toyo Si-180"); A.select_option("#status","AVAILABLE"); btn(A,"Save")
-    A.goto(B+"/assets?tab=molds"); A.click("text=New mold"); A.fill("#code","MD-CAP28"); A.fill("#name","Cap mold 24-cav"); A.fill("#cavities","24"); combo(A,"productId","CAP-28"); btn(A,"Save")
+    A.goto(B+"/assets?tab=molds"); A.click("text=New mold"); A.fill("#code","MD-CAP28"); A.fill("#name","Cap mold 24-cav"); A.fill("#cavities","24"); btn(A,"Save")
     ck("master data created (3 products, 2 machines, mold)", sql(f"SELECT (SELECT count(*) FROM {T('\"Product\"')})||'/'||(SELECT count(*) FROM {T('\"Machine\"')})||'/'||(SELECT count(*) FROM {T('\"Mold\"')})")=="3/2/1")
     pid=dict(r.split("|") for r in sql(f"SELECT code||'|'||id FROM {T('\"Product\"')}").split("\n"))
 

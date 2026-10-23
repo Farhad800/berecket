@@ -212,7 +212,27 @@
     "product": "Ürün",
     "currentMachine": "Takılı olduğu makine",
     "newMold": "Yeni kalıp",
-    "shots": "Baskı sayısı"
+    "shots": "Baskı sayısı",
+    "mold": "Kalıp",
+    "labels": "Etiketler",
+    "labelsN": "{n} etiket",
+    "productsN": "{n} ürün",
+    "viewLabels": "Etiketleri gör",
+    "addLabels": "Etiket ekle",
+    "moldOfProductHint": "Bu ürünün yapıldığı kalıp. Aynı kalıptaki her etiket ayrı bir üründür.",
+    "productNameHint": "Etiketli ürünler için etiket adı, örn. “Zakho Su 500 ml”.",
+    "searchProducts": "Ürün, etiket, kod veya kalıp…",
+    "allMolds": "Tüm kalıplar",
+    "noMold": "Kalıpsız",
+    "showingFirst": "{total} üründen ilk {n} gösteriliyor. Gerisi için kalıp seçin veya arayın.",
+    "existingLabels": "Bu kalıptaki etiketler",
+    "noLabelsYet": "Henüz etiket yok.",
+    "pasteLabels": "Etiketler — her satıra bir tane",
+    "pasteLabelsHint": "Etiket adlarını her satıra bir tane yazın veya yapıştırın (Excel'den bütün bir sütunu kopyalayabilirsiniz). Kodlar otomatik verilir ({code}-001, -002…). Kendi kodlarınız için iki sütun yapıştırın: kod ve ad.",
+    "sameForAll": "İsteğe bağlı — listedeki tüm etiketlere uygulanır:",
+    "saveLabels": "{n} etiketi kaydet",
+    "labelsSaved": "{n} etiket ürün olarak kaydedildi.",
+    "labelsSkipped": "{n} tanesi zaten vardı, atlandı."
   },
   "status": {
     "machine": {
@@ -463,7 +483,8 @@
       "update": "Ürün güncellendi",
       "archive": "Ürün arşivlendi",
       "restore": "Ürün geri alındı",
-      "delete": "Ürün silindi"
+      "delete": "Ürün silindi",
+      "bulk_create": "Kalıba etiketler eklendi"
     },
     "machine": {
       "create": "Makine eklendi",
@@ -487,6 +508,9 @@
     },
     "service": {
       "report": "Servis raporu girildi"
+    },
+    "masterdata": {
+      "import": "Excel'den içe aktarıldı"
     }
   },
   "sched": {
@@ -1279,5 +1303,35 @@
     "produced": "Üretilen",
     "onlyOrdered": "Yalnızca açık siparişteki ürünler",
     "noOrdered": "Açık siparişte ürün yok. Tüm ürünler için kutunun işaretini kaldırın."
+  },
+  "imp": {
+    "button": "Excel'den içe aktar",
+    "title": "Excel'den içe aktar",
+    "subtitle": "Birçok makine, kalıp ve ürünü (etiketi) tek seferde ekleyin veya güncelleyin.",
+    "step1": "1. Şablonu indirin",
+    "step1Hint": "Üç sayfalı bir Excel dosyası: Machines, Molds ve Products. Doldurun veya mevcut listelerinizi yapıştırın.",
+    "download": "Excel şablonunu indir",
+    "tip1": "Products sayfasında her etiket için bir satır ve kalıp kodu.",
+    "tip2": "Ürün kodu boş kalabilir — kalıp kodundan otomatik oluşturulur.",
+    "tip3": "Aynı dosyayı tekrar içe aktarmak kopya oluşturmaz, satırları günceller.",
+    "tip4": "Tüm satırlar doğru olana kadar hiçbir şey kaydedilmez.",
+    "step2": "2. Doldurulmuş dosyayı yükleyin",
+    "choose": "Excel veya CSV dosyasını seçin",
+    "check": "Dosyayı kontrol et",
+    "reading": "Okunuyor…",
+    "new": "Yeni",
+    "updated": "Güncellenen",
+    "unchanged": "Değişmeyen",
+    "hasErrors": "{n} sorun bulundu. Excel'de düzeltip dosyayı tekrar kontrol edin — hiçbir şey kaydedilmedi.",
+    "row": "satır {n}",
+    "ready": "Dosya doğru.",
+    "import": "{n} satırı içe aktar",
+    "done": "İçe aktarıldı. Açın:",
+    "nothing": "İçe aktarılacak yeni bir şey yok — dosyadaki her şey sistemde zaten var.",
+    "sheet": {
+      "machines": "Makineler",
+      "molds": "Kalıplar",
+      "products": "Ürünler / etiketler"
+    }
   }
 }

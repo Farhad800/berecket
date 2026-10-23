@@ -7,6 +7,7 @@
 | Unit | `tests/unit/*.test.ts` (Vitest) | Permissions after the simplification; production day handling |
 | Acceptance | `tests/e2e/acceptance.py` | Spec section 18 adapted to the simplified workflow, from an **empty database**: setup → employees → products/machines/molds → order as a product sheet (edit, 60-product order, delete) → daily production per shift (merge, correction) → breakdown + maintenance → QC approve & reject (stock reduced, NCR) → stock out (never below zero) + adjustment → ledger consistency → order completed + history → search/reports/exports → mobile → audit → backend rejections → go-live reset |
 | Security | `tests/e2e/security.py` | Authentication, authorisation, CSRF, sessions, headers, lockout, injection, XSS, uploads (see SECURITY.md) |
+| Bulk master data | `tests/e2e/bulk.py` | Excel template → 4 machines, 35 molds, 525 labels imported in one go; re-import makes no copies; wrong rows refused with row numbers; CSV; pasting labels onto a mold; mold filters on all sheets; permissions; phone layout |
 | Stage 1 | `tests/e2e/stage1.py` | Sign-in, roles, languages, install banner. (Older stage 2–9 suites were retired with the 23 Oct 2026 simplification; the acceptance suite covers those flows.) |
 
 ## Latest results (22 Oct 2026)

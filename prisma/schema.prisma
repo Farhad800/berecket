@@ -120,15 +120,18 @@ model Product {
   weightGrams    Decimal?          @db.Decimal(10, 2)
   cycleTimeSec   Decimal?          @db.Decimal(8, 2)
   qcRequired     Boolean           @default(false) // shown to QC as "inspect every day's production"
+  // One mold makes many products: each printed label on the same molded item is its own product.
+  moldId         String?
+  mold           Mold?             @relation(fields: [moldId], references: [id], onDelete: SetNull)
   archivedAt     DateTime?
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
-  molds          Mold[]
   orderLines     OrderLine[]
   entries        ProductionEntry[]
   stockMovements StockMovement[]
 
   @@index([name])
+  @@index([moldId])
 }
 
 enum MachineStatus {
@@ -169,8 +172,7 @@ model Mold {
   code             String               @unique
   name             String
   cavities         Int                  @default(1)
-  productId        String?
-  product          Product?             @relation(fields: [productId], references: [id])
+  products         Product[]
   currentMachineId String?
   currentMachine   Machine?             @relation("MoldCurrentMachine", fields: [currentMachineId], references: [id])
   status           MoldStatus           @default(AVAILABLE)

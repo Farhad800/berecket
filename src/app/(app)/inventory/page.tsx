@@ -42,10 +42,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
 
   async function StockTab() {
     const [products, stock] = await Promise.all([
-      db.product.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
+      db.product.findMany({ where: { archivedAt: null }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, code: true, name: true, mold: { select: { code: true } } } }),
       getStock(),
     ]);
-    const rows = products.map((p) => ({ id: p.id, code: p.code, name: p.name, stock: stock.get(p.id) ?? 0 }));
+    const rows = products.map((p) => ({ id: p.id, code: p.code, name: p.name, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0 }));
     const total = rows.reduce((s, r) => s + r.stock, 0);
     return (
       <div className="space-y-4">

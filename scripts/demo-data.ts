@@ -47,8 +47,8 @@ async function add() {
     await db.machine.upsert({ where: { code }, update: {}, create: { code, name: `Toyo ${model} (demo)`, manufacturer: "Toyo", model, tonnage } });
   }
   for (const [code, product, cav] of [["DEMO-MD-PF500", "DEMO-PF500", 32], ["DEMO-MD-CAP28", "DEMO-CAP28", 48], ["DEMO-MD-JAR1L", "DEMO-JAR1L", 4]] as const) {
-    const p = await db.product.findUniqueOrThrow({ where: { code: product } });
-    await db.mold.upsert({ where: { code }, update: {}, create: { code, name: `${product} mold (demo)`, cavities: cav, productId: p.id } });
+    const m = await db.mold.upsert({ where: { code }, update: {}, create: { code, name: `${product} mold (demo)`, cavities: cav } });
+    await db.product.update({ where: { code: product }, data: { moldId: m.id } });
   }
   console.log("Demo products, machines and molds ready (codes start with DEMO-).");
 }
