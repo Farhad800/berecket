@@ -15,7 +15,6 @@ async function recordExists(type: string, id: string) {
     case "ServiceReport": return db.serviceReport.count({ where: { id } });
     case "QcInspection": return db.qcInspection.count({ where: { id } });
     case "QualityIssue": return db.qualityIssue.count({ where: { id } });
-    case "Shipment": return db.shipment.count({ where: { id } });
     default: return 0;
   }
 }

@@ -10,7 +10,6 @@ export const NAV: NavGroup[] = [
   ]},
   { key: "sales", items: [
     { href: "/orders", key: "orders", icon: "ClipboardList", perm: "orders:view" },
-    { href: "/schedule", key: "schedule", icon: "CalendarRange", perm: "schedule:view" },
   ]},
   { key: "operations", items: [
     { href: "/production", key: "production", icon: "Factory", perm: "production:view" },
@@ -18,10 +17,8 @@ export const NAV: NavGroup[] = [
     { href: "/history", key: "history", icon: "History", perm: "maintenance:view" },
     { href: "/qc", key: "qc", icon: "ShieldCheck", perm: "qc:view" },
     { href: "/inventory", key: "inventory", icon: "Warehouse", perm: "warehouse:view" },
-    { href: "/shipments", key: "shipments", icon: "Truck", perm: "shipments:view" },
   ]},
   { key: "masterData", items: [
-    { href: "/customers", key: "customers", icon: "Building2", perm: "customers:view" },
     { href: "/products", key: "products", icon: "Package", perm: "products:view" },
     { href: "/assets", key: "assets", icon: "Cog", perm: "assets:view" },
   ]},

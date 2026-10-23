@@ -43,7 +43,7 @@ export default function SystemAdmin({ ops, master, demoUsers }: { ops: Counts; m
                 <input type="radio" name="scope" value="everything" checked={scope === "everything"} onChange={() => setScope("everything")} className="mt-1" />
                 <span>
                   <b>{t("scopeAll")}</b><br />
-                  <span className="text-muted">{t("scopeAllHint", { customers: master.customers, products: master.products, machines: master.machines, molds: master.molds })}</span>
+                  <span className="text-muted">{t("scopeAllHint", { products: master.products, machines: master.machines, molds: master.molds })}</span>
                 </span>
               </label>
             </fieldset>

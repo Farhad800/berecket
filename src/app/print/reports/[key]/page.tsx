@@ -7,7 +7,7 @@ import { REPORT_BY_KEY, parseQuery, queryParams } from "@/lib/reports/registry";
 import { describeFilters, filterSelects } from "@/lib/reports/context";
 import type { T } from "@/lib/reports/format";
 import { KpiRow, ReportTable } from "@/components/report-view";
-import PrintButton from "../../shipments/[id]/print-button";
+import PrintButton from "@/components/print-button";
 
 export const metadata = { title: "Report" };
 

@@ -2,21 +2,16 @@ import { db, type Tx } from "./db";
 
 const PREFIX = {
   order: "ORD",
-  job: "JOB",
-  batch: "LOT",
   maintenance: "MR",
   service: "SR",
   inspection: "QC",
   issue: "NCR",
-  receipt: "GRN",
-  shipment: "SHP",
-  customer: "CUS",
 } as const;
 
 export type DocKind = keyof typeof PREFIX;
 
-/** Kinds that are master data, not yearly documents: CUS-0001 rather than CUS-2026-0001. */
-const NO_YEAR: DocKind[] = ["customer"];
+/** Kinds numbered without a year (none at the moment). */
+const NO_YEAR: DocKind[] = [];
 
 /**
  * Atomic, gap-tolerant sequential numbers per kind and year, e.g. ORD-2026-0007.

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
-  AlertOctagon, AlertTriangle, Boxes, CalendarCheck, CalendarClock, ClipboardList, Factory, PackageCheck,
-  PackageOpen, PlayCircle, ShieldAlert, Truck, Wrench, Zap, Clock, type LucideIcon,
+  AlertOctagon, Boxes, CalendarDays, ClipboardList, Factory, PackageMinus, Package, ShieldAlert, ShieldX, SearchCheck, Wrench, ShieldQuestion, type LucideIcon,
 } from "lucide-react";
 import { pageUser } from "@/lib/auth";
 import { getDashboard } from "@/lib/dashboard";
@@ -14,28 +13,26 @@ export const metadata = { title: "Dashboard" };
 type CardDef = { key: string; href: string; icon: LucideIcon; alert?: boolean };
 
 const GROUPS: { title: string; cards: CardDef[] }[] = [
-  { title: "nav.sales", cards: [
-    { key: "activeOrders", href: "/orders", icon: ClipboardList },
-    { key: "dueToday", href: "/orders?due=today", icon: CalendarClock },
-    { key: "overdue", href: "/orders?due=overdue", icon: AlertTriangle, alert: true },
-    { key: "urgent", href: "/orders?priority=URGENT", icon: Zap, alert: true },
+  { title: "nav.orders", cards: [
+    { key: "openOrders", href: "/orders", icon: ClipboardList },
+    { key: "openPieces", href: "/orders", icon: Package },
   ]},
   { title: "nav.production", cards: [
-    { key: "scheduledToday", href: "/schedule", icon: CalendarCheck },
-    { key: "inProduction", href: "/production?status=IN_PROGRESS", icon: PlayCircle },
     { key: "producedToday", href: "/production", icon: Factory },
+    { key: "productsToday", href: "/production", icon: CalendarDays },
+    { key: "producedWeek", href: "/reports/production", icon: Factory },
     { key: "machinesDown", href: "/assets?status=down", icon: AlertOctagon, alert: true },
     { key: "openMaintenance", href: "/service", icon: Wrench },
   ]},
   { title: "nav.qc", cards: [
-    { key: "awaitingQc", href: "/qc?status=PENDING", icon: Clock },
-    { key: "criticalIssues", href: "/qc?severity=CRITICAL", icon: ShieldAlert, alert: true },
+    { key: "notInspected", href: "/qc", icon: SearchCheck },
+    { key: "rejectedWeek", href: "/reports/quality", icon: ShieldX, alert: true },
+    { key: "openIssues", href: "/qc?tab=issues", icon: ShieldQuestion },
+    { key: "criticalIssues", href: "/qc?tab=issues&severity=CRITICAL", icon: ShieldAlert, alert: true },
   ]},
   { title: "nav.inventory", cards: [
-    { key: "awaitingReceipt", href: "/inventory?tab=awaiting", icon: PackageOpen },
-    { key: "availableStock", href: "/inventory", icon: Boxes },
-    { key: "shipmentsToday", href: "/shipments", icon: Truck },
-    { key: "partiallyDelivered", href: "/orders?status=PARTIALLY_DELIVERED", icon: PackageCheck },
+    { key: "stock", href: "/inventory", icon: Boxes },
+    { key: "outWeek", href: "/inventory?tab=movements", icon: PackageMinus },
   ]},
 ];
 
@@ -88,7 +85,7 @@ export default async function DashboardPage() {
                 <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-2 text-sm">
                   <span>
                     <b>{a.user?.fullName ?? "System"}</b> <span className="text-muted">·</span>{" "}
-                    <code className="text-xs">{a.action}</code>
+                    <span className="text-muted">{t.has(`history.${a.action}`) ? t(`history.${a.action}`) : a.action}</span>
                   </span>
                   <span className="text-xs text-muted">{formatDateTime(a.createdAt, locale)}</span>
                 </li>

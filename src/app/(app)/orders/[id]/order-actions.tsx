@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Pause, Play, XCircle, PackageCheck, Trash2 } from "lucide-react";
+import { CheckCircle2, RotateCcw, XCircle, Trash2 } from "lucide-react";
 import { deleteOrderAction, orderTransitionAction } from "@/app/actions/orders";
 import { Alert, Button, Card, Input } from "@/components/ui";
 
-type Act = "confirm" | "hold" | "resume" | "cancel" | "close" | "delete";
-const NEEDS_REASON: Act[] = ["hold", "cancel", "close", "delete"];
+type Act = "complete" | "cancel" | "reopen" | "delete";
+const NEEDS_REASON: Act[] = ["cancel", "reopen", "delete"];
 
 export default function OrderActions({ orderId, allowed }: { orderId: string; allowed: Act[] }) {
   const t = useTranslations("order");
@@ -24,7 +24,7 @@ export default function OrderActions({ orderId, allowed }: { orderId: string; al
     });
 
   if (allowed.length === 0) return null;
-  const icon = { confirm: CheckCircle2, hold: Pause, resume: Play, cancel: XCircle, close: PackageCheck, delete: Trash2 };
+  const icon = { complete: CheckCircle2, cancel: XCircle, reopen: RotateCcw, delete: Trash2 };
 
   return (
     <div className="space-y-2">
@@ -36,7 +36,7 @@ export default function OrderActions({ orderId, allowed }: { orderId: string; al
             <Button
               key={a}
               size="sm"
-              variant={a === "confirm" || a === "resume" ? "primary" : a === "cancel" || a === "delete" ? "danger" : "secondary"}
+              variant={a === "complete" ? "primary" : a === "delete" ? "danger" : "secondary"}
               disabled={pending}
               onClick={() => (NEEDS_REASON.includes(a) ? setAsking(a) : go(a))}
             >

@@ -45,20 +45,18 @@ export type ReportResult = {
   totals?: boolean;
 };
 
-export type FilterKey = "range" | "customer" | "product" | "machine" | "status" | "priority" | "group" | "category" | "severity" | "type";
+export type FilterKey = "range" | "product" | "machine" | "status" | "priority" | "group" | "severity" | "type";
 
 export type ReportQuery = {
   from: string; // YYYY-MM-DD (factory calendar)
   to: string;
   start: Date; // UTC instant, inclusive
   end: Date; // UTC instant, exclusive
-  customer?: string;
   product?: string;
   machine?: string;
   status?: string;
   priority?: string;
   group?: string;
-  category?: string;
   severity?: string;
   type?: string;
 };

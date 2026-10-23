@@ -3,14 +3,11 @@
 
 export const RESOURCES = [
   "orders",
-  "schedule",
   "production",
   "maintenance",
   "service",
   "qc",
   "warehouse",
-  "shipments",
-  "customers",
   "products",
   "assets", // machines & molds
   "reports",
@@ -29,14 +26,11 @@ export type Permission = `${Resource}:${Action}`;
 /** Which actions are meaningful for each resource (drives the admin permission matrix). */
 export const RESOURCE_ACTIONS: Record<Resource, Action[]> = {
   orders: ["view", "create", "edit", "approve", "export", "archive"],
-  schedule: ["view", "create", "edit", "export"],
   production: ["view", "create", "edit", "export"],
   maintenance: ["view", "create", "edit", "approve", "export"],
   service: ["view", "create", "edit", "export"],
   qc: ["view", "create", "edit", "approve", "export"],
   warehouse: ["view", "create", "edit", "approve", "export"],
-  shipments: ["view", "create", "edit", "approve", "export"],
-  customers: ["view", "create", "edit", "archive", "export"],
   products: ["view", "create", "edit", "archive", "export"],
   assets: ["view", "create", "edit", "archive", "export"],
   reports: ["view", "export"],
@@ -53,14 +47,11 @@ export const ALL_PERMISSIONS: Permission[] = RESOURCES.flatMap((r) =>
 /** Global visibility rule: every active employee can read all factory business records. */
 export const BUSINESS_VIEW: Permission[] = [
   "orders:view",
-  "schedule:view",
   "production:view",
   "maintenance:view",
   "service:view",
   "qc:view",
   "warehouse:view",
-  "shipments:view",
-  "customers:view",
   "products:view",
   "assets:view",
   "reports:view",
@@ -77,20 +68,17 @@ export const DEFAULT_ROLES: { name: string; description: string; permissions: Pe
   },
   {
     name: "Sales Manager",
-    description: "Creates customer orders, sets deadlines and plans production.",
+    description: "Gives production the order sheets: products and amounts.",
     permissions: p(
       ...BUSINESS_VIEW,
       "orders:create", "orders:edit", "orders:approve", "orders:export", "orders:archive",
-      "schedule:create", "schedule:edit", "schedule:export",
-      "customers:create", "customers:edit", "customers:export",
       "products:create", "products:edit",
-      "shipments:approve",
       "reports:export",
     ),
   },
   {
     name: "Production Team",
-    description: "Runs production jobs, reports quantities, downtime and machine problems.",
+    description: "Enters each day's production (product, quantity, shift) and reports machine problems.",
     permissions: p(
       ...BUSINESS_VIEW,
       "production:create", "production:edit",
@@ -109,7 +97,7 @@ export const DEFAULT_ROLES: { name: string; description: string; permissions: Pe
   },
   {
     name: "Quality Control Team",
-    description: "Inspects batches, approves, holds or rejects products and tracks defects.",
+    description: "Inspects daily production, rejects defective pieces and tracks quality issues.",
     permissions: p(
       ...BUSINESS_VIEW,
       "qc:create", "qc:edit", "qc:approve", "qc:export",
@@ -118,11 +106,10 @@ export const DEFAULT_ROLES: { name: string; description: string; permissions: Pe
   },
   {
     name: "Warehouse Team",
-    description: "Receives finished goods, manages stock and dispatches shipments.",
+    description: "Keeps product stock: records goods going out and count corrections.",
     permissions: p(
       ...BUSINESS_VIEW,
       "warehouse:create", "warehouse:edit", "warehouse:export",
-      "shipments:create", "shipments:edit", "shipments:approve", "shipments:export",
     ),
   },
 ];

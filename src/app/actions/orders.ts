@@ -8,237 +8,146 @@ import { requirePermission, requireUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { run, formObject, UserError } from "@/lib/action";
 import { nextNumber } from "@/lib/numbering";
-import { parseFactoryDate } from "@/lib/time";
-import { getLineProgress, recomputeOrderStatus, OPEN_STATUSES } from "@/lib/orders";
+import { notify } from "@/lib/notify";
 
-const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date");
-const optDate = dateStr.optional();
-
-const headerSchema = z.object({
-  customerId: z.string().min(1, "Choose a customer"),
-  customerReference: z.string().trim().max(80).optional(),
-  priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).default("NORMAL"),
-  requestedDeliveryDate: dateStr,
-  plannedStart: optDate,
-  plannedEnd: optDate,
-  instructions: z.string().trim().max(4000).optional(),
-  packaging: z.string().trim().max(2000).optional(),
-  notes: z.string().trim().max(4000).optional(),
-});
-
+/**
+ * An order is a sheet the Sales Manager gives to production: products and amounts.
+ * (No customer, dates or priority — owner's decision, 23 Oct 2026.)
+ */
 const lineSchema = z.object({
-  lineId: z.string().optional(),
   productId: z.string().min(1, "Choose a product"),
   quantity: z.coerce.number().int("Whole pieces only").positive("Must be more than 0").max(100_000_000),
-  specifications: z.string().trim().max(2000).optional(),
 });
 
 function parseLines(raw: Record<string, unknown>) {
-  const arr = (k: string) => (raw[k] as (string | undefined)[] | undefined) ?? [];
-  const productIds = arr("productId");
-  const lines = productIds.map((_, i) => ({
-    lineId: arr("lineId")[i],
-    productId: arr("productId")[i],
-    quantity: arr("quantity")[i],
-    specifications: arr("specifications")[i],
-  }));
-  const parsed = lines.filter((l) => l.productId || l.quantity).map((l, i) => {
+  const ids = ([] as unknown[]).concat(raw.productId ?? []) as string[];
+  const qtys = ([] as unknown[]).concat(raw.quantity ?? []) as string[];
+  const lines = ids.map((productId, i) => ({ productId, quantity: qtys[i] })).filter((l) => l.productId || l.quantity);
+  const parsed = lines.map((l, i) => {
     const r = lineSchema.safeParse(l);
-    if (!r.success) throw new UserError(`Product line ${i + 1}: ${r.error.issues[0].message}`);
+    if (!r.success) throw new UserError(`Line ${i + 1}: ${r.error.issues[0].message}`);
     return r.data;
   });
-  if (parsed.length === 0) throw new UserError("Add at least one product line.");
-  if (parsed.length > 500) throw new UserError("An order can have up to 500 product lines.");
+  if (parsed.length === 0) throw new UserError("Add at least one product.");
+  if (parsed.length > 500) throw new UserError("An order can have up to 500 products.");
+  // The same product twice on one sheet is almost always a typing mistake.
+  const seen = new Set<string>();
+  for (const l of parsed) {
+    if (seen.has(l.productId)) throw new UserError("The same product is on the sheet twice. Add the amounts together on one line.");
+    seen.add(l.productId);
+  }
   return parsed;
 }
 
-function headerData(v: z.infer<typeof headerSchema>) {
-  const plannedStart = v.plannedStart ? parseFactoryDate(v.plannedStart) : null;
-  const plannedEnd = v.plannedEnd ? parseFactoryDate(v.plannedEnd) : null;
-  if (plannedStart && plannedEnd && plannedEnd < plannedStart) throw new UserError("Planned finish is before planned start.");
-  return {
-    customerId: v.customerId,
-    customerReference: v.customerReference ?? null,
-    priority: v.priority,
-    requestedDeliveryDate: parseFactoryDate(v.requestedDeliveryDate),
-    plannedStart,
-    plannedEnd,
-    instructions: v.instructions ?? null,
-    packaging: v.packaging ?? null,
-    notes: v.notes ?? null,
-  };
+async function checkProducts(ids: string[]) {
+  const found = await db.product.count({ where: { id: { in: ids }, archivedAt: null } });
+  if (found !== ids.length) throw new UserError("One of the products is archived or doesn't exist.");
 }
 
 export async function createOrderAction(_: unknown, fd: FormData) {
-  let id = "";
   const res = await run(async () => {
-    const raw = formObject(fd);
-    const confirm = raw.intent === "confirm";
-    const me = await requirePermission(confirm ? "orders:approve" : "orders:create");
-    if (confirm && !me.permissions.has("orders:create")) throw new UserError("You don't have permission to create orders.");
-    const header = headerData(headerSchema.parse(raw));
-    const lines = parseLines(raw);
-    const customer = await db.customer.findUnique({ where: { id: header.customerId } });
-    if (!customer || customer.archivedAt) throw new UserError("That customer is archived or doesn't exist.");
-
+    const me = await requirePermission("orders:create");
+    const lines = parseLines(formObject(fd));
+    await checkProducts(lines.map((l) => l.productId));
     const order = await db.$transaction(async (tx) => {
-      const products = await tx.product.findMany({ where: { id: { in: lines.map((l) => l.productId) }, archivedAt: null } });
-      if (products.length !== new Set(lines.map((l) => l.productId)).size) throw new UserError("One of the products is archived or doesn't exist.");
       const o = await tx.order.create({
         data: {
-          ...header,
           number: await nextNumber("order", tx),
-          status: confirm ? "CONFIRMED" : "DRAFT",
-          confirmedAt: confirm ? new Date() : null,
           createdById: me.id,
-          lines: {
-            create: lines.map((l, i) => ({
-              lineNo: i + 1,
-              productId: l.productId,
-              quantity: l.quantity,
-              specifications: l.specifications ?? null,
-              unit: products.find((p) => p.id === l.productId)?.unit ?? "pcs",
-            })),
-          },
+          lines: { create: lines.map((l, i) => ({ lineNo: i + 1, productId: l.productId, quantity: l.quantity })) },
         },
       });
-      await audit({ userId: me.id, action: confirm ? "order.create_confirm" : "order.create", entityType: "Order", entityId: o.id, after: { number: o.number, lines: lines.length } }, tx);
-      if (confirm) await recomputeOrderStatus(o.id, tx);
+      const pieces = lines.reduce((s, l) => s + l.quantity, 0);
+      await audit({ userId: me.id, action: "order.create", entityType: "Order", entityId: o.id, after: { number: o.number, products: lines.length, pieces } }, tx);
+      await notify({
+        type: "order.new", title: `New order ${o.number}: ${lines.length} products, ${pieces.toLocaleString("en")} pcs`,
+        link: `/orders/${o.id}`, toPermission: "production:create", exceptUserId: me.id,
+      }, tx);
       return o;
     });
-    id = order.id;
-  });
-  if (res.ok) {
     revalidatePath("/orders");
-    redirect(`/orders/${id}`);
-  }
+    revalidatePath("/dashboard");
+    return order.id;
+  });
+  if (res.ok) redirect(`/orders/${res.data}`);
   return res;
 }
 
 export async function updateOrderAction(_: unknown, fd: FormData) {
-  const raw = formObject(fd);
-  const id = String(raw.id ?? "");
   const res = await run(async () => {
     const me = await requirePermission("orders:edit");
-    const header = headerData(headerSchema.parse(raw));
-    const reason = (raw.reason as string | undefined)?.trim();
+    const raw = formObject(fd);
+    const id = z.string().min(1).parse(raw.id);
     const lines = parseLines(raw);
-
+    await checkProducts(lines.map((l) => l.productId));
     await db.$transaction(async (tx) => {
-      const before = await tx.order.findUniqueOrThrow({ where: { id }, include: { lines: { include: { jobs: true } } } });
-      if (["DELIVERED", "CANCELLED"].includes(before.status)) throw new UserError("Delivered or cancelled orders can't be edited.");
-
-      const deadlineMoved = before.requestedDeliveryDate.getTime() !== header.requestedDeliveryDate.getTime();
-      const datesMoved =
-        deadlineMoved ||
-        before.plannedStart?.getTime() !== header.plannedStart?.getTime() ||
-        before.plannedEnd?.getTime() !== header.plannedEnd?.getTime();
-      if (before.status !== "DRAFT" && datesMoved && !reason) {
-        throw new UserError("Please give a reason for changing the dates of a confirmed order.");
-      }
-
-      const progress = await getLineProgress([id], tx);
-      const keepIds = new Set(lines.map((l) => l.lineId).filter(Boolean));
-      // Lines removed by the user: only allowed if nothing has happened on them yet.
-      for (const old of before.lines) {
-        if (keepIds.has(old.id)) continue;
-        const p = progress.get(old.id);
-        if (old.jobs.some((j) => j.status !== "CANCELLED") || (p && (p.produced > 0 || p.shipped > 0))) {
-          throw new UserError(`Line ${old.lineNo} already has production or shipments and can't be removed.`);
-        }
-        await tx.orderLine.delete({ where: { id: old.id } });
-      }
-      let nextNo = Math.max(0, ...before.lines.map((l) => l.lineNo)) + 1;
-      for (const l of lines) {
-        if (l.lineId) {
-          const old = before.lines.find((x) => x.id === l.lineId);
-          if (!old) throw new UserError("A product line no longer exists. Reload the page.");
-          const p = progress.get(old.id);
-          const floor = p?.shipped ?? 0;
-          if (l.quantity < floor) throw new UserError(`Line ${old.lineNo}: quantity can't be below the ${floor} already shipped.`);
-          if (old.productId !== l.productId && (old.jobs.length > 0 || (p?.produced ?? 0) > 0)) {
-            throw new UserError(`Line ${old.lineNo}: product can't change once production is planned.`);
-          }
-          await tx.orderLine.update({ where: { id: old.id }, data: { productId: l.productId, quantity: l.quantity, specifications: l.specifications ?? null } });
-        } else {
-          await tx.orderLine.create({ data: { orderId: id, lineNo: nextNo++, productId: l.productId, quantity: l.quantity, specifications: l.specifications ?? null } });
-        }
-      }
-      await tx.order.update({ where: { id }, data: header });
-
-      const iso = (d: Date | null) => d?.toISOString() ?? null;
+      const before = await tx.order.findUniqueOrThrow({ where: { id }, include: { lines: { include: { product: { select: { code: true } } } } } });
+      if (before.status !== "OPEN") throw new UserError("Only open orders can be changed.");
+      await tx.orderLine.deleteMany({ where: { orderId: id } });
+      await tx.orderLine.createMany({ data: lines.map((l, i) => ({ orderId: id, lineNo: i + 1, productId: l.productId, quantity: l.quantity })) });
+      const products = await tx.product.findMany({ where: { id: { in: lines.map((l) => l.productId) } }, select: { id: true, code: true } });
+      const code = (pid: string) => products.find((p) => p.id === pid)?.code ?? pid;
       await audit({
-        userId: me.id,
-        action: deadlineMoved ? "order.deadline_change" : "order.update",
-        entityType: "Order",
-        entityId: id,
-        reason: reason ?? null,
-        before: { requestedDeliveryDate: iso(before.requestedDeliveryDate), plannedStart: iso(before.plannedStart), plannedEnd: iso(before.plannedEnd), priority: before.priority, lines: before.lines.map((l) => ({ no: l.lineNo, qty: l.quantity })) },
-        after: { requestedDeliveryDate: iso(header.requestedDeliveryDate), plannedStart: iso(header.plannedStart), plannedEnd: iso(header.plannedEnd), priority: header.priority, lines: lines.map((l) => ({ qty: l.quantity })) },
+        userId: me.id, action: "order.update", entityType: "Order", entityId: id,
+        before: { lines: before.lines.map((l) => `${l.product.code} × ${l.quantity}`) },
+        after: { lines: lines.map((l) => `${code(l.productId)} × ${l.quantity}`) },
       }, tx);
-      await recomputeOrderStatus(id, tx);
     });
-  });
-  if (res.ok) {
     revalidatePath(`/orders/${id}`);
     revalidatePath("/orders");
-    redirect(`/orders/${id}`);
-  }
+    return id;
+  });
+  if (res.ok) redirect(`/orders/${res.data}`);
   return res;
 }
 
-/** Status changes a person makes deliberately. Everything else is calculated. */
-export async function orderTransitionAction(
-  orderId: string,
-  action: "confirm" | "hold" | "resume" | "cancel" | "close",
-  reason?: string,
-) {
+/** Open → Completed / Cancelled, and back to Open if closed by mistake. */
+export async function orderTransitionAction(orderId: string, action: "complete" | "cancel" | "reopen", reason?: string) {
   return run(async () => {
-    const perm = action === "close" || action === "confirm" ? "orders:approve" : "orders:edit";
-    const me = await requirePermission(perm);
+    const me = await requirePermission(action === "complete" ? "orders:edit" : "orders:approve");
     const why = reason?.trim();
-    if (["hold", "cancel", "close"].includes(action) && (!why || why.length < 3)) throw new UserError("Please give a reason.");
-
+    if (action !== "complete" && (!why || why.length < 3)) throw new UserError("Please give a reason.");
     await db.$transaction(async (tx) => {
-      const o = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { lines: { select: { id: true } } } });
-      const progress = await getLineProgress([orderId], tx);
-      const anyShipped = [...progress.values()].some((p) => p.shipped > 0);
-      const anyProduced = [...progress.values()].some((p) => p.produced > 0);
-
-      switch (action) {
-        case "confirm":
-          if (o.status !== "DRAFT") throw new UserError("Only draft orders can be confirmed.");
-          if (o.lines.length === 0) throw new UserError("Add at least one product line first.");
-          await tx.order.update({ where: { id: orderId }, data: { status: "CONFIRMED", confirmedAt: new Date() } });
-          await recomputeOrderStatus(orderId, tx);
-          break;
-        case "hold":
-          if (!OPEN_STATUSES.includes(o.status) || o.status === "ON_HOLD") throw new UserError("This order can't be put on hold now.");
-          await tx.order.update({ where: { id: orderId }, data: { status: "ON_HOLD" } });
-          break;
-        case "resume":
-          if (o.status !== "ON_HOLD") throw new UserError("This order isn't on hold.");
-          await tx.order.update({ where: { id: orderId }, data: { status: "CONFIRMED" } });
-          await recomputeOrderStatus(orderId, tx);
-          break;
-        case "cancel":
-          if (["DELIVERED", "CANCELLED"].includes(o.status)) throw new UserError("This order is already closed.");
-          if (anyShipped) throw new UserError("Goods have already been shipped. Use 'Close with exception' instead.");
-          await tx.order.update({ where: { id: orderId }, data: { status: "CANCELLED", cancelledAt: new Date() } });
-          // Planned jobs that never started are cancelled with it; running jobs must be stopped by Production.
-          await tx.productionJob.updateMany({ where: { orderLine: { orderId }, status: "PLANNED" }, data: { status: "CANCELLED" } });
-          break;
-        case "close":
-          if (!OPEN_STATUSES.includes(o.status) || o.status === "DRAFT") throw new UserError("Only open orders can be closed.");
-          if (!anyShipped && !anyProduced) throw new UserError("Nothing has been produced or shipped. Cancel the order instead.");
-          await tx.order.update({ where: { id: orderId }, data: { deliveryException: why, status: "DELIVERED", deliveredAt: new Date() } });
-          break;
+      const o = await tx.order.findUniqueOrThrow({ where: { id: orderId } });
+      if (action === "reopen") {
+        if (o.status === "OPEN") throw new UserError("This order is already open.");
+        await tx.order.update({ where: { id: orderId }, data: { status: "OPEN", completedAt: null, cancelledAt: null } });
+      } else {
+        if (o.status !== "OPEN") throw new UserError("Only open orders can be completed or cancelled.");
+        await tx.order.update({
+          where: { id: orderId },
+          data: action === "complete" ? { status: "COMPLETED", completedAt: new Date() } : { status: "CANCELLED", cancelledAt: new Date() },
+        });
       }
-      await audit({ userId: me.id, action: `order.${action}`, entityType: "Order", entityId: orderId, reason: why ?? null, before: { status: o.status } }, tx);
+      await audit({ userId: me.id, action: `order.${action}`, entityType: "Order", entityId: orderId, reason: why || null, before: { status: o.status } }, tx);
     });
     revalidatePath(`/orders/${orderId}`);
     revalidatePath("/orders");
+    revalidatePath("/dashboard");
   });
+}
+
+/** Removes an order sheet completely (e.g. entered twice). A record stays in the audit log. */
+export async function deleteOrderAction(orderId: string, reason?: string) {
+  const res = await run(async () => {
+    const me = await requirePermission("orders:archive");
+    const why = reason?.trim();
+    if (!why || why.length < 3) throw new UserError("Please give a reason.");
+    await db.$transaction(async (tx) => {
+      const o = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { lines: { include: { product: { select: { code: true } } } } } });
+      await tx.comment.deleteMany({ where: { entityType: "Order", entityId: orderId } });
+      await tx.notification.deleteMany({ where: { link: `/orders/${orderId}` } });
+      await tx.order.delete({ where: { id: orderId } });
+      await audit({
+        userId: me.id, action: "order.delete", entityType: "Order", entityId: orderId, reason: why,
+        before: { number: o.number, status: o.status, lines: o.lines.map((l) => `${l.product.code} × ${l.quantity}`) },
+      }, tx);
+    });
+    revalidatePath("/orders");
+    revalidatePath("/dashboard");
+  });
+  if (res.ok) redirect("/orders?deleted=1");
+  return res;
 }
 
 const commentSchema = z.object({
@@ -247,12 +156,11 @@ const commentSchema = z.object({
   body: z.string().trim().min(1, "Write a comment").max(4000),
 });
 
-/** Any signed-in employee who can see a record may comment on it. */
 export async function addCommentAction(_: unknown, fd: FormData) {
   return run(async () => {
     const me = await requireUser();
     const v = commentSchema.parse(formObject(fd));
-    const perm = { Order: "orders:view", MaintenanceRequest: "maintenance:view", QualityIssue: "qc:view" }[v.entityType];
+    const perm = ({ Order: "orders:view", MaintenanceRequest: "maintenance:view", QualityIssue: "qc:view" } as const)[v.entityType];
     if (!me.permissions.has(perm)) throw new UserError("You don't have permission to comment here.");
     const exists =
       v.entityType === "Order" ? await db.order.count({ where: { id: v.entityId } })
@@ -264,49 +172,4 @@ export async function addCommentAction(_: unknown, fd: FormData) {
       v.entityType === "Order" ? `/orders/${v.entityId}` : v.entityType === "MaintenanceRequest" ? `/service/requests/${v.entityId}` : `/qc/issues/${v.entityId}`,
     );
   });
-}
-
-/**
- * Permanently deletes an order that was entered by mistake. Only possible while nothing has
- * happened to it yet (no production, QC, receipts or shipments, no started jobs). Orders with
- * history must be cancelled or closed instead, so the factory's records stay complete.
- */
-export async function deleteOrderAction(orderId: string, reason?: string) {
-  const res = await run(async () => {
-    const me = await requirePermission("orders:archive");
-    const why = reason?.trim();
-    if (!why || why.length < 3) throw new UserError("Please give a reason.");
-    await db.$transaction(async (tx) => {
-      const o = await tx.order.findUniqueOrThrow({
-        where: { id: orderId },
-        include: { customer: { select: { name: true } }, lines: { include: { product: { select: { code: true } }, jobs: { select: { id: true, status: true } } } } },
-      });
-      const lineIds = o.lines.map((l) => l.id);
-      const jobIds = o.lines.flatMap((l) => l.jobs.map((j) => j.id));
-      const blocked = (what: string) => {
-        throw new UserError(`This order can't be deleted because ${what}. Cancel it instead — it stays in the records as cancelled.`);
-      };
-      if (o.lines.some((l) => l.jobs.some((j) => !["PLANNED", "CANCELLED"].includes(j.status)))) blocked("production has started");
-      if (await tx.batch.count({ where: { orderLineId: { in: lineIds } } })) blocked("it has production batches");
-      if (await tx.shipment.count({ where: { orderId } })) blocked("it has shipments");
-      if (await tx.warehouseReceipt.count({ where: { orderLineId: { in: lineIds } } })) blocked("goods were received for it");
-      if (await tx.maintenanceRequest.count({ where: { jobId: { in: jobIds } } })) blocked("maintenance requests refer to its jobs");
-      if (await tx.downtime.count({ where: { jobId: { in: jobIds } } })) blocked("downtime was recorded on its jobs");
-      if (await tx.serviceReport.count({ where: { orderId } })) blocked("service reports refer to it");
-
-      await tx.productionJob.deleteMany({ where: { id: { in: jobIds } } });
-      await tx.comment.deleteMany({ where: { entityType: "Order", entityId: orderId } });
-      await tx.notification.deleteMany({ where: { link: `/orders/${orderId}` } });
-      await tx.order.delete({ where: { id: orderId } }); // order lines are removed with it
-      await audit({
-        userId: me.id, action: "order.delete", entityType: "Order", entityId: orderId, reason: why,
-        before: { number: o.number, customer: o.customer.name, status: o.status, lines: o.lines.map((l) => `${l.product.code} × ${l.quantity}`), plannedJobs: jobIds.length },
-      }, tx);
-    });
-    revalidatePath("/orders");
-    revalidatePath("/schedule");
-    revalidatePath("/dashboard");
-  });
-  if (res.ok) redirect("/orders?deleted=1");
-  return res;
 }

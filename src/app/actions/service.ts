@@ -9,7 +9,6 @@ import { audit } from "@/lib/audit";
 import { run, formObject, UserError } from "@/lib/action";
 import { nextNumber } from "@/lib/numbering";
 import { parseFactoryDate, parseFactoryDateTime } from "@/lib/time";
-import { syncMachineStatus } from "@/lib/production";
 import { notify } from "@/lib/notify";
 
 const OPEN = ["OPEN", "IN_PROGRESS", "WAITING_PARTS"] as const;
@@ -17,7 +16,6 @@ const OPEN = ["OPEN", "IN_PROGRESS", "WAITING_PARTS"] as const;
 function refreshService(id?: string) {
   revalidatePath("/service");
   if (id) revalidatePath(`/service/requests/${id}`);
-  revalidatePath("/schedule");
   revalidatePath("/history");
   revalidatePath("/assets");
   revalidatePath("/dashboard");
@@ -30,7 +28,6 @@ async function releaseMachineIfClear(machineId: string, tx: Tx) {
   const m = await tx.machine.findUnique({ where: { id: machineId } });
   if (m && ["DOWN", "MAINTENANCE"].includes(m.status)) {
     await tx.machine.update({ where: { id: machineId }, data: { status: "AVAILABLE" } });
-    await syncMachineStatus(machineId, tx);
   }
   return true;
 }
@@ -39,7 +36,6 @@ async function releaseMachineIfClear(machineId: string, tx: Tx) {
 const requestSchema = z.object({
   machineId: z.string().min(1, "Choose a machine"),
   moldId: z.string().optional(),
-  jobId: z.string().optional(),
   title: z.string().trim().min(3, "Required").max(160),
   description: z.string().trim().max(4000).optional(),
   priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).default("NORMAL"),
@@ -56,7 +52,7 @@ export async function createRequestAction(_: unknown, fd: FormData) {
       const r = await tx.maintenanceRequest.create({
         data: {
           number: await nextNumber("maintenance", tx),
-          machineId: v.machineId, moldId: v.moldId ?? null, jobId: v.jobId ?? null,
+          machineId: v.machineId, moldId: v.moldId ?? null,
           title: v.title, description: v.description ?? null, priority: v.priority, machineDown: down, reportedById: me.id,
         },
         include: { machine: true },
@@ -94,7 +90,7 @@ export async function requestTransitionAction(requestId: string, action: ReqActi
     }
 
     await db.$transaction(async (tx) => {
-      const r = await tx.maintenanceRequest.findUniqueOrThrow({ where: { id: requestId }, include: { machine: true, job: { select: { id: true, number: true, responsibleId: true } } } });
+      const r = await tx.maintenanceRequest.findUniqueOrThrow({ where: { id: requestId }, include: { machine: true } });
       const now = new Date();
       switch (action) {
         case "start":
@@ -118,9 +114,9 @@ export async function requestTransitionAction(requestId: string, action: ReqActi
             type: "maintenance.completed",
             title: released && r.machineDown ? `${r.machine.code} is ready to run again` : `${r.number} repair completed`,
             body: `${r.title} — ${text}`,
-            link: r.job ? `/production/${r.job.id}` : `/service/requests/${r.id}`,
+            link: `/service/requests/${r.id}`,
             toPermission: "production:edit",
-            toUserIds: [r.reportedById, r.job?.responsibleId],
+            toUserIds: [r.reportedById],
             exceptUserId: me.id,
             requires: "maintenance:view",
           }, tx);
@@ -174,7 +170,6 @@ const reportSchema = z.object({
   shift: z.enum(["A", "B", "C"]),
   machineId: z.string().min(1, "Choose a machine"),
   moldId: z.string().optional(),
-  orderId: z.string().optional(),
   maintenanceRequestId: z.string().optional(),
   moldRemovedId: z.string().optional(),
   moldInstalledId: z.string().optional(),
@@ -222,30 +217,13 @@ export async function createServiceReportAction(_: unknown, fd: FormData) {
         data: {
           number: await nextNumber("service", tx),
           date: parseFactoryDate(v.date), shift: v.shift, technicianId: me.id, machineId: v.machineId,
-          moldId: v.moldId ?? v.moldInstalledId ?? null, orderId: v.orderId ?? null, maintenanceRequestId: v.maintenanceRequestId ?? null,
+          moldId: v.moldId ?? v.moldInstalledId ?? null, maintenanceRequestId: v.maintenanceRequestId ?? null,
           moldRemovedId: v.moldRemovedId ?? null, moldInstalledId: v.moldInstalledId ?? null, moldChangeReason: v.moldChangeReason ?? null,
           workPerformed: v.workPerformed, breakdown: v.breakdown ?? null, startTime: start, endTime: end, downtimeMinutes: downtime,
           spareParts: v.spareParts ?? null, repairsCompleted: v.repairsCompleted ?? null, outstandingWork: v.outstandingWork ?? null,
           followUp: v.followUp ?? null, notes: v.notes ?? null,
         },
       });
-      // Machine stop time from service work counts in downtime reports — unless Production already logged it for the same request.
-      if (downtime > 0) {
-        const already = v.maintenanceRequestId ? await tx.downtime.count({ where: { maintenanceRequestId: v.maintenanceRequestId } }) : 0;
-        if (!already) {
-          await tx.downtime.create({
-            data: {
-              machineId: v.machineId,
-              maintenanceRequestId: v.maintenanceRequestId ?? null,
-              category: v.moldInstalledId || v.moldRemovedId ? "MOLD_CHANGE" : v.breakdown ? "BREAKDOWN" : "SETUP",
-              reason: `${r.number}: ${v.workPerformed}`.slice(0, 1000),
-              startedAt: start,
-              endedAt: end ?? new Date(start.getTime() + downtime * 60000),
-              reportedById: me.id,
-            },
-          });
-        }
-      }
       if (v.maintenanceRequestId) {
         const mr = await tx.maintenanceRequest.findUnique({ where: { id: v.maintenanceRequestId } });
         if (mr?.status === "OPEN") await tx.maintenanceRequest.update({ where: { id: mr.id }, data: { status: "IN_PROGRESS", assignedToId: mr.assignedToId ?? me.id } });

@@ -1,269 +1,106 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
-import { ListPlus, Plus, Trash2 } from "lucide-react";
-import Combobox, { type ComboOption } from "@/components/combobox";
+import { Save, Search, X } from "lucide-react";
 import { useFormAction } from "@/components/use-form-action";
-import { Alert, Button, Card, Field, Input, Select, Textarea } from "@/components/ui";
+import { Alert, Button, cn } from "@/components/ui";
 import { createOrderAction, updateOrderAction } from "@/app/actions/orders";
 
-type Line = { key: string; lineId?: string; productId: string; quantity: string; specifications: string; locked?: boolean };
-type Initial = {
-  id: string;
-  status: string;
-  customerId: string;
-  customerReference: string;
-  priority: string;
-  requestedDeliveryDate: string;
-  plannedStart: string;
-  plannedEnd: string;
-  instructions: string;
-  packaging: string;
-  notes: string;
-  lines: Omit<Line, "key">[];
-};
+type Product = { id: string; code: string; name: string };
 
-let seq = 0;
-const newLine = (): Line => ({ key: `n${++seq}`, productId: "", quantity: "", specifications: "" });
-
-export default function OrderForm({
-  customers,
-  products,
-  initial,
-  canConfirm,
-}: {
-  customers: ComboOption[];
-  products: (ComboOption & { specs?: string })[];
-  initial?: Initial;
-  canConfirm: boolean;
-}) {
+/**
+ * The order sheet: every product with an amount box. The Sales Manager types the amounts
+ * needed; products left empty are not part of the order.
+ */
+export default function OrderForm({ products, initial }: { products: Product[]; initial?: { id: string; quantities: Record<string, number> } }) {
   const t = useTranslations();
-  const editing = !!initial;
-  const [lines, setLines] = useState<Line[]>(
-    initial?.lines.map((l, i) => ({ ...l, key: `e${i}` })) ?? [newLine()],
+  const [qty, setQty] = useState<Record<string, string>>(
+    Object.fromEntries(Object.entries(initial?.quantities ?? {}).map(([k, v]) => [k, String(v)])),
   );
-  const { onSubmit, pending, error, fieldErrors: fe } = useFormAction(editing ? updateOrderAction : createOrderAction);
-  const [openSpecs, setOpenSpecs] = useState<Set<string>>(new Set());
-  const [picking, setPicking] = useState(false);
-  const [picked, setPicked] = useState<Set<string>>(new Set());
-  const [pickFilter, setPickFilter] = useState("");
+  const [filter, setFilter] = useState("");
+  const [onlyChosen, setOnlyChosen] = useState(false);
+  const { onSubmit, pending, error } = useFormAction(initial ? updateOrderAction : createOrderAction);
 
-  const update = (key: string, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
-  const needsReason = editing && initial.status !== "DRAFT";
+  const chosen = products.filter((p) => Number(qty[p.id]) > 0);
+  const pieces = chosen.reduce((s, p) => s + Number(qty[p.id]), 0);
+  const shown = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    return products.filter((p) => (!onlyChosen || Number(qty[p.id]) > 0) && (!q || `${p.code} ${p.name}`.toLowerCase().includes(q)));
+  }, [products, filter, onlyChosen, qty]);
+
+  const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const all = Array.from(document.querySelectorAll<HTMLInputElement>("input[data-q]"));
+    all[all.indexOf(e.currentTarget) + 1]?.focus();
+  };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      {editing && <input type="hidden" name="id" value={initial.id} />}
-      {error && <Alert>{error}</Alert>}
+    <form onSubmit={onSubmit} className="pb-24">
+      {initial && <input type="hidden" name="id" value={initial.id} />}
+      {chosen.map((p) => (
+        <span key={p.id} hidden>
+          <input type="hidden" name="productId[]" value={p.id} />
+          <input type="hidden" name="quantity[]" value={qty[p.id]} />
+        </span>
+      ))}
+      {error && <div className="mb-3"><Alert>{error}</Alert></div>}
 
-      <Card>
-        <h2 className="mb-3 font-semibold">{t("order.customerSection")}</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="sm:col-span-2">
-            <Field label={`${t("order.customer")} *`} name="customerId" error={fe.customerId}>
-              <Combobox name="customerId" options={customers} defaultValue={initial?.customerId} required invalid={!!fe.customerId} />
-            </Field>
-          </div>
-          <Field label={t("order.customerReference")} name="customerReference" hint={t("order.customerReferenceHint")}>
-            <Input name="customerReference" defaultValue={initial?.customerReference} dir="ltr" />
-          </Field>
-          <Field label={`${t("order.requestedDelivery")} *`} name="requestedDeliveryDate" error={fe.requestedDeliveryDate}>
-            <Input name="requestedDeliveryDate" type="date" required defaultValue={initial?.requestedDeliveryDate} />
-          </Field>
-          <Field label={t("order.priority")} name="priority">
-            <Select name="priority" defaultValue={initial?.priority ?? "NORMAL"}>
-              {["LOW", "NORMAL", "HIGH", "URGENT"].map((p) => <option key={p} value={p}>{t(`status.priority.${p}`)}</option>)}
-            </Select>
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label={t("order.plannedStart")} name="plannedStart">
-              <Input name="plannedStart" type="date" defaultValue={initial?.plannedStart} />
-            </Field>
-            <Field label={t("order.plannedEnd")} name="plannedEnd">
-              <Input name="plannedEnd" type="date" defaultValue={initial?.plannedEnd} />
-            </Field>
-          </div>
-        </div>
-      </Card>
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-3">
+        <label className="relative min-w-52 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted start-3" />
+          <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("order.filterProducts")} aria-label={t("order.filterProducts")} className="min-h-11 w-full rounded-lg border border-line bg-surface ps-9 pe-3 text-sm" />
+        </label>
+        <label className="flex min-h-11 items-center gap-2 text-sm">
+          <input type="checkbox" checked={onlyChosen} onChange={(e) => setOnlyChosen(e.target.checked)} className="size-5 accent-brand-600" /> {t("order.onlyChosen")}
+        </label>
+      </div>
 
-      <Card>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold">{t("order.products")}</h2>
-          <span className="text-xs text-muted">{lines.length}</span>
+      <div className="overflow-hidden rounded-2xl border border-line bg-surface">
+        <div className="grid grid-cols-[1fr_9rem] gap-3 border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-muted">
+          <span>{t("order.product")}</span><span className="text-end">{t("order.quantity")} ({t("md.pcs")})</span>
         </div>
-        <div className="space-y-2">
-          {lines.map((l, i) => (
-            <div key={l.key} className="rounded-xl border border-line p-3">
-              <input type="hidden" name="lineId[]" value={l.lineId ?? ""} />
-              <div className="grid grid-cols-[2rem_1fr_auto] items-start gap-2 sm:grid-cols-[2rem_2fr_1fr_auto]">
-                <span className="pt-3 text-xs font-semibold text-muted tabular-nums">{i + 1}</span>
-                <div className="min-w-0">
-                  <span className="sr-only">{t("order.product")}</span>
-                  {l.locked ? (
-                    <>
-                      <input type="hidden" name="productId[]" value={l.productId} />
-                      <div className="flex min-h-11 items-center rounded-lg border border-line bg-surface-2 px-3 text-sm">
-                        {products.find((p) => p.value === l.productId)?.label}
-                      </div>
-                    </>
-                  ) : (
-                    <Combobox
-                      name="productId[]"
-                      options={products}
-                      defaultValue={l.productId}
-                      required
-                      onChange={(v) => {
-                        const p = products.find((x) => x.value === v);
-                        update(l.key, { productId: v, ...(l.specifications ? {} : { specifications: p?.specs ?? "" }) });
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="col-span-2 col-start-2 sm:col-span-1 sm:col-start-auto">
-                  <Input
-                    name="quantity[]"
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    step={1}
-                    required
-                    placeholder={`${t("order.quantity")} (${t("md.pcs")})`}
-                    aria-label={`${t("order.line")} ${i + 1} ${t("order.quantity")}`}
-                    value={l.quantity}
-                    onChange={(e) => update(l.key, { quantity: e.target.value })}
-                    onKeyDown={(e) => {
-                      if (e.key !== "Enter") return;
-                      e.preventDefault();
-                      const all = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="quantity[]"]'));
-                      all[all.indexOf(e.currentTarget) + 1]?.focus();
-                    }}
-                    dir="ltr"
-                  />
-                </div>
-                <div className="row-start-1 flex justify-end sm:row-start-auto">
-                  {!l.locked && lines.length > 1 && (
-                    <button
-                      type="button"
-                      aria-label={t("order.removeLine")}
-                      onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
-                      className="rounded-md p-2.5 text-muted hover:bg-surface-2 hover:text-red-600"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  )}
-                </div>
+        <ul className="divide-y divide-line">
+          {shown.map((p) => (
+            <li key={p.id} className={cn("grid grid-cols-[1fr_9rem] items-center gap-3 px-4 py-2", Number(qty[p.id]) > 0 && "bg-brand-50/60 dark:bg-brand-900/30")}>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{p.name}</p>
+                <p className="text-xs text-muted" dir="ltr">{p.code}</p>
               </div>
-              {l.specifications || openSpecs.has(l.key) ? (
-                <div className="mt-2 ps-10">
-                  <Textarea
-                    name="specifications[]"
-                    rows={2}
-                    aria-label={t("order.lineSpecs")}
-                    placeholder={t("order.lineSpecs")}
-                    value={l.specifications}
-                    onChange={(e) => update(l.key, { specifications: e.target.value })}
-                  />
-                </div>
-              ) : (
-                <>
-                  <input type="hidden" name="specifications[]" value="" />
-                  <button type="button" onClick={() => setOpenSpecs((s) => new Set(s).add(l.key))} className="mt-1 ms-10 text-xs font-semibold text-brand-600 hover:underline dark:text-brand-300">
-                    + {t("order.lineSpecs")}
+              <div className="flex items-center gap-1">
+                <input
+                  data-q
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  value={qty[p.id] ?? ""}
+                  onChange={(e) => setQty((q) => ({ ...q, [p.id]: e.target.value }))}
+                  onKeyDown={onKey}
+                  aria-label={`${p.code} ${t("order.quantity")}`}
+                  className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 text-end text-base tabular-nums"
+                  dir="ltr"
+                />
+                {qty[p.id] && (
+                  <button type="button" aria-label={t("order.removeLine")} onClick={() => setQty((q) => ({ ...q, [p.id]: "" }))} className="rounded-md p-1.5 text-muted hover:text-red-600">
+                    <X className="size-4" />
                   </button>
-                </>
-              )}
-            </div>
+                )}
+              </div>
+            </li>
           ))}
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" onClick={() => setLines((ls) => [...ls, newLine()])}>
-            <Plus className="size-4" /> {t("order.addLine")}
+        </ul>
+        {shown.length === 0 && <p className="p-6 text-center text-sm text-muted">{t("common.empty")}</p>}
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 px-3 py-3 backdrop-blur lg:start-64" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <p className="text-sm">{t("order.sheetSummary", { n: chosen.length, pcs: pieces.toLocaleString("en") })}</p>
+          <Button type="submit" disabled={pending || chosen.length === 0}>
+            <Save className="size-4" /> {pending ? t("common.saving") : initial ? t("common.save") : t("order.saveOrder")}
           </Button>
-          <Button type="button" variant="secondary" onClick={() => setPicking((v) => !v)}>
-            <ListPlus className="size-4" /> {t("order.addMany")}
-          </Button>
         </div>
-        {picking && (
-          <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50/50 p-3 dark:border-brand-800 dark:bg-brand-900/30">
-            <p className="mb-2 text-sm font-semibold">{t("order.addManyTitle")}</p>
-            <Input value={pickFilter} onChange={(e) => setPickFilter(e.target.value)} placeholder={t("common.search")} aria-label={t("common.search")} />
-            <ul className="mt-2 max-h-72 space-y-0.5 overflow-y-auto">
-              {products
-                .filter((p) => !pickFilter || `${p.label} ${p.hint ?? ""}`.toLowerCase().includes(pickFilter.toLowerCase()))
-                .map((p) => (
-                  <li key={p.value}>
-                    <label className="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm hover:bg-surface">
-                      <input
-                        type="checkbox"
-                        className="size-5 accent-brand-600"
-                        checked={picked.has(p.value)}
-                        onChange={(e) => setPicked((s) => { const n = new Set(s); if (e.target.checked) n.add(p.value); else n.delete(p.value); return n; })}
-                      />
-                      <span className="min-w-0 flex-1 truncate">{p.label}</span>
-                      {p.hint && <span className="text-xs text-muted" dir="ltr">{p.hint}</span>}
-                    </label>
-                  </li>
-                ))}
-            </ul>
-            <div className="mt-2 flex gap-2">
-              <Button
-                type="button"
-                disabled={picked.size === 0}
-                onClick={() => {
-                  const add = products.filter((p) => picked.has(p.value)).map((p) => ({ ...newLine(), productId: p.value, specifications: p.specs ?? "" }));
-                  setLines((ls) => [...ls.filter((l) => l.lineId || l.productId || l.quantity), ...add]);
-                  setPicked(new Set()); setPickFilter(""); setPicking(false);
-                }}
-              >
-                {t("order.addSelected", { n: picked.size })}
-              </Button>
-              <Button type="button" variant="ghost" onClick={() => setPicking(false)}>{t("common.cancel")}</Button>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 font-semibold">{t("order.instructionsSection")}</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label={t("order.instructions")} name="instructions">
-            <Textarea name="instructions" defaultValue={initial?.instructions} />
-          </Field>
-          <Field label={t("order.packaging")} name="packaging">
-            <Textarea name="packaging" defaultValue={initial?.packaging} />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label={t("md.notes")} name="notes">
-              <Textarea name="notes" defaultValue={initial?.notes} />
-            </Field>
-          </div>
-        </div>
-      </Card>
-
-      {needsReason && (
-        <Card>
-          <Field label={t("order.changeReason")} name="reason" hint={t("order.changeReasonHint")}>
-            <Input name="reason" />
-          </Field>
-        </Card>
-      )}
-
-      <div className="sticky bottom-0 z-10 -mx-3 flex flex-wrap gap-2 border-t border-line bg-surface-2/95 px-3 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:border">
-        {editing ? (
-          <Button type="submit" disabled={pending}>{pending ? t("common.saving") : t("common.save")}</Button>
-        ) : (
-          <>
-            <Button type="submit" name="intent" value="draft" variant="secondary" disabled={pending}>
-              {t("order.saveDraft")}
-            </Button>
-            {canConfirm && (
-              <Button type="submit" name="intent" value="confirm" disabled={pending}>
-                {pending ? t("common.saving") : t("order.saveConfirm")}
-              </Button>
-            )}
-          </>
-        )}
       </div>
     </form>
   );

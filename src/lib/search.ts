@@ -3,8 +3,7 @@ import type { Tone } from "@/components/ui";
 import { db } from "./db";
 import type { CurrentUser } from "./auth";
 import type { Permission } from "./permissions";
-import { STATUS_TONE } from "./orders";
-import { ISSUE_TONE, JOB_TONE, MAINT_TONE, QC_TONE, SHIP_TONE } from "./tones";
+import { ISSUE_TONE, MAINT_TONE, ORDER_TONE } from "./tones";
 
 export type Hit = {
   title: string; // record number / code
@@ -20,10 +19,8 @@ const ci = (q: string) => ({ contains: q, mode: "insensitive" as const });
 const same = (a: string | null | undefined, q: string) => !!a && a.toLowerCase() === q.toLowerCase();
 
 /**
- * One search across every kind of record the spec lists: order, customer, product code,
- * batch, machine, mold, quality issue, maintenance request and shipment (plus jobs,
- * service reports, inspections and receipts, which share the same numbering).
- * Each group only runs if the user may view that kind of record.
+ * One search across orders, products, machines, molds, quality issues, QC inspections,
+ * maintenance requests and service reports. Each group only runs if the user may view it.
  */
 export async function globalSearch(raw: string, me: CurrentUser): Promise<SearchGroup[]> {
   const q = raw.trim().slice(0, 80);
@@ -33,39 +30,21 @@ export async function globalSearch(raw: string, me: CurrentUser): Promise<Search
 
   const tasks: [string, Promise<Hit[]>][] = [
     ["orders", !may("orders:view") ? skip : db.order.findMany({
-      where: { OR: [{ number: ci(q) }, { customerReference: ci(q) }, { customer: { name: ci(q) } }] },
+      where: { OR: [{ number: ci(q) }, { lines: { some: { product: { OR: [{ code: ci(q) }, { name: ci(q) }] } } } }] },
       orderBy: { createdAt: "desc" }, take: TAKE,
-      select: { id: true, number: true, status: true, customerReference: true, customer: { select: { name: true } } },
+      select: { id: true, number: true, status: true, _count: { select: { lines: true } } },
     }).then((r) => r.map((o) => ({
-      title: o.number, sub: [o.customer.name, o.customerReference].filter(Boolean).join(" · "), href: `/orders/${o.id}`,
-      status: { ns: "status.order", value: o.status, tone: STATUS_TONE[o.status] }, exact: same(o.number, q) || same(o.customerReference, q),
+      title: o.number, sub: `${o._count.lines} products`, href: `/orders/${o.id}`,
+      status: { ns: "status.order", value: o.status, tone: ORDER_TONE[o.status] }, exact: same(o.number, q),
     })))],
-    ["customers", !may("customers:view") ? skip : db.customer.findMany({
-      where: { OR: [{ code: ci(q) }, { name: ci(q) }, { phone: ci(q) }, { contactName: ci(q) }] }, orderBy: { name: "asc" }, take: TAKE,
-      select: { id: true, code: true, name: true, phone: true },
-    }).then((r) => r.map((c) => ({ title: c.name, sub: [c.code, c.phone].filter(Boolean).join(" · "), href: `/orders?customer=${c.id}`, exact: same(c.code, q) })))],
     ["products", !may("products:view") ? skip : db.product.findMany({
       where: { OR: [{ code: ci(q) }, { name: ci(q) }] }, orderBy: { code: "asc" }, take: TAKE, select: { code: true, name: true },
-    }).then((r) => r.map((p) => ({ title: p.code, sub: p.name, href: `/products?q=${encodeURIComponent(p.code)}`, exact: same(p.code, q) })))],
-    ["batches", !may("qc:view") ? skip : db.batch.findMany({
-      where: { number: ci(q) }, orderBy: { createdAt: "desc" }, take: TAKE,
-      select: { id: true, number: true, qcStatus: true, product: { select: { code: true } }, orderLine: { select: { order: { select: { number: true } } } } },
-    }).then((r) => r.map((b) => ({
-      title: b.number, sub: `${b.product.code} · ${b.orderLine.order.number}`, href: `/qc/batches/${b.id}`,
-      status: { ns: "status.qc", value: b.qcStatus, tone: QC_TONE[b.qcStatus] }, exact: same(b.number, q),
-    })))],
-    ["jobs", !may("production:view") ? skip : db.productionJob.findMany({
-      where: { number: ci(q) }, orderBy: { createdAt: "desc" }, take: TAKE,
-      select: { id: true, number: true, status: true, machine: { select: { code: true } }, orderLine: { select: { product: { select: { code: true } } } } },
-    }).then((r) => r.map((j) => ({
-      title: j.number, sub: [j.orderLine.product.code, j.machine?.code].filter(Boolean).join(" · "), href: `/production/${j.id}`,
-      status: { ns: "status.job", value: j.status, tone: JOB_TONE[j.status] }, exact: same(j.number, q),
-    })))],
+    }).then((r) => r.map((p) => ({ title: p.code, sub: p.name, href: `/production?product=${encodeURIComponent(p.code)}`, exact: same(p.code, q) })))],
     ["machines", !may("assets:view") ? skip : db.machine.findMany({
       where: { OR: [{ code: ci(q) }, { name: ci(q) }, { model: ci(q) }] }, orderBy: { code: "asc" }, take: TAKE, select: { id: true, code: true, name: true, status: true },
     }).then((r) => r.map((m) => ({
       title: m.code, sub: m.name, href: `/history?machine=${m.id}`,
-      status: { ns: "status.machine", value: m.status, tone: (m.status === "DOWN" ? "red" : m.status === "RUNNING" ? "purple" : m.status === "MAINTENANCE" ? "amber" : "green") as Tone },
+      status: { ns: "status.machine", value: m.status, tone: (m.status === "DOWN" ? "red" : m.status === "MAINTENANCE" ? "amber" : "green") as Tone },
       exact: same(m.code, q),
     })))],
     ["molds", !may("assets:view") ? skip : db.mold.findMany({
@@ -73,15 +52,15 @@ export async function globalSearch(raw: string, me: CurrentUser): Promise<Search
       select: { id: true, code: true, name: true, currentMachine: { select: { code: true } } },
     }).then((r) => r.map((m) => ({ title: m.code, sub: [m.name, m.currentMachine?.code].filter(Boolean).join(" · "), href: `/history?mold=${m.id}`, exact: same(m.code, q) })))],
     ["issues", !may("qc:view") ? skip : db.qualityIssue.findMany({
-      where: { OR: [{ number: ci(q) }, { description: ci(q) }, { batch: { number: ci(q) } }] }, orderBy: { createdAt: "desc" }, take: TAKE,
-      select: { id: true, number: true, status: true, description: true, batch: { select: { number: true } } },
+      where: { OR: [{ number: ci(q) }, { description: ci(q) }, { entry: { product: { code: ci(q) } } }] }, orderBy: { createdAt: "desc" }, take: TAKE,
+      select: { id: true, number: true, status: true, description: true, entry: { select: { product: { select: { code: true } } } } },
     }).then((r) => r.map((i) => ({
-      title: i.number, sub: `${i.batch.number} · ${i.description.slice(0, 80)}`, href: `/qc/issues/${i.id}`,
+      title: i.number, sub: `${i.entry.product.code} · ${i.description.slice(0, 80)}`, href: `/qc/issues/${i.id}`,
       status: { ns: "status.issue", value: i.status, tone: ISSUE_TONE[i.status] }, exact: same(i.number, q),
     })))],
     ["inspections", !may("qc:view") ? skip : db.qcInspection.findMany({
-      where: { number: ci(q) }, orderBy: { inspectedAt: "desc" }, take: TAKE, select: { number: true, decision: true, batchId: true, batch: { select: { number: true } } },
-    }).then((r) => r.map((i) => ({ title: i.number, sub: i.batch.number, href: `/qc/batches/${i.batchId}`, exact: same(i.number, q) })))],
+      where: { number: ci(q) }, orderBy: { inspectedAt: "desc" }, take: TAKE, select: { number: true, entryId: true, entry: { select: { product: { select: { code: true } } } } },
+    }).then((r) => r.map((i) => ({ title: i.number, sub: i.entry.product.code, href: `/qc/entries/${i.entryId}`, exact: same(i.number, q) })))],
     ["requests", !may("maintenance:view") ? skip : db.maintenanceRequest.findMany({
       where: { OR: [{ number: ci(q) }, { title: ci(q) }] }, orderBy: { createdAt: "desc" }, take: TAKE,
       select: { id: true, number: true, title: true, status: true, machine: { select: { code: true } } },
@@ -92,16 +71,6 @@ export async function globalSearch(raw: string, me: CurrentUser): Promise<Search
     ["serviceReports", !may("service:view") ? skip : db.serviceReport.findMany({
       where: { number: ci(q) }, orderBy: { createdAt: "desc" }, take: TAKE, select: { id: true, number: true, workPerformed: true, machine: { select: { code: true } } },
     }).then((r) => r.map((s) => ({ title: s.number, sub: `${s.machine.code} · ${s.workPerformed.slice(0, 80)}`, href: `/service/reports/${s.id}`, exact: same(s.number, q) })))],
-    ["shipments", !may("shipments:view") ? skip : db.shipment.findMany({
-      where: { OR: [{ number: ci(q) }, { deliveryNote: ci(q) }, { vehicle: ci(q) }] }, orderBy: { createdAt: "desc" }, take: TAKE,
-      select: { id: true, number: true, deliveryNote: true, status: true, customer: { select: { name: true } } },
-    }).then((r) => r.map((s) => ({
-      title: s.deliveryNote ? `${s.number} · ${s.deliveryNote}` : s.number, sub: s.customer.name, href: `/shipments/${s.id}`,
-      status: { ns: "status.ship", value: s.status, tone: SHIP_TONE[s.status] }, exact: same(s.number, q) || same(s.deliveryNote, q),
-    })))],
-    ["receipts", !may("warehouse:view") ? skip : db.warehouseReceipt.findMany({
-      where: { number: ci(q) }, orderBy: { receivedAt: "desc" }, take: TAKE, select: { number: true, qtyReceived: true, batchId: true, batch: { select: { number: true } } },
-    }).then((r) => r.map((x) => ({ title: x.number, sub: `${x.batch.number} · ${x.qtyReceived}`, href: `/qc/batches/${x.batchId}`, exact: same(x.number, q) })))],
   ];
 
   const results = await Promise.all(tasks.map(([, p]) => p));
