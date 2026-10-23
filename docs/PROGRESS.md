@@ -38,4 +38,4 @@ Checklist:
 - [x] schema + migration  - [x] orders  - [x] daily production  - [x] QC + warehouse
 - [x] cleanup (nav, perms, dashboard, reports, search, history, service, go-live tools, demo, i18n stage9)
 - [x] tests: acceptance 56/56 (fresh DB), security 28/28, unit 6/6; docs updated
-- [ ] deploy (migration wipes old test orders/production/stock on the live DB — expected)
+- [x] deployed dpl_79chb3XqbTheneC2dyx8WaWvf7Xt (23 Oct 2026); migration cleared old test orders/production/stock on the live DB
