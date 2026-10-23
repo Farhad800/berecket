@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import {
-  AlarmClock, ArrowDownUp, ArrowLeftRight, Bug, ChevronRight, ClipboardCheck, ClipboardPen, Factory, ListChecks,
-  PackageCheck, PauseCircle, ShieldCheck, Target, Timer, Truck, Wrench, type LucideIcon,
+  ArrowDownUp, ArrowLeftRight, Boxes, Bug, ChevronRight, ClipboardCheck, ClipboardPen, Factory, ListChecks,
+  ShieldCheck, Target, Wrench, type LucideIcon,
 } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
 import { REPORTS, SECTIONS } from "@/lib/reports/registry";
@@ -11,8 +11,7 @@ import { Alert, PageHeader } from "@/components/ui";
 export const metadata = { title: "Reports & Analytics" };
 
 const ICONS: Record<string, LucideIcon> = {
-  Factory, Target, ClipboardCheck, Timer, AlarmClock, ListChecks, PauseCircle, Wrench, ArrowLeftRight,
-  ShieldCheck, Bug, ClipboardPen, PackageCheck, ArrowDownUp, Truck,
+  Factory, Target, ClipboardCheck, ListChecks, Wrench, ArrowLeftRight, ShieldCheck, Bug, ClipboardPen, Boxes, ArrowDownUp,
 };
 
 export default async function ReportsPage() {

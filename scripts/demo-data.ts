@@ -35,9 +35,6 @@ async function add() {
   DEMO_USERS.forEach((u) => console.log(`  ${u[2].padEnd(18)} ${u[3]}`));
 
   // Demo master data so orders can be tried straight away. All codes start with DEMO-.
-  for (const [code, name, phone] of [["DEMO-C1", "Demo Water Company", "+964 750 000 0001"], ["DEMO-C2", "Demo Dairy Co.", "+964 750 000 0002"]]) {
-    await db.customer.upsert({ where: { code }, update: {}, create: { code, name, phone, address: "Duhok (demo)" } });
-  }
   const products = [
     ["DEMO-PF500", "500 ml PET preform (demo)", 12, true],
     ["DEMO-CAP28", "28 mm bottle cap (demo)", 6, false],
@@ -53,7 +50,7 @@ async function add() {
     const p = await db.product.findUniqueOrThrow({ where: { code: product } });
     await db.mold.upsert({ where: { code }, update: {}, create: { code, name: `${product} mold (demo)`, cavities: cav, productId: p.id } });
   }
-  console.log("Demo customers, products, machines and molds ready (codes start with DEMO-).");
+  console.log("Demo products, machines and molds ready (codes start with DEMO-).");
 }
 
 async function remove() {
@@ -78,7 +75,6 @@ async function remove() {
   await tryDelete("molds", () => db.mold.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
   await tryDelete("machines", () => db.machine.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
   await tryDelete("products", () => db.product.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
-  await tryDelete("customers", () => db.customer.deleteMany({ where: { code: { startsWith: "DEMO-" } } }));
 }
 
 const cmd = process.argv[2];

@@ -7,21 +7,18 @@
   },
   "nav": {
     "main": "Main",
-    "sales": "Sales & Planning",
+    "sales": "Sales",
     "operations": "Operations",
     "masterData": "Master data",
     "insights": "Insights",
     "admin": "Administration",
     "dashboard": "Dashboard",
-    "orders": "Customer Orders",
-    "schedule": "Production Schedule",
-    "production": "Production Reports",
+    "orders": "Orders",
+    "production": "Daily Production",
     "service": "Technical Service",
     "history": "Mold & Machine History",
     "qc": "Quality Control",
-    "inventory": "Warehouse Inventory",
-    "shipments": "Customer Shipments",
-    "customers": "Customers",
+    "inventory": "Warehouse Stock",
     "products": "Products",
     "assets": "Machines & Molds",
     "reports": "Reports & Analytics",
@@ -85,24 +82,22 @@
   "dashboard": {
     "title": "Dashboard",
     "greeting": "Hello, {name}",
-    "activeOrders": "Active orders",
-    "dueToday": "Due today",
-    "overdue": "Overdue orders",
-    "urgent": "Urgent orders",
-    "scheduledToday": "Jobs scheduled today",
-    "inProduction": "Jobs in production",
     "producedToday": "Produced today (pcs)",
-    "awaitingQc": "Awaiting QC (pcs)",
     "criticalIssues": "Open critical quality issues",
     "machinesDown": "Machines down",
     "openMaintenance": "Open maintenance requests",
-    "awaitingReceipt": "Awaiting warehouse receipt (pcs)",
-    "availableStock": "Available approved stock (pcs)",
-    "shipmentsToday": "Shipments today",
-    "partiallyDelivered": "Partially delivered orders",
     "recentActivity": "Recent activity",
     "noActivity": "No activity yet.",
-    "updated": "Updated {time}"
+    "updated": "Updated {time}",
+    "openOrders": "Open orders",
+    "openPieces": "Pieces in open orders",
+    "productsToday": "Products made today",
+    "producedWeek": "Produced last 7 days",
+    "notInspected": "Entries not inspected (14 days)",
+    "rejectedWeek": "Rejected last 7 days (pcs)",
+    "openIssues": "Open quality issues",
+    "stock": "Pieces in stock",
+    "outWeek": "Out last 7 days (pcs)"
   },
   "admin": {
     "employees": "Employees",
@@ -233,42 +228,11 @@
       "IN_REPAIR": "In repair",
       "RETIRED": "Retired"
     },
-    "order": {
-      "DRAFT": "Draft",
-      "CONFIRMED": "Confirmed",
-      "WAITING_PLANNING": "Waiting for planning",
-      "SCHEDULED": "Scheduled",
-      "IN_PRODUCTION": "In production",
-      "ON_HOLD": "On hold",
-      "PARTIALLY_PRODUCED": "Partially produced",
-      "AWAITING_QC": "Awaiting quality inspection",
-      "PARTIALLY_COMPLETED": "Partially completed",
-      "COMPLETED": "Completed",
-      "READY_FOR_DISPATCH": "Ready for dispatch",
-      "PARTIALLY_DELIVERED": "Partially delivered",
-      "DELIVERED": "Delivered",
-      "CANCELLED": "Cancelled"
-    },
     "priority": {
       "LOW": "Low",
       "NORMAL": "Normal",
       "HIGH": "High",
       "URGENT": "Urgent"
-    },
-    "job": {
-      "PLANNED": "Planned",
-      "IN_PROGRESS": "Running",
-      "PAUSED": "Paused",
-      "COMPLETED": "Completed",
-      "CANCELLED": "Cancelled"
-    },
-    "qc": {
-      "PENDING": "Awaiting QC",
-      "RELEASED": "Released",
-      "APPROVED": "Approved",
-      "PARTIAL": "Partly held",
-      "HOLD": "On hold",
-      "REJECTED": "Rejected"
     },
     "maint": {
       "OPEN": "Open",
@@ -290,16 +254,14 @@
       "RESOLVED": "Resolved",
       "REOPENED": "Reopened"
     },
-    "stock": {
-      "AVAILABLE": "Available",
-      "RESERVED": "Reserved",
-      "QUARANTINE": "Quarantine",
-      "REJECTED": "Rejected",
-      "SHIPPED": "Shipped"
+    "entryQc": {
+      "NOT_INSPECTED": "Not inspected",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
     },
-    "ship": {
-      "DRAFT": "Draft — stock reserved",
-      "CONFIRMED": "Dispatched",
+    "order": {
+      "OPEN": "Open",
+      "COMPLETED": "Completed",
       "CANCELLED": "Cancelled"
     }
   },
@@ -328,15 +290,15 @@
     "saveConfirm": "Save & confirm",
     "count": "{n} orders",
     "new": "New order",
-    "searchPlaceholder": "Order no., customer, product code…",
-    "allStatuses": "All statuses",
+    "searchPlaceholder": "Order number or product…",
+    "allStatuses": "All orders",
     "openOnly": "Open orders",
     "due": "Due",
     "dueWeek": "Due in 7 days",
     "overdueShort": "late",
     "progressLine": "{done} of {total} made · {shipped} shipped",
     "needMasterData": "Add at least one customer and one product first.",
-    "newHint": "One order can contain several products.",
+    "newHint": "Type the amount next to each product you need. Leave the rest empty.",
     "planProduction": "Plan production",
     "created": "Created",
     "confirmed": "Confirmed",
@@ -356,23 +318,31 @@
       "toProduce": "Left to make",
       "toDeliver": "Left to deliver"
     },
-    "act": {
-      "confirm": "Confirm order",
-      "hold": "Put on hold",
-      "resume": "Resume",
-      "cancel": "Cancel order",
-      "close": "Close with exception",
-      "holdHelp": "Production planning stops until the order is resumed.",
-      "cancelHelp": "Planned jobs that haven't started are cancelled too.",
-      "closeHelp": "Marks the order delivered even though not every piece was shipped. Use only with management approval.",
-      "confirmAction": "Confirm",
-      "delete": "Delete order",
-      "deleteHelp": "Only for orders entered by mistake, before any production. The order disappears completely; a record of who deleted it and why stays in the audit log."
-    },
-    "deletedMsg": "Order deleted. The deletion is recorded in the audit log.",
+    "deletedMsg": "Order deleted. The audit log keeps a record of who deleted it and why.",
     "addMany": "Add several products",
     "addManyTitle": "Tick the products to add — then type each quantity",
-    "addSelected": "Add {n} products"
+    "addSelected": "Add {n} products",
+    "filterProducts": "Filter products by code or name…",
+    "onlyChosen": "Show only chosen",
+    "sheetSummary": "{n} products · {pcs} pcs",
+    "saveOrder": "Save order",
+    "needProducts": "Add products first — orders and daily production are typed against the product list.",
+    "productsPieces": "{n} products · {pcs} pcs",
+    "inStock": "In stock",
+    "stockNote": "“In stock” is today's warehouse stock for each product.",
+    "completedOn": "Completed on {date}",
+    "cancelledOn": "Cancelled on {date}",
+    "act": {
+      "complete": "Mark completed",
+      "completeHelp": "Use when everything on this order has been delivered.",
+      "cancel": "Cancel order",
+      "cancelHelp": "The order stays in the list as cancelled and no longer counts as demand.",
+      "reopen": "Reopen",
+      "reopenHelp": "Makes the order open again so it can be edited and counts as demand.",
+      "delete": "Delete order",
+      "deleteHelp": "Only for orders entered by mistake. The order disappears completely; a record of who deleted it and why stays in the audit log.",
+      "confirmAction": "Confirm"
+    }
   },
   "comments": {
     "title": "Comments",
@@ -382,16 +352,18 @@
   },
   "history": {
     "order": {
-      "create": "Order created as draft",
+      "create": "Order created",
       "create_confirm": "Order created and confirmed",
-      "update": "Order edited",
+      "update": "Order changed",
       "deadline_change": "Delivery date changed",
       "confirm": "Order confirmed",
       "hold": "Put on hold",
       "resume": "Resumed",
-      "cancel": "Cancelled",
+      "cancel": "Order cancelled",
       "close": "Closed with exception",
-      "delete": "Order deleted"
+      "delete": "Order deleted",
+      "complete": "Order completed",
+      "reopen": "Order reopened"
     },
     "job": {
       "create": "Production job scheduled",
@@ -404,8 +376,9 @@
       "complete": "Job completed"
     },
     "production": {
-      "report": "Quantity reported",
-      "correct": "Quantity corrected"
+      "report": "Daily production entered",
+      "correct": "Production entry corrected",
+      "delete": "Production entry deleted"
     },
     "batch": {
       "open": "New batch opened"
@@ -427,10 +400,10 @@
       "upload": "File added"
     },
     "qc": {
-      "approve": "QC approved the batch",
+      "approve": "QC approved an entry",
       "partial": "QC partial release",
       "hold": "QC put the batch on hold",
-      "reject": "QC rejected the batch",
+      "reject": "QC rejected pieces",
       "issue_create": "Quality issue opened",
       "corrective_action": "Corrective action recorded",
       "issue_submit": "Submitted for verification",
@@ -441,7 +414,8 @@
       "receive": "Goods received"
     },
     "stock": {
-      "adjust": "Stock adjusted"
+      "adjust": "Stock adjusted",
+      "out": "Stock taken out"
     },
     "shipment": {
       "create": "Shipment drafted, stock reserved",
@@ -630,7 +604,22 @@
       "NO_OPERATOR": "No operator",
       "SETUP": "Setup / adjustment",
       "OTHER": "Other"
-    }
+    },
+    "last60": "last 60 days",
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "day": "Day",
+    "show": "Show",
+    "today": "Today",
+    "allProducts": "All products",
+    "total60": "Produced in the last 60 days",
+    "totalDay": "Produced on {date}",
+    "entriesN": "{n} entries",
+    "nothingDay": "Nothing entered for this day yet.",
+    "correct": "Correct",
+    "correctQty": "Correct quantity",
+    "correctReasonHint": "e.g. typing mistake",
+    "correctHelp": "Stock changes by the difference. Enter 0 to delete the entry. Entries already inspected by QC can't be changed."
   },
   "svc": {
     "newRequest": "New maintenance request",
@@ -746,13 +735,13 @@
     "markAll": "Mark all read"
   },
   "qc": {
-    "policy": "Batches are released by default; QC samples randomly and can hold or reject any batch at any time.",
+    "policy": "QC picks daily production entries at random. Products marked “QC required” are listed first. Rejected pieces are removed from stock automatically.",
     "criticalBanner": "{n} critical quality issues are open",
     "searchBatches": "Batch, product code or order…",
     "searchIssues": "Issue no., description or batch…",
     "needsAttention": "Needs attention + last 7 days",
     "randomPick": "Random sample suggestion:",
-    "notInspected": "not inspected",
+    "notInspected": "Not inspected",
     "inspection": "Inspection",
     "decision": "Decision",
     "inspected": "Inspected",
@@ -802,10 +791,10 @@
       "categories": "Defect types"
     },
     "dec": {
-      "APPROVE": "Approve",
+      "APPROVE": "Approved",
       "PARTIAL": "Partial release",
       "HOLD": "Hold",
-      "REJECT": "Reject"
+      "REJECT": "Rejected"
     },
     "effect": {
       "APPROVE": "The whole batch becomes approved stock.",
@@ -825,12 +814,22 @@
       "reopen": "Issue reopened."
     },
     "continuesIssue": "This decision continues open issue {issue}.",
-    "addNewDefect": "+ It's a different defect — record it"
+    "addNewDefect": "+ It's a different defect — record it",
+    "searchEntries": "Product code or name…",
+    "last14": "All (last 14 days)",
+    "producedInEntry": "{n} pcs produced in this entry",
+    "alreadyRejected": "{n} pcs already rejected",
+    "effectReject": "{n} pcs will be removed from stock and the entry marked Rejected.",
+    "effectApprove": "No defects: the entry will be marked Approved.",
+    "saveReject": "Reject {n} pcs",
+    "saveApprove": "Approve",
+    "countsSimple": "{inspected} inspected · {rejected} rejected",
+    "whichMachine": "Which machine?"
   },
   "wh": {
-    "ledgerNote": "Stock is calculated from recorded movements — totals can't be typed in.",
+    "ledgerNote": "Stock goes up automatically from daily production and down when QC rejects or goods go out. Totals can't be typed in.",
     "searchStock": "Batch, product or order…",
-    "noStock": "No stock on hand.",
+    "noStock": "No products match.",
     "adjustTitle": "Stock adjustment",
     "adjustHint": "For counts, damage or scrapping rejected goods. Every adjustment is logged with your name and reason.",
     "saveAdjustment": "Save adjustment",
@@ -857,69 +856,33 @@
     "overHint": "Production reported {n} pcs still to receive.",
     "overBlocked": "Only {n} pcs are waiting. A supervisor must approve a higher count.",
     "confirmReceipt": "Confirm receipt",
-    "tab": {
-      "stock": "Stock",
-      "awaiting": "Awaiting receipt",
-      "receipts": "Receipts",
-      "movements": "Movements",
-      "locations": "Locations"
-    },
     "kind": {
       "COUNT": "Count correction",
       "DAMAGE": "Damaged",
       "SCRAP": "Scrapped",
       "OTHER": "Other"
     },
+    "totalPieces": "Pieces in stock",
+    "productsInStock": "Products in stock",
+    "goingOut": "Going out",
+    "showEmpty": "Show products with no stock",
+    "outSaved": "Saved: {n} products, {pcs} pieces went out.",
+    "reference": "Reference (optional)",
+    "referenceHint": "e.g. order number, truck or person",
+    "saveOut": "Take out {n} products · {pcs} pcs",
+    "adjustQtyHint": "Positive adds pieces, negative removes them (e.g. −20).",
+    "viewEntry": "View entry",
+    "moreInReport": "Showing the latest 300. Use the Stock movements report for older ones.",
     "mv": {
-      "RECEIPT": "Receipt",
-      "RESERVE": "Reserved for shipment",
-      "UNRESERVE": "Reservation released",
-      "SHIP": "Shipped",
-      "QC_SYNC": "Quality decision",
-      "ADJUST": "Adjustment",
-      "SCRAP": "Scrap"
+      "PRODUCTION": "Produced",
+      "QC_REJECT": "QC rejected",
+      "OUT": "Out",
+      "ADJUST": "Adjustment"
+    },
+    "tab": {
+      "stock": "Stock",
+      "movements": "Movements"
     }
-  },
-  "ship": {
-    "new": "New shipment",
-    "search": "Shipment, delivery note, order or customer…",
-    "notCancelled": "Not cancelled",
-    "newHint": "Only approved, unreserved stock can be shipped.",
-    "nothingToShip": "No order has approved stock ready to ship.",
-    "orderWithStock": "Order (with stock ready)",
-    "lineFacts": "Ordered {ordered} · shipped {shipped} · in drafts {drafts} · still to deliver {open}",
-    "fillFifo": "Fill oldest first",
-    "noStockLine": "No stock for this product yet.",
-    "availableN": "{n} available",
-    "blockedN": "{n} blocked",
-    "lineTotal": "This line: {n} pcs",
-    "overOpen": "more than the {n} still to deliver",
-    "plannedDate": "Planned dispatch date",
-    "vehicle": "Vehicle / plate",
-    "driver": "Driver",
-    "reserveHint": "Saving reserves this stock for the shipment. Stock leaves the warehouse only when the dispatch is confirmed.",
-    "createDraft": "Reserve stock & create shipment",
-    "confirmTitle": "Confirm dispatch",
-    "confirmHint": "Stock is deducted and the order updated in one step. If anything has changed (e.g. a QC hold), nothing is changed.",
-    "deliveryNote": "Delivery note no.",
-    "deliveryNoteHint": "Leave empty to number it automatically",
-    "confirmDispatch": "Confirm dispatch",
-    "confirmedMsg": "Dispatched. Stock and order updated.",
-    "cancelReason": "Reason for cancelling",
-    "cancel": "Cancel shipment",
-    "cancelledMsg": "Cancelled — reserved stock released.",
-    "printNote": "Print delivery note",
-    "problems": "Quality Control blocked {batches} after it was reserved. Cancel this draft and create a new one.",
-    "shippedAt": "Dispatched",
-    "confirmedBy": "Confirmed by",
-    "total": "Total",
-    "print": "Print",
-    "deliveryNoteTitle": "Delivery note",
-    "shipment": "Shipment",
-    "signWarehouse": "Warehouse",
-    "signDriver": "Driver",
-    "signCustomer": "Received by customer",
-    "orderNo": "Order"
   },
   "rep": {
     "intro": "Live figures from the factory's records. Pick a report, set the dates and filters, then export to Excel (CSV) or PDF.",
@@ -942,39 +905,15 @@
     },
     "sec": {
       "production": "Production",
-      "orders": "Orders & delivery",
+      "orders": "Orders",
       "service": "Machines & maintenance",
       "quality": "Quality",
-      "warehouse": "Warehouse & shipments"
+      "warehouse": "Warehouse"
     },
     "r": {
       "production": {
         "title": "Production output",
-        "desc": "Good and defective pieces by day, week, month, machine, product or shift."
-      },
-      "planned-vs-actual": {
-        "title": "Planned vs actual",
-        "desc": "Each production job's planned quantity and dates against what was really made."
-      },
-      "order-completion": {
-        "title": "Order completion",
-        "desc": "How much of each order has been produced and delivered."
-      },
-      "on-time": {
-        "title": "On-time delivery",
-        "desc": "Orders delivered by the requested date, late, or still overdue."
-      },
-      "delayed": {
-        "title": "Delayed orders",
-        "desc": "Open orders past their requested delivery date, most overdue first."
-      },
-      "outstanding": {
-        "title": "Outstanding quantities",
-        "desc": "For every open order line: ordered, produced, received, shipped and what is left."
-      },
-      "downtime": {
-        "title": "Machine downtime",
-        "desc": "Hours lost by machine or reason, or every stop in detail."
+        "desc": "Pieces produced and rejected by day, week, month, product or shift."
       },
       "maintenance": {
         "title": "Maintenance requests",
@@ -986,7 +925,7 @@
       },
       "quality": {
         "title": "Rejection rates",
-        "desc": "Inspections, held and rejected pieces and defect rates by product."
+        "desc": "Inspections, rejected pieces and rejection rates by product."
       },
       "defects": {
         "title": "Quality defects",
@@ -996,17 +935,25 @@
         "title": "Corrective actions",
         "desc": "Every corrective action recorded against a quality issue."
       },
-      "receipts": {
-        "title": "Warehouse receipts",
-        "desc": "Finished goods received from production."
-      },
       "movements": {
-        "title": "Inventory movements",
-        "desc": "Every stock movement: receipts, reservations, shipments, QC changes and adjustments."
+        "title": "Stock movements",
+        "desc": "Every stock change: produced, QC rejected, out and adjustments."
       },
-      "shipments": {
-        "title": "Customer shipments",
-        "desc": "Dispatched shipments with delivery notes, pieces and vehicles."
+      "production-entries": {
+        "title": "Daily production entries",
+        "desc": "Every entry with day, shift, quantity and QC result."
+      },
+      "orders": {
+        "title": "Orders",
+        "desc": "Orders with their status, products and pieces."
+      },
+      "demand": {
+        "title": "Ordered vs. stock",
+        "desc": "For each product in open orders: pieces ordered, in stock and still to make."
+      },
+      "stock": {
+        "title": "Stock by product",
+        "desc": "Pieces in, out and in stock for each product."
       }
     },
     "group": {
@@ -1042,7 +989,7 @@
       "allCategories": "All reasons",
       "allSeverities": "All severities",
       "allTypes": "All movement types",
-      "defaultStatus": "All (except cancelled)",
+      "defaultStatus": "All",
       "period": "Period: {from} – {to}",
       "preset": {
         "today": "Today",
@@ -1144,7 +1091,21 @@
       "unresolved": "Unresolved",
       "variance": "Difference",
       "vehicle": "Vehicle",
-      "when": "Date & time"
+      "when": "Date & time",
+      "adjusted": "Adjusted",
+      "day": "Day",
+      "entries": "Entries",
+      "inProduced": "Produced (in)",
+      "inStock": "In stock",
+      "inStockNow": "In stock now",
+      "madeInPeriod": "Made in period",
+      "openOrders": "Open orders",
+      "outRejected": "QC rejected",
+      "outShipped": "Went out",
+      "products": "Products",
+      "qc": "QC",
+      "reference": "Reference",
+      "stillToMake": "Still to make"
     },
     "kpi": {
       "achievement": "Plan achieved",
@@ -1203,7 +1164,12 @@
       "shippedPcs": "Pieces shipped",
       "stillOpen": "Still open",
       "unresolved": "Unresolved",
-      "urgentDelayed": "Urgent among them"
+      "urgentDelayed": "Urgent among them",
+      "entries": "Entries",
+      "notInspected": "Not inspected",
+      "outPcs": "Pieces out",
+      "productsOrdered": "Products ordered",
+      "stockNow": "Pieces in stock now"
     },
     "chartMax": "Highest: {v}"
   },
@@ -1249,18 +1215,12 @@
     "count": "{n} entries",
     "entity": {
       "Order": "Order",
-      "ProductionJob": "Production job",
-      "Batch": "Batch",
       "QcInspection": "QC inspection",
       "QualityIssue": "Quality issue",
       "MaintenanceRequest": "Maintenance request",
       "ServiceReport": "Service report",
       "PreventiveTask": "Preventive task",
-      "Shipment": "Shipment",
-      "WarehouseReceipt": "Warehouse receipt",
       "StockMovement": "Stock",
-      "StorageLocation": "Storage location",
-      "Customer": "Customer",
       "Product": "Product",
       "Machine": "Machine",
       "Mold": "Mold",
@@ -1270,7 +1230,8 @@
       "Report": "Report",
       "AuditLog": "Audit log",
       "Attachment": "Attachment",
-      "System": "System"
+      "System": "System",
+      "ProductionEntry": "Production entry"
     }
   },
   "sys": {
@@ -1278,12 +1239,12 @@
     "resetTitle": "Clear test data before going live",
     "resetIntro": "Use this once, when testing is finished and the factory starts using the system for real. It permanently deletes these records:",
     "kept": "Always kept:",
-    "keptList": "employees and their logins, roles and permissions, departments, defect types, storage locations and the audit log. Numbering starts again from 0001.",
+    "keptList": "employees and their logins, roles and permissions, departments, defect types and the audit log. Numbering starts again from 0001.",
     "scope": "What to delete",
     "scopeOps": "Test transactions only (recommended)",
-    "scopeOpsHint": "Orders, schedules, production, maintenance, QC, stock and shipments. Customers, products, machines and molds stay.",
+    "scopeOpsHint": "Orders, daily production, maintenance, QC and stock. Products, machines and molds stay.",
     "scopeAll": "Everything, including master data",
-    "scopeAllHint": "Also deletes {customers} customers, {products} products, {machines} machines and {molds} molds.",
+    "scopeAllHint": "Also deletes {products} products, {machines} machines and {molds} molds.",
     "warning": "This cannot be undone. Make sure a backup exists first (see the backup guide).",
     "typeReset": "Type RESET to confirm",
     "yourPassword": "Your password",
@@ -1297,37 +1258,26 @@
     "demoDone": "Demo accounts removed.",
     "count": {
       "orders": "Orders",
-      "jobs": "Production jobs",
-      "batches": "Batches",
-      "entries": "Quantity reports",
-      "downtime": "Downtime records",
+      "entries": "Production entries",
       "maintenance": "Maintenance requests",
       "serviceReports": "Service reports",
       "inspections": "QC inspections",
       "issues": "Quality issues",
-      "receipts": "Warehouse receipts",
-      "movements": "Stock movements",
-      "shipments": "Shipments"
+      "movements": "Stock movements"
     }
   },
   "daily": {
-    "title": "Daily entry sheet",
-    "subtitle": "{date} · {n} jobs running or due today. Type the quantities and save once.",
-    "none": "No jobs are running or planned for today.",
-    "filter": "Filter by machine, job, product or order…",
+    "title": "Daily production entry",
+    "subtitle": "{date} · type what was produced for each product and save once.",
+    "filter": "Filter products…",
     "shift": "Shift",
-    "newBatch": "Start a new batch (lot) for each job",
-    "colJob": "Machine · job · product",
-    "colProgress": "Made / planned",
-    "todaySoFar": "{n} today so far",
-    "willStart": "Starts when you save",
-    "machineDown": "Machine down",
-    "summary": "{jobs} jobs · {pcs} good pieces to save",
+    "summary": "{n} products · {pcs} pcs · shift {shift}",
     "saveAll": "Save all",
-    "saved": "Saved {n} jobs, {pcs} good pieces.",
-    "started": "{n} planned jobs were started.",
-    "notSaved": "{n} not saved — fix and save again:",
-    "finished": "Finished",
-    "completed": "{n} jobs marked finished."
+    "saved": "Saved {n} products, {pcs} pieces. Stock was updated.",
+    "inOrders": "In open orders",
+    "alreadyShift": "Already entered (shift {shift})",
+    "produced": "Produced",
+    "onlyOrdered": "Only products in open orders",
+    "noOrdered": "No product is in an open order. Untick the box to see all products."
   }
 }

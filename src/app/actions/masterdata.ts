@@ -80,7 +80,6 @@ export async function saveMachineAction(_: unknown, fd: FormData) {
       await audit({ userId: me.id, action: "machine.create", entityType: "Machine", entityId: m.id, after: { code: m.code } });
     }
     revalidatePath("/assets");
-    revalidatePath("/schedule");
   });
 }
 

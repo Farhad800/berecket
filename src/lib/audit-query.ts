@@ -7,12 +7,11 @@ export const AUDIT_DAYS = ["1", "7", "30", "90", "365"] as const;
 /** Where each kind of audited record can be opened. */
 export const ENTITY_HREF: Record<string, (id: string) => string> = {
   Order: (id) => `/orders/${id}`,
-  ProductionJob: (id) => `/production/${id}`,
-  Batch: (id) => `/qc/batches/${id}`,
+  ProductionEntry: (id) => `/qc/entries/${id}`,
+  QcInspection: () => `/qc?tab=inspections`,
   QualityIssue: (id) => `/qc/issues/${id}`,
   MaintenanceRequest: (id) => `/service/requests/${id}`,
   ServiceReport: (id) => `/service/reports/${id}`,
-  Shipment: (id) => `/shipments/${id}`,
   Report: (id) => `/reports/${id}`,
 };
 

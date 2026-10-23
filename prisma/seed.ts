@@ -1,6 +1,6 @@
 /**
  * Baseline setup — safe to run any number of times (idempotent).
- * Creates departments, built-in roles, defect categories, storage locations, settings,
+ * Creates departments, built-in roles, defect categories, settings,
  * and the FIRST administrator only if no administrator exists yet.
  *
  *   ADMIN_USERNAME=admin ADMIN_FULLNAME="..." npm run db:seed
@@ -36,12 +36,6 @@ const DEFECTS = [
   ["OTHER", "Other"],
 ];
 
-const LOCATIONS = [
-  ["FG-A", "Finished goods — Area A"],
-  ["FG-B", "Finished goods — Area B"],
-  ["QUAR", "Quarantine area"],
-  ["DISP", "Dispatch bay"],
-];
 
 async function main() {
   for (const [code, name] of DEPARTMENTS) {
@@ -67,15 +61,11 @@ async function main() {
   for (const [code, name] of DEFECTS) {
     await db.defectCategory.upsert({ where: { code }, update: {}, create: { code, name } });
   }
-  for (const [code, name] of LOCATIONS) {
-    await db.storageLocation.upsert({ where: { code }, update: {}, create: { code, name } });
-  }
 
   const settings: Record<string, unknown> = {
     "factory.name": "Bereket Plastic",
     "factory.timezone": process.env.FACTORY_TIMEZONE ?? "Asia/Baghdad",
-    // Chosen with the factory: batches are shippable by default; QC samples randomly and can hold/reject any time.
-    // Products flagged "QC required" still start as PENDING until inspected.
+    // QC samples daily production entries at random; products flagged "QC required" are shown first.
     "qc.policy": "random",
     "shifts": { A: "07:00-15:00", B: "15:00-23:00", C: "23:00-07:00" },
     "units.default": "pcs",

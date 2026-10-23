@@ -7,21 +7,18 @@
   },
   "nav": {
     "main": "Ana",
-    "sales": "Satış ve Planlama",
+    "sales": "Satış",
     "operations": "Operasyonlar",
     "masterData": "Ana veriler",
     "insights": "Analiz",
     "admin": "Yönetim",
     "dashboard": "Gösterge Paneli",
-    "orders": "Müşteri Siparişleri",
-    "schedule": "Üretim Planı",
-    "production": "Üretim Raporları",
+    "orders": "Siparişler",
+    "production": "Günlük Üretim",
     "service": "Teknik Servis",
     "history": "Kalıp ve Makine Geçmişi",
     "qc": "Kalite Kontrol",
     "inventory": "Depo Stoku",
-    "shipments": "Müşteri Sevkiyatları",
-    "customers": "Müşteriler",
     "products": "Ürünler",
     "assets": "Makineler ve Kalıplar",
     "reports": "Raporlar ve Analizler",
@@ -85,24 +82,22 @@
   "dashboard": {
     "title": "Gösterge Paneli",
     "greeting": "Merhaba, {name}",
-    "activeOrders": "Aktif siparişler",
-    "dueToday": "Bugün teslim",
-    "overdue": "Geciken siparişler",
-    "urgent": "Acil siparişler",
-    "scheduledToday": "Bugün planlanan işler",
-    "inProduction": "Üretimdeki işler",
     "producedToday": "Bugün üretilen (adet)",
-    "awaitingQc": "Kalite kontrol bekleyen (adet)",
     "criticalIssues": "Açık kritik kalite sorunları",
     "machinesDown": "Arızalı makineler",
     "openMaintenance": "Açık bakım talepleri",
-    "awaitingReceipt": "Depo kabulü bekleyen (adet)",
-    "availableStock": "Kullanılabilir onaylı stok (adet)",
-    "shipmentsToday": "Bugünkü sevkiyatlar",
-    "partiallyDelivered": "Kısmen teslim edilen siparişler",
     "recentActivity": "Son etkinlikler",
     "noActivity": "Henüz etkinlik yok.",
-    "updated": "Güncellendi {time}"
+    "updated": "Güncellendi {time}",
+    "openOrders": "Açık siparişler",
+    "openPieces": "Açık siparişlerdeki adet",
+    "productsToday": "Bugün yapılan ürünler",
+    "producedWeek": "Son 7 günde üretilen",
+    "notInspected": "Muayene edilmemiş girişler (14 gün)",
+    "rejectedWeek": "Son 7 günde reddedilen (adet)",
+    "openIssues": "Açık kalite sorunları",
+    "stock": "Stoktaki adet",
+    "outWeek": "Son 7 günde çıkan (adet)"
   },
   "admin": {
     "employees": "Çalışanlar",
@@ -233,42 +228,11 @@
       "IN_REPAIR": "Tamirde",
       "RETIRED": "Hizmet dışı"
     },
-    "order": {
-      "DRAFT": "Taslak",
-      "CONFIRMED": "Onaylandı",
-      "WAITING_PLANNING": "Planlama bekliyor",
-      "SCHEDULED": "Planlandı",
-      "IN_PRODUCTION": "Üretimde",
-      "ON_HOLD": "Beklemede",
-      "PARTIALLY_PRODUCED": "Kısmen üretildi",
-      "AWAITING_QC": "Kalite kontrol bekliyor",
-      "PARTIALLY_COMPLETED": "Kısmen tamamlandı",
-      "COMPLETED": "Tamamlandı",
-      "READY_FOR_DISPATCH": "Sevke hazır",
-      "PARTIALLY_DELIVERED": "Kısmen teslim edildi",
-      "DELIVERED": "Teslim edildi",
-      "CANCELLED": "İptal edildi"
-    },
     "priority": {
       "LOW": "Düşük",
       "NORMAL": "Normal",
       "HIGH": "Yüksek",
       "URGENT": "Acil"
-    },
-    "job": {
-      "PLANNED": "Planlandı",
-      "IN_PROGRESS": "Çalışıyor",
-      "PAUSED": "Duraklatıldı",
-      "COMPLETED": "Tamamlandı",
-      "CANCELLED": "İptal edildi"
-    },
-    "qc": {
-      "PENDING": "KK bekliyor",
-      "RELEASED": "Serbest",
-      "APPROVED": "Onaylı",
-      "PARTIAL": "Kısmen bekletildi",
-      "HOLD": "Bekletiliyor",
-      "REJECTED": "Reddedildi"
     },
     "maint": {
       "OPEN": "Açık",
@@ -290,16 +254,14 @@
       "RESOLVED": "Çözüldü",
       "REOPENED": "Yeniden açıldı"
     },
-    "stock": {
-      "AVAILABLE": "Kullanılabilir",
-      "RESERVED": "Ayrılmış",
-      "QUARANTINE": "Karantina",
-      "REJECTED": "Ret",
-      "SHIPPED": "Sevk edildi"
+    "entryQc": {
+      "NOT_INSPECTED": "Muayene edilmedi",
+      "APPROVED": "Onaylandı",
+      "REJECTED": "Reddedildi"
     },
-    "ship": {
-      "DRAFT": "Taslak — stok ayrıldı",
-      "CONFIRMED": "Sevk edildi",
+    "order": {
+      "OPEN": "Açık",
+      "COMPLETED": "Tamamlandı",
       "CANCELLED": "İptal"
     }
   },
@@ -328,15 +290,15 @@
     "saveConfirm": "Kaydet ve onayla",
     "count": "{n} sipariş",
     "new": "Yeni sipariş",
-    "searchPlaceholder": "Sipariş no, müşteri, ürün kodu…",
-    "allStatuses": "Tüm durumlar",
+    "searchPlaceholder": "Sipariş no veya ürün…",
+    "allStatuses": "Tüm siparişler",
     "openOnly": "Açık siparişler",
     "due": "Teslim",
     "dueWeek": "7 gün içinde",
     "overdueShort": "gecikti",
     "progressLine": "{total} adetin {done} adedi üretildi · {shipped} sevk",
     "needMasterData": "Önce en az bir müşteri ve bir ürün ekleyin.",
-    "newHint": "Bir sipariş birden fazla ürün içerebilir.",
+    "newHint": "İhtiyacınız olan her ürünün yanına miktarı yazın. Gerisini boş bırakın.",
     "planProduction": "Üretimi planla",
     "created": "Oluşturuldu",
     "confirmed": "Onaylandı",
@@ -356,23 +318,31 @@
       "toProduce": "Üretilecek",
       "toDeliver": "Teslim edilecek"
     },
-    "act": {
-      "confirm": "Siparişi onayla",
-      "hold": "Beklemeye al",
-      "resume": "Devam ettir",
-      "cancel": "Siparişi iptal et",
-      "close": "İstisna ile kapat",
-      "holdHelp": "Sipariş devam ettirilene kadar planlama durur.",
-      "cancelHelp": "Başlamamış planlı işler de iptal edilir.",
-      "closeHelp": "Tüm adetler sevk edilmese de sipariş teslim sayılır. Yalnızca yönetim onayıyla kullanın.",
-      "confirmAction": "Onayla",
-      "delete": "Siparişi sil",
-      "deleteHelp": "Yalnızca yanlışlıkla girilen, üretim başlamamış siparişler için. Sipariş tamamen silinir; kimin neden sildiği denetim kaydında kalır."
-    },
-    "deletedMsg": "Sipariş silindi. Silme işlemi denetim kaydına yazıldı.",
+    "deletedMsg": "Sipariş silindi. Denetim kaydı kimin neden sildiğini saklar.",
     "addMany": "Birden çok ürün ekle",
     "addManyTitle": "Eklenecek ürünleri işaretleyin — sonra miktarlarını yazın",
-    "addSelected": "{n} ürün ekle"
+    "addSelected": "{n} ürün ekle",
+    "filterProducts": "Ürünleri koda veya ada göre süz…",
+    "onlyChosen": "Yalnızca seçilenler",
+    "sheetSummary": "{n} ürün · {pcs} adet",
+    "saveOrder": "Siparişi kaydet",
+    "needProducts": "Önce ürün ekleyin — siparişler ve günlük üretim ürün listesinden girilir.",
+    "productsPieces": "{n} ürün · {pcs} adet",
+    "inStock": "Stokta",
+    "stockNote": "“Stokta”, her ürünün bugünkü depo stoğudur.",
+    "completedOn": "{date} tarihinde tamamlandı",
+    "cancelledOn": "{date} tarihinde iptal edildi",
+    "act": {
+      "complete": "Tamamlandı yap",
+      "completeHelp": "Bu siparişteki her şey teslim edildiğinde kullanın.",
+      "cancel": "Siparişi iptal et",
+      "cancelHelp": "Sipariş iptal olarak listede kalır ve artık talep sayılmaz.",
+      "reopen": "Yeniden aç",
+      "reopenHelp": "Sipariş yeniden açılır, düzenlenebilir ve talep sayılır.",
+      "delete": "Siparişi sil",
+      "deleteHelp": "Yalnızca yanlışlıkla girilen siparişler için. Sipariş tamamen silinir; kimin neden sildiği denetim kaydında kalır.",
+      "confirmAction": "Onayla"
+    }
   },
   "comments": {
     "title": "Yorumlar",
@@ -382,16 +352,18 @@
   },
   "history": {
     "order": {
-      "create": "Sipariş taslak olarak oluşturuldu",
+      "create": "Sipariş oluşturuldu",
       "create_confirm": "Sipariş oluşturuldu ve onaylandı",
-      "update": "Sipariş düzenlendi",
+      "update": "Sipariş değiştirildi",
       "deadline_change": "Teslim tarihi değişti",
       "confirm": "Sipariş onaylandı",
       "hold": "Beklemeye alındı",
       "resume": "Devam ettirildi",
-      "cancel": "İptal edildi",
+      "cancel": "Sipariş iptal edildi",
       "close": "İstisna ile kapatıldı",
-      "delete": "Sipariş silindi"
+      "delete": "Sipariş silindi",
+      "complete": "Sipariş tamamlandı",
+      "reopen": "Sipariş yeniden açıldı"
     },
     "job": {
       "create": "Üretim işi planlandı",
@@ -404,8 +376,9 @@
       "complete": "İş tamamlandı"
     },
     "production": {
-      "report": "Miktar bildirildi",
-      "correct": "Miktar düzeltildi"
+      "report": "Günlük üretim girildi",
+      "correct": "Üretim girişi düzeltildi",
+      "delete": "Üretim girişi silindi"
     },
     "batch": {
       "open": "Yeni parti açıldı"
@@ -427,10 +400,10 @@
       "upload": "Dosya eklendi"
     },
     "qc": {
-      "approve": "KK partiyi onayladı",
+      "approve": "KK bir girişi onayladı",
       "partial": "KK kısmi serbest bıraktı",
       "hold": "KK partiyi bekletti",
-      "reject": "KK partiyi reddetti",
+      "reject": "KK adet reddetti",
       "issue_create": "Kalite sorunu açıldı",
       "corrective_action": "Düzeltici faaliyet kaydedildi",
       "issue_submit": "Doğrulamaya gönderildi",
@@ -441,7 +414,8 @@
       "receive": "Mal kabul edildi"
     },
     "stock": {
-      "adjust": "Stok düzeltildi"
+      "adjust": "Stok düzeltildi",
+      "out": "Stoktan çıkış"
     },
     "shipment": {
       "create": "Sevkiyat taslağı, stok ayrıldı",
@@ -630,7 +604,22 @@
       "NO_OPERATOR": "Operatör yok",
       "SETUP": "Ayar / hazırlık",
       "OTHER": "Diğer"
-    }
+    },
+    "last60": "son 60 gün",
+    "prevDay": "Önceki gün",
+    "nextDay": "Sonraki gün",
+    "day": "Gün",
+    "show": "Göster",
+    "today": "Bugün",
+    "allProducts": "Tüm ürünler",
+    "total60": "Son 60 günde üretilen",
+    "totalDay": "{date} tarihinde üretilen",
+    "entriesN": "{n} giriş",
+    "nothingDay": "Bu gün için henüz giriş yok.",
+    "correct": "Düzelt",
+    "correctQty": "Doğru miktar",
+    "correctReasonHint": "örn. yazım hatası",
+    "correctHelp": "Stok fark kadar değişir. Girişi silmek için 0 girin. KK'nin muayene ettiği girişler değiştirilemez."
   },
   "svc": {
     "newRequest": "Yeni bakım talebi",
@@ -746,13 +735,13 @@
     "markAll": "Tümünü okundu say"
   },
   "qc": {
-    "policy": "Partiler varsayılan olarak serbesttir; KK rastgele numune alır ve herhangi bir partiyi her an bekletebilir veya reddedebilir.",
+    "policy": "KK günlük üretim girişlerini rastgele seçer. “KK gerekli” ürünler önce listelenir. Reddedilen adetler stoktan otomatik düşülür.",
     "criticalBanner": "{n} kritik kalite sorunu açık",
     "searchBatches": "Parti, ürün kodu veya sipariş…",
     "searchIssues": "Sorun no, açıklama veya parti…",
     "needsAttention": "Dikkat gerekenler + son 7 gün",
     "randomPick": "Rastgele numune önerisi:",
-    "notInspected": "kontrol edilmedi",
+    "notInspected": "Muayene edilmedi",
     "inspection": "Kontrol",
     "decision": "Karar",
     "inspected": "Kontrol edilen",
@@ -802,10 +791,10 @@
       "categories": "Hata türleri"
     },
     "dec": {
-      "APPROVE": "Onayla",
+      "APPROVE": "Onaylandı",
       "PARTIAL": "Kısmi serbest",
       "HOLD": "Beklet",
-      "REJECT": "Reddet"
+      "REJECT": "Reddedildi"
     },
     "effect": {
       "APPROVE": "Partinin tamamı onaylı stok olur.",
@@ -825,12 +814,22 @@
       "reopen": "Sorun yeniden açıldı."
     },
     "continuesIssue": "Bu karar açık {issue} sorununun devamıdır.",
-    "addNewDefect": "+ Farklı bir hata — kaydet"
+    "addNewDefect": "+ Farklı bir hata — kaydet",
+    "searchEntries": "Ürün kodu veya adı…",
+    "last14": "Tümü (son 14 gün)",
+    "producedInEntry": "Bu girişte {n} adet üretildi",
+    "alreadyRejected": "{n} adet zaten reddedildi",
+    "effectReject": "{n} adet stoktan düşülecek ve giriş Reddedildi olarak işaretlenecek.",
+    "effectApprove": "Hata yok: giriş Onaylandı olarak işaretlenecek.",
+    "saveReject": "{n} adet reddet",
+    "saveApprove": "Onayla",
+    "countsSimple": "{inspected} muayene · {rejected} red",
+    "whichMachine": "Hangi makine?"
   },
   "wh": {
-    "ledgerNote": "Stok kayıtlı hareketlerden hesaplanır — toplamlar elle girilemez.",
+    "ledgerNote": "Stok günlük üretimle otomatik artar, KK reddinde veya mal çıkışında azalır. Toplamlar elle girilemez.",
     "searchStock": "Parti, ürün veya sipariş…",
-    "noStock": "Stokta ürün yok.",
+    "noStock": "Eşleşen ürün yok.",
     "adjustTitle": "Stok düzeltmesi",
     "adjustHint": "Sayım, hasar veya ret ürün imhası için. Her düzeltme adınız ve nedenle kaydedilir.",
     "saveAdjustment": "Düzeltmeyi kaydet",
@@ -857,69 +856,33 @@
     "overHint": "Üretime göre kabul edilecek {n} adet kaldı.",
     "overBlocked": "Sadece {n} adet bekliyor. Daha fazlası için amir onayı gerekir.",
     "confirmReceipt": "Kabulü onayla",
-    "tab": {
-      "stock": "Stok",
-      "awaiting": "Kabul bekleyen",
-      "receipts": "Kabuller",
-      "movements": "Hareketler",
-      "locations": "Yerler"
-    },
     "kind": {
       "COUNT": "Sayım düzeltme",
       "DAMAGE": "Hasarlı",
       "SCRAP": "Hurda",
       "OTHER": "Diğer"
     },
+    "totalPieces": "Stoktaki adet",
+    "productsInStock": "Stoktaki ürünler",
+    "goingOut": "Çıkan",
+    "showEmpty": "Stoğu olmayan ürünleri göster",
+    "outSaved": "Kaydedildi: {n} ürün, {pcs} adet çıktı.",
+    "reference": "Referans (isteğe bağlı)",
+    "referenceHint": "örn. sipariş no, kamyon veya kişi",
+    "saveOut": "{n} ürün · {pcs} adet çıkar",
+    "adjustQtyHint": "Pozitif ekler, negatif çıkarır (örn. −20).",
+    "viewEntry": "Girişi gör",
+    "moreInReport": "Son 300 gösteriliyor. Daha eskiler için Stok hareketleri raporunu kullanın.",
     "mv": {
-      "RECEIPT": "Kabul",
-      "RESERVE": "Sevkiyata ayrıldı",
-      "UNRESERVE": "Ayırma kaldırıldı",
-      "SHIP": "Sevk",
-      "QC_SYNC": "Kalite kararı",
-      "ADJUST": "Düzeltme",
-      "SCRAP": "Hurda"
+      "PRODUCTION": "Üretim",
+      "QC_REJECT": "KK reddi",
+      "OUT": "Çıkış",
+      "ADJUST": "Düzeltme"
+    },
+    "tab": {
+      "stock": "Stok",
+      "movements": "Hareketler"
     }
-  },
-  "ship": {
-    "new": "Yeni sevkiyat",
-    "search": "Sevkiyat, irsaliye, sipariş veya müşteri…",
-    "notCancelled": "İptal olmayanlar",
-    "newHint": "Yalnızca onaylı ve ayrılmamış stok sevk edilebilir.",
-    "nothingToShip": "Sevke hazır onaylı stoğu olan sipariş yok.",
-    "orderWithStock": "Sipariş (stoğu hazır)",
-    "lineFacts": "Sipariş {ordered} · sevk {shipped} · taslakta {drafts} · kalan {open}",
-    "fillFifo": "Önce en eski",
-    "noStockLine": "Bu ürün için henüz stok yok.",
-    "availableN": "{n} kullanılabilir",
-    "blockedN": "{n} bloke",
-    "lineTotal": "Bu kalem: {n} adet",
-    "overOpen": "teslim edilecek {n} adetten fazla",
-    "plannedDate": "Planlanan sevk tarihi",
-    "vehicle": "Araç / plaka",
-    "driver": "Şoför",
-    "reserveHint": "Kaydetmek stoğu bu sevkiyata ayırır. Stok yalnızca sevk onaylanınca depodan çıkar.",
-    "createDraft": "Stoğu ayır ve sevkiyat oluştur",
-    "confirmTitle": "Sevki onayla",
-    "confirmHint": "Stok düşülür ve sipariş tek adımda güncellenir. Bir şey değiştiyse (örn. KK bekletmesi) hiçbir şey değişmez.",
-    "deliveryNote": "İrsaliye no",
-    "deliveryNoteHint": "Otomatik numara için boş bırakın",
-    "confirmDispatch": "Sevki onayla",
-    "confirmedMsg": "Sevk edildi. Stok ve sipariş güncellendi.",
-    "cancelReason": "İptal nedeni",
-    "cancel": "Sevkiyatı iptal et",
-    "cancelledMsg": "İptal edildi — ayrılan stok serbest.",
-    "printNote": "İrsaliye yazdır",
-    "problems": "KK, ayrıldıktan sonra {batches} partisini bloke etti. Bu taslağı iptal edip yenisini oluşturun.",
-    "shippedAt": "Sevk zamanı",
-    "confirmedBy": "Onaylayan",
-    "total": "Toplam",
-    "print": "Yazdır",
-    "deliveryNoteTitle": "İrsaliye",
-    "shipment": "Sevkiyat",
-    "signWarehouse": "Depo",
-    "signDriver": "Şoför",
-    "signCustomer": "Müşteri teslim aldı",
-    "orderNo": "Sipariş"
   },
   "rep": {
     "intro": "Fabrika kayıtlarından canlı rakamlar. Bir rapor seçin, tarihleri ve filtreleri ayarlayın, sonra Excel (CSV) veya PDF olarak dışa aktarın.",
@@ -942,39 +905,15 @@
     },
     "sec": {
       "production": "Üretim",
-      "orders": "Siparişler ve teslimat",
+      "orders": "Siparişler",
       "service": "Makineler ve bakım",
       "quality": "Kalite",
-      "warehouse": "Depo ve sevkiyat"
+      "warehouse": "Depo"
     },
     "r": {
       "production": {
         "title": "Üretim çıktısı",
-        "desc": "Güne, haftaya, aya, makineye, ürüne veya vardiyaya göre sağlam ve hatalı adet."
-      },
-      "planned-vs-actual": {
-        "title": "Planlanan ve gerçekleşen",
-        "desc": "Her üretim işinin planlanan miktar ve tarihleri ile gerçekte üretilen."
-      },
-      "order-completion": {
-        "title": "Sipariş tamamlanma",
-        "desc": "Her siparişin ne kadarının üretildiği ve teslim edildiği."
-      },
-      "on-time": {
-        "title": "Zamanında teslimat",
-        "desc": "İstenen tarihte, geç teslim edilen veya hâlâ geciken siparişler."
-      },
-      "delayed": {
-        "title": "Geciken siparişler",
-        "desc": "İstenen teslim tarihini geçmiş açık siparişler, en çok geciken önce."
-      },
-      "outstanding": {
-        "title": "Kalan miktarlar",
-        "desc": "Her açık sipariş satırı için: sipariş, üretilen, kabul, sevk ve kalan."
-      },
-      "downtime": {
-        "title": "Makine duruşları",
-        "desc": "Makineye veya nedene göre kaybedilen saatler ya da her duruş ayrıntılı."
+        "desc": "Güne, haftaya, aya, ürüne veya vardiyaya göre üretilen ve reddedilen adetler."
       },
       "maintenance": {
         "title": "Bakım talepleri",
@@ -986,7 +925,7 @@
       },
       "quality": {
         "title": "Ret oranları",
-        "desc": "Ürüne göre muayeneler, bekletilen ve reddedilen adetler ve hata oranları."
+        "desc": "Ürüne göre muayeneler, reddedilen adetler ve red oranları."
       },
       "defects": {
         "title": "Kalite hataları",
@@ -996,17 +935,25 @@
         "title": "Düzeltici faaliyetler",
         "desc": "Kalite sorunlarına kaydedilen her düzeltici faaliyet."
       },
-      "receipts": {
-        "title": "Depo kabulleri",
-        "desc": "Üretimden kabul edilen mamuller."
-      },
       "movements": {
         "title": "Stok hareketleri",
-        "desc": "Tüm stok hareketleri: kabul, ayırma, sevk, KK değişiklikleri ve düzeltmeler."
+        "desc": "Her stok değişikliği: üretim, KK reddi, çıkış ve düzeltmeler."
       },
-      "shipments": {
-        "title": "Müşteri sevkiyatları",
-        "desc": "İrsaliye, adet ve araç bilgisiyle yapılan sevkiyatlar."
+      "production-entries": {
+        "title": "Günlük üretim girişleri",
+        "desc": "Gün, vardiya, miktar ve KK sonucu ile her giriş."
+      },
+      "orders": {
+        "title": "Siparişler",
+        "desc": "Durum, ürün ve adetleriyle siparişler."
+      },
+      "demand": {
+        "title": "Sipariş vs. stok",
+        "desc": "Açık siparişteki her ürün için: sipariş edilen, stokta olan ve yapılacak adet."
+      },
+      "stock": {
+        "title": "Ürüne göre stok",
+        "desc": "Her ürün için giren, çıkan ve stoktaki adet."
       }
     },
     "group": {
@@ -1042,7 +989,7 @@
       "allCategories": "Tüm nedenler",
       "allSeverities": "Tüm dereceler",
       "allTypes": "Tüm hareket türleri",
-      "defaultStatus": "Tümü (iptal hariç)",
+      "defaultStatus": "Tümü",
       "period": "Dönem: {from} – {to}",
       "preset": {
         "today": "Bugün",
@@ -1144,7 +1091,21 @@
       "unresolved": "Çözülmedi",
       "variance": "Fark",
       "vehicle": "Araç",
-      "when": "Tarih ve saat"
+      "when": "Tarih ve saat",
+      "adjusted": "Düzeltme",
+      "day": "Gün",
+      "entries": "Girişler",
+      "inProduced": "Üretilen (giriş)",
+      "inStock": "Stokta",
+      "inStockNow": "Şu an stokta",
+      "madeInPeriod": "Dönemde yapılan",
+      "openOrders": "Açık siparişler",
+      "outRejected": "KK reddi",
+      "outShipped": "Çıkan",
+      "products": "Ürünler",
+      "qc": "KK",
+      "reference": "Referans",
+      "stillToMake": "Yapılacak"
     },
     "kpi": {
       "achievement": "Plan gerçekleşme",
@@ -1203,7 +1164,12 @@
       "shippedPcs": "Sevk edilen adet",
       "stillOpen": "Hâlâ açık",
       "unresolved": "Çözülmedi",
-      "urgentDelayed": "Acil olanlar"
+      "urgentDelayed": "Acil olanlar",
+      "entries": "Girişler",
+      "notInspected": "Muayene edilmedi",
+      "outPcs": "Çıkan adet",
+      "productsOrdered": "Sipariş edilen ürünler",
+      "stockNow": "Şu an stoktaki adet"
     },
     "chartMax": "En yüksek: {v}"
   },
@@ -1249,18 +1215,12 @@
     "count": "{n} kayıt",
     "entity": {
       "Order": "Sipariş",
-      "ProductionJob": "Üretim işi",
-      "Batch": "Parti",
       "QcInspection": "KK muayenesi",
       "QualityIssue": "Kalite sorunu",
       "MaintenanceRequest": "Bakım talebi",
       "ServiceReport": "Servis raporu",
       "PreventiveTask": "Önleyici görev",
-      "Shipment": "Sevkiyat",
-      "WarehouseReceipt": "Depo kabulü",
       "StockMovement": "Stok",
-      "StorageLocation": "Depo yeri",
-      "Customer": "Müşteri",
       "Product": "Ürün",
       "Machine": "Makine",
       "Mold": "Kalıp",
@@ -1270,7 +1230,8 @@
       "Report": "Rapor",
       "AuditLog": "Denetim kaydı",
       "Attachment": "Ek",
-      "System": "Sistem"
+      "System": "Sistem",
+      "ProductionEntry": "Üretim girişi"
     }
   },
   "sys": {
@@ -1278,12 +1239,12 @@
     "resetTitle": "Canlıya geçmeden önce test verilerini temizle",
     "resetIntro": "Bunu test bittiğinde ve fabrika sistemi gerçekten kullanmaya başladığında bir kez kullanın. Şu kayıtları kalıcı olarak siler:",
     "kept": "Her zaman korunur:",
-    "keptList": "çalışanlar ve girişleri, roller ve yetkiler, departmanlar, hata türleri, depo yerleri ve denetim kaydı. Numaralandırma 0001'den yeniden başlar.",
+    "keptList": "çalışanlar ve girişleri, roller ve yetkiler, departmanlar, hata türleri ve denetim kaydı. Numaralandırma 0001'den yeniden başlar.",
     "scope": "Ne silinecek",
     "scopeOps": "Yalnızca test işlemleri (önerilen)",
-    "scopeOpsHint": "Siparişler, planlar, üretim, bakım, KK, stok ve sevkiyatlar. Müşteriler, ürünler, makineler ve kalıplar kalır.",
+    "scopeOpsHint": "Siparişler, günlük üretim, bakım, KK ve stok. Ürünler, makineler ve kalıplar kalır.",
     "scopeAll": "Ana veriler dahil her şey",
-    "scopeAllHint": "Ayrıca {customers} müşteri, {products} ürün, {machines} makine ve {molds} kalıbı siler.",
+    "scopeAllHint": "Ayrıca {products} ürün, {machines} makine ve {molds} kalıbı siler.",
     "warning": "Bu geri alınamaz. Önce bir yedek olduğundan emin olun (yedekleme kılavuzuna bakın).",
     "typeReset": "Onaylamak için RESET yazın",
     "yourPassword": "Şifreniz",
@@ -1297,37 +1258,26 @@
     "demoDone": "Demo hesaplar kaldırıldı.",
     "count": {
       "orders": "Siparişler",
-      "jobs": "Üretim işleri",
-      "batches": "Partiler",
-      "entries": "Miktar bildirimleri",
-      "downtime": "Duruş kayıtları",
+      "entries": "Üretim girişleri",
       "maintenance": "Bakım talepleri",
       "serviceReports": "Servis raporları",
       "inspections": "KK muayeneleri",
       "issues": "Kalite sorunları",
-      "receipts": "Depo kabulleri",
-      "movements": "Stok hareketleri",
-      "shipments": "Sevkiyatlar"
+      "movements": "Stok hareketleri"
     }
   },
   "daily": {
-    "title": "Günlük giriş sayfası",
-    "subtitle": "{date} · bugün çalışan veya vadesi gelen {n} iş. Miktarları yazın ve bir kez kaydedin.",
-    "none": "Bugün çalışan veya planlanan iş yok.",
-    "filter": "Makine, iş, ürün veya siparişe göre süz…",
+    "title": "Günlük üretim girişi",
+    "subtitle": "{date} · her ürün için üretileni yazın ve bir kez kaydedin.",
+    "filter": "Ürünleri süz…",
     "shift": "Vardiya",
-    "newBatch": "Her iş için yeni parti başlat",
-    "colJob": "Makine · iş · ürün",
-    "colProgress": "Üretilen / planlanan",
-    "todaySoFar": "bugün şimdiye kadar {n}",
-    "willStart": "Kaydedince başlar",
-    "machineDown": "Makine arızalı",
-    "summary": "{jobs} iş · kaydedilecek {pcs} sağlam adet",
+    "summary": "{n} ürün · {pcs} adet · vardiya {shift}",
     "saveAll": "Tümünü kaydet",
-    "saved": "{n} iş, {pcs} sağlam adet kaydedildi.",
-    "started": "{n} planlı iş başlatıldı.",
-    "notSaved": "{n} kaydedilmedi — düzeltip tekrar kaydedin:",
-    "finished": "Bitti",
-    "completed": "{n} iş bitti olarak işaretlendi."
+    "saved": "{n} ürün, {pcs} adet kaydedildi. Stok güncellendi.",
+    "inOrders": "Açık siparişlerde",
+    "alreadyShift": "Girilmiş (vardiya {shift})",
+    "produced": "Üretilen",
+    "onlyOrdered": "Yalnızca açık siparişteki ürünler",
+    "noOrdered": "Açık siparişte ürün yok. Tüm ürünler için kutunun işaretini kaldırın."
   }
 }
