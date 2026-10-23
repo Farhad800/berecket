@@ -109,41 +109,23 @@ model Counter {
 
 // ───────────────────────────── Master data ─────────────────────────────
 
-model Customer {
-  id          String     @id @default(cuid())
-  code        String     @unique
-  name        String
-  contactName String?
-  phone       String?
-  email       String?
-  address     String?
-  notes       String?
-  archivedAt  DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  orders      Order[]
-  shipments   Shipment[]
-
-  @@index([name])
-}
-
 model Product {
-  id             String      @id @default(cuid())
-  code           String      @unique
+  id             String            @id @default(cuid())
+  code           String            @unique
   name           String
   specifications String?
-  unit           String      @default("pcs")
+  unit           String            @default("pcs")
   material       String?
   color          String?
-  weightGrams    Decimal?    @db.Decimal(10, 2)
-  cycleTimeSec   Decimal?    @db.Decimal(8, 2) // for capacity estimates
-  qcRequired     Boolean     @default(false) // if true, batches start PENDING instead of RELEASED
+  weightGrams    Decimal?          @db.Decimal(10, 2)
+  cycleTimeSec   Decimal?          @db.Decimal(8, 2)
+  qcRequired     Boolean           @default(false) // shown to QC as "inspect every day's production"
   archivedAt     DateTime?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   molds          Mold[]
   orderLines     OrderLine[]
-  batches        Batch[]
+  entries        ProductionEntry[]
   stockMovements StockMovement[]
 
   @@index([name])
@@ -158,23 +140,21 @@ enum MachineStatus {
 }
 
 model Machine {
-  id           String         @id @default(cuid())
-  code         String         @unique // e.g. "M-01"
-  name         String
-  manufacturer String?        @default("Toyo")
-  model        String?
-  tonnage      Int?
-  status       MachineStatus  @default(AVAILABLE)
-  notes        String?
-  archivedAt   DateTime?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  jobs         ProductionJob[]
-  molds        Mold[]         @relation("MoldCurrentMachine")
-  maintenance  MaintenanceRequest[]
+  id             String               @id @default(cuid())
+  code           String               @unique // e.g. "M-01"
+  name           String
+  manufacturer   String?              @default("Toyo")
+  model          String?
+  tonnage        Int?
+  status         MachineStatus        @default(AVAILABLE)
+  notes          String?
+  archivedAt     DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  molds          Mold[]               @relation("MoldCurrentMachine")
+  maintenance    MaintenanceRequest[]
   serviceReports ServiceReport[]
-  downtimes    Downtime[]
-  preventive   PreventiveTask[]
+  preventive     PreventiveTask[]
 }
 
 enum MoldStatus {
@@ -185,35 +165,25 @@ enum MoldStatus {
 }
 
 model Mold {
-  id               String      @id @default(cuid())
-  code             String      @unique
+  id               String               @id @default(cuid())
+  code             String               @unique
   name             String
-  cavities         Int         @default(1)
+  cavities         Int                  @default(1)
   productId        String?
-  product          Product?    @relation(fields: [productId], references: [id])
+  product          Product?             @relation(fields: [productId], references: [id])
   currentMachineId String?
-  currentMachine   Machine?    @relation("MoldCurrentMachine", fields: [currentMachineId], references: [id])
-  status           MoldStatus  @default(AVAILABLE)
-  shotCount        Int         @default(0)
+  currentMachine   Machine?             @relation("MoldCurrentMachine", fields: [currentMachineId], references: [id])
+  status           MoldStatus           @default(AVAILABLE)
+  shotCount        Int                  @default(0)
   notes            String?
   archivedAt       DateTime?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  jobs             ProductionJob[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
   maintenance      MaintenanceRequest[]
-  serviceReports   ServiceReport[] @relation("ServiceMold")
-  removedIn        ServiceReport[] @relation("MoldRemoved")
-  installedIn      ServiceReport[] @relation("MoldInstalled")
+  serviceReports   ServiceReport[]      @relation("ServiceMold")
+  removedIn        ServiceReport[]      @relation("MoldRemoved")
+  installedIn      ServiceReport[]      @relation("MoldInstalled")
   preventive       PreventiveTask[]
-}
-
-model StorageLocation {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  name      String
-  active    Boolean  @default(true)
-  receipts  WarehouseReceipt[]
-  movements StockMovement[]
 }
 
 model DefectCategory {
@@ -224,7 +194,7 @@ model DefectCategory {
   issues QualityIssue[]
 }
 
-// ───────────────────────────── Sales & planning ─────────────────────────────
+// ───────────────────────────── Orders (a sheet of products and amounts) ─────────────────────────────
 
 enum Priority {
   LOW
@@ -234,75 +204,39 @@ enum Priority {
 }
 
 enum OrderStatus {
-  DRAFT
-  CONFIRMED
-  WAITING_PLANNING
-  SCHEDULED
-  IN_PRODUCTION
-  ON_HOLD
-  PARTIALLY_PRODUCED
-  AWAITING_QC
-  PARTIALLY_COMPLETED
+  OPEN
   COMPLETED
-  READY_FOR_DISPATCH
-  PARTIALLY_DELIVERED
-  DELIVERED
   CANCELLED
 }
 
 model Order {
-  id                    String      @id @default(cuid())
-  number                String      @unique
-  customerId            String
-  customer              Customer    @relation(fields: [customerId], references: [id])
-  status                OrderStatus @default(DRAFT)
-  priority              Priority    @default(NORMAL)
-  customerReference     String?
-  requestedDeliveryDate DateTime
-  plannedStart          DateTime?
-  plannedEnd            DateTime?
-  instructions          String?
-  packaging             String?
-  notes                 String?
-  deliveryException     String? // authorised reason for closing as Delivered short
-  createdById           String
-  confirmedAt           DateTime?
-  completedAt           DateTime?
-  deliveredAt           DateTime?
-  cancelledAt           DateTime?
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-  lines                 OrderLine[]
-  shipments             Shipment[]
-  serviceReports        ServiceReport[]
+  id          String      @id @default(cuid())
+  number      String      @unique
+  status      OrderStatus @default(OPEN)
+  createdById String
+  completedAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  lines       OrderLine[]
 
   @@index([status])
-  @@index([requestedDeliveryDate])
-  @@index([customerId])
 }
 
 model OrderLine {
-  id             String   @id @default(cuid())
-  orderId        String
-  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  lineNo         Int
-  productId      String
-  product        Product  @relation(fields: [productId], references: [id])
-  specifications String?
-  quantity       Int
-  unit           String   @default("pcs")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  jobs           ProductionJob[]
-  batches        Batch[]
-  receipts       WarehouseReceipt[]
-  shipmentLines  ShipmentLine[]
-  stockMovements StockMovement[]
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  lineNo    Int
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
 
   @@unique([orderId, lineNo])
+  @@index([productId])
 }
 
-// ───────────────────────────── Production ─────────────────────────────
+// ───────────────────────────── Daily production ─────────────────────────────
 
 enum Shift {
   A // 07:00–15:00
@@ -310,116 +244,32 @@ enum Shift {
   C // 23:00–07:00
 }
 
-enum JobStatus {
-  PLANNED
-  IN_PROGRESS
-  PAUSED
-  COMPLETED
-  CANCELLED
-}
-
-model ProductionJob {
-  id            String     @id @default(cuid())
-  number        String     @unique
-  orderLineId   String
-  orderLine     OrderLine  @relation(fields: [orderLineId], references: [id])
-  machineId     String?
-  machine       Machine?   @relation(fields: [machineId], references: [id])
-  moldId        String?
-  mold          Mold?      @relation(fields: [moldId], references: [id])
-  plannedQty    Int
-  plannedStart  DateTime
-  plannedEnd    DateTime
-  actualStart   DateTime?
-  actualEnd     DateTime?
-  status        JobStatus  @default(PLANNED)
-  priority      Priority   @default(NORMAL)
-  responsibleId String?
-  notes         String?
-  createdById   String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  batches       Batch[]
-  entries       ProductionEntry[]
-  downtimes     Downtime[]
-  maintenance   MaintenanceRequest[]
-
-  @@index([machineId, plannedStart, plannedEnd])
-  @@index([status])
-}
-
-enum BatchQcStatus {
-  PENDING // awaiting inspection (product requires QC)
-  RELEASED // not inspected, released by default (random QC policy)
+enum EntryQcStatus {
+  NOT_INSPECTED
   APPROVED
-  PARTIAL // some accepted, some held/rejected
-  HOLD
-  REJECTED
+  REJECTED // some or all pieces rejected
 }
 
-model Batch {
-  id          String        @id @default(cuid())
-  number      String        @unique // lot number
-  jobId       String
-  job         ProductionJob @relation(fields: [jobId], references: [id])
-  orderLineId String
-  orderLine   OrderLine     @relation(fields: [orderLineId], references: [id])
-  productId   String
-  product     Product       @relation(fields: [productId], references: [id])
+/// What was produced: one product, one shift, one day. Adds to stock automatically.
+model ProductionEntry {
+  id          String          @id @default(cuid())
+  day         DateTime        @db.Date // factory calendar day
   shift       Shift
-  qcStatus    BatchQcStatus @default(RELEASED)
-  closedAt    DateTime?
+  productId   String
+  product     Product         @relation(fields: [productId], references: [id])
+  quantity    Int
+  qcStatus    EntryQcStatus   @default(NOT_INSPECTED)
+  notes       String?
   createdById String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  entries     ProductionEntry[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   inspections QcInspection[]
   issues      QualityIssue[]
-  receipts    WarehouseReceipt[]
   movements   StockMovement[]
-  shipmentLines ShipmentLine[]
 
-  @@index([jobId])
+  @@index([day])
+  @@index([productId, day])
   @@index([qcStatus])
-}
-
-/// Append-only production progress log. Totals are derived from these rows,
-/// so history is preserved whenever quantities are reported or corrected.
-model ProductionEntry {
-  id           String        @id @default(cuid())
-  jobId        String
-  job          ProductionJob @relation(fields: [jobId], references: [id])
-  batchId      String
-  batch        Batch         @relation(fields: [batchId], references: [id])
-  shift        Shift
-  qtyGood      Int
-  qtyDefective Int           @default(0)
-  isCorrection Boolean       @default(false)
-  notes        String?
-  reportedById String
-  reportedAt   DateTime      @default(now())
-
-  @@index([jobId])
-  @@index([batchId])
-  @@index([reportedAt])
-}
-
-model Downtime {
-  id                   String              @id @default(cuid())
-  machineId            String
-  machine              Machine             @relation(fields: [machineId], references: [id])
-  jobId                String?
-  job                  ProductionJob?      @relation(fields: [jobId], references: [id])
-  maintenanceRequestId String?
-  maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
-  category             String // BREAKDOWN, MOLD_CHANGE, MATERIAL, POWER, QUALITY, OTHER
-  reason               String
-  startedAt            DateTime
-  endedAt              DateTime?
-  reportedById         String
-  createdAt            DateTime            @default(now())
-
-  @@index([machineId, startedAt])
 }
 
 // ───────────────────────────── Technical service ─────────────────────────────
@@ -434,30 +284,27 @@ enum MaintenanceStatus {
 }
 
 model MaintenanceRequest {
-  id           String            @id @default(cuid())
-  number       String            @unique
-  machineId    String
-  machine      Machine           @relation(fields: [machineId], references: [id])
-  moldId       String?
-  mold         Mold?             @relation(fields: [moldId], references: [id])
-  jobId        String?
-  job          ProductionJob?    @relation(fields: [jobId], references: [id])
-  title        String
-  description  String?
-  priority     Priority          @default(NORMAL)
-  status       MaintenanceStatus @default(OPEN)
-  machineDown  Boolean           @default(false)
-  isPreventive Boolean           @default(false)
-  reportedById String
-  assignedToId String?
-  resolution   String?
-  readyAt      DateTime? // machine ready to return to service
-  completedAt  DateTime?
-  verifiedAt   DateTime?
-  verifiedById String?
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  downtimes    Downtime[]
+  id             String            @id @default(cuid())
+  number         String            @unique
+  machineId      String
+  machine        Machine           @relation(fields: [machineId], references: [id])
+  moldId         String?
+  mold           Mold?             @relation(fields: [moldId], references: [id])
+  title          String
+  description    String?
+  priority       Priority          @default(NORMAL)
+  status         MaintenanceStatus @default(OPEN)
+  machineDown    Boolean           @default(false)
+  isPreventive   Boolean           @default(false)
+  reportedById   String
+  assignedToId   String?
+  resolution     String?
+  readyAt        DateTime?
+  completedAt    DateTime?
+  verifiedAt     DateTime?
+  verifiedById   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   serviceReports ServiceReport[]
 
   @@index([status])
@@ -474,8 +321,6 @@ model ServiceReport {
   machine              Machine             @relation(fields: [machineId], references: [id])
   moldId               String?
   mold                 Mold?               @relation("ServiceMold", fields: [moldId], references: [id])
-  orderId              String?
-  order                Order?              @relation(fields: [orderId], references: [id])
   maintenanceRequestId String?
   maintenanceRequest   MaintenanceRequest? @relation(fields: [maintenanceRequestId], references: [id])
   moldRemovedId        String?
@@ -517,29 +362,25 @@ model PreventiveTask {
 
 enum QcDecision {
   APPROVE
-  PARTIAL
-  HOLD
   REJECT
 }
 
 model QcInspection {
-  id           String     @id @default(cuid())
-  number       String     @unique
-  batchId      String
-  batch        Batch      @relation(fields: [batchId], references: [id])
+  id           String          @id @default(cuid())
+  number       String          @unique
+  entryId      String
+  entry        ProductionEntry @relation(fields: [entryId], references: [id])
   inspectorId  String
-  inspectedAt  DateTime   @default(now())
-  sampleOnly   Boolean    @default(true)
+  inspectedAt  DateTime        @default(now())
+  sampleOnly   Boolean         @default(true)
   qtyInspected Int
-  qtyAccepted  Int
-  qtyRejected  Int        @default(0)
-  qtyHold      Int        @default(0)
+  qtyRejected  Int             @default(0)
   decision     QcDecision
   notes        String?
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime        @default(now())
   issues       QualityIssue[]
 
-  @@index([batchId])
+  @@index([entryId])
 }
 
 enum Severity {
@@ -557,27 +398,27 @@ enum IssueStatus {
 }
 
 model QualityIssue {
-  id                  String          @id @default(cuid())
-  number              String          @unique
-  batchId             String
-  batch               Batch           @relation(fields: [batchId], references: [id])
-  inspectionId        String?
-  inspection          QcInspection?   @relation(fields: [inspectionId], references: [id])
-  categoryId          String
-  category            DefectCategory  @relation(fields: [categoryId], references: [id])
-  severity            Severity
-  description         String
-  recommendedAction   String?
-  responsibleDept     String // PRODUCTION, SERVICE, QC, WAREHOUSE
-  assignedToId        String?
-  status              IssueStatus     @default(OPEN)
+  id                   String             @id @default(cuid())
+  number               String             @unique
+  entryId              String
+  entry                ProductionEntry    @relation(fields: [entryId], references: [id])
+  inspectionId         String?
+  inspection           QcInspection?      @relation(fields: [inspectionId], references: [id])
+  categoryId           String
+  category             DefectCategory     @relation(fields: [categoryId], references: [id])
+  severity             Severity
+  description          String
+  recommendedAction    String?
+  responsibleDept      String // PRODUCTION, SERVICE, QC, WAREHOUSE
+  assignedToId         String?
+  status               IssueStatus        @default(OPEN)
   maintenanceRequestId String?
-  createdById         String
-  resolvedAt          DateTime?
-  verifiedById        String?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  actions             CorrectiveAction[]
+  createdById          String
+  resolvedAt           DateTime?
+  verifiedById         String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  actions              CorrectiveAction[]
 
   @@index([status, severity])
 }
@@ -591,102 +432,31 @@ model CorrectiveAction {
   performedAt   DateTime     @default(now())
 }
 
-// ───────────────────────────── Warehouse ─────────────────────────────
+// ───────────────────────────── Warehouse stock ─────────────────────────────
 
-model WarehouseReceipt {
-  id             String          @id @default(cuid())
-  number         String          @unique
-  batchId        String
-  batch          Batch           @relation(fields: [batchId], references: [id])
-  orderLineId    String
-  orderLine      OrderLine       @relation(fields: [orderLineId], references: [id])
-  qtyReceived    Int
-  qtyAvailable   Int
-  qtyQuarantine  Int
-  locationId     String
-  location       StorageLocation @relation(fields: [locationId], references: [id])
-  receivedById   String
-  receivedAt     DateTime        @default(now())
-  idempotencyKey String          @unique // stops double-submits creating duplicate receipts
-  notes          String?
-
-  @@index([batchId])
+enum StockMoveType {
+  PRODUCTION // automatic, from a daily production entry (incl. corrections)
+  QC_REJECT // automatic, pieces rejected by QC
+  OUT // goods leaving the warehouse
+  ADJUST // count correction, damage, scrap
 }
 
-enum StockState {
-  AVAILABLE
-  RESERVED
-  QUARANTINE
-  REJECTED
-  SHIPPED
-}
-
-/// Inventory ledger. Every balance is SUM(qty) grouped by (batch, state).
-/// Transfers between states are two rows with the same transactionId.
+/// Stock ledger: the balance of a product is the sum of its movements. Never edited.
 model StockMovement {
-  id            String           @id @default(cuid())
-  transactionId String
-  type          String // RECEIPT, SHIP, ADJUST, HOLD, RELEASE, REJECT, RESERVE, UNRESERVE
-  productId     String
-  product       Product          @relation(fields: [productId], references: [id])
-  batchId       String
-  batch         Batch            @relation(fields: [batchId], references: [id])
-  orderLineId   String?
-  orderLine     OrderLine?       @relation(fields: [orderLineId], references: [id])
-  locationId    String?
-  location      StorageLocation? @relation(fields: [locationId], references: [id])
-  state         StockState
-  qty           Int // signed
-  referenceType String?
-  referenceId   String?
-  reason        String?
-  createdById   String
-  createdAt     DateTime         @default(now())
+  id          String           @id @default(cuid())
+  productId   String
+  product     Product          @relation(fields: [productId], references: [id])
+  type        StockMoveType
+  qty         Int // + in, − out
+  entryId     String?
+  entry       ProductionEntry? @relation(fields: [entryId], references: [id])
+  reference   String? // e.g. who/where the goods went
+  reason      String?
+  createdById String
+  createdAt   DateTime         @default(now())
 
-  @@index([batchId, state])
-  @@index([productId, state])
-  @@index([transactionId])
-}
-
-enum ShipmentStatus {
-  DRAFT
-  CONFIRMED
-  CANCELLED
-}
-
-model Shipment {
-  id             String         @id @default(cuid())
-  number         String         @unique
-  customerId     String
-  customer       Customer       @relation(fields: [customerId], references: [id])
-  orderId        String
-  order          Order          @relation(fields: [orderId], references: [id])
-  status         ShipmentStatus @default(DRAFT)
-  plannedDate    DateTime?
-  shippedAt      DateTime?
-  deliveryNote   String?
-  vehicle        String?
-  driver         String?
-  notes          String?
-  createdById    String
-  confirmedById  String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  lines          ShipmentLine[]
-
-  @@index([orderId])
-  @@index([status, plannedDate])
-}
-
-model ShipmentLine {
-  id          String    @id @default(cuid())
-  shipmentId  String
-  shipment    Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  orderLineId String
-  orderLine   OrderLine @relation(fields: [orderLineId], references: [id])
-  batchId     String
-  batch       Batch     @relation(fields: [batchId], references: [id])
-  qty         Int
+  @@index([productId])
+  @@index([createdAt])
 }
 
 // ───────────────────────────── Collaboration ─────────────────────────────
