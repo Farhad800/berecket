@@ -30,9 +30,6 @@ def combo(pg,name,text,nth=0):
 def btn(pg,name,exact=True,last=False):
     l=pg.get_by_role("button", name=name, exact=exact); (l.last if last else l.first).click(); pg.wait_for_load_state("networkidle"); pg.wait_for_timeout(900)
 def main_text(pg): return pg.inner_text("main")
-def bal(bid):
-    rows=sql(f"SELECT state||'='||SUM(qty) FROM {T('\"StockMovement\"')} WHERE {T('\"batchId\"')}='{bid}' GROUP BY state")
-    return {k:int(v) for k,v in (r.split("=") for r in rows.split("\n") if r)}
 
 with sync_playwright() as p:
     br=p.chromium.launch(); errs=[]
@@ -69,141 +66,140 @@ with sync_playwright() as p:
     ck("2. production's menu has no administration", P.locator("nav a[href='/admin']").count()==0)
     P.goto(B+"/admin"); ck("2. production blocked from administration page", "/forbidden" in P.url)
 
-    # master data (admin)
-    A.goto(B+"/customers"); A.click("text=New customer"); A.fill("#name","Zakho Water Company"); A.fill("#phone","0750 123 4567"); btn(A,"Save")
-    for code,name,qc in [("CAP-28","28 mm bottle cap",False),("PF-500","500 ml PET preform",True)]:
+    # master data (admin) — no customers any more
+    ck("customers page is gone", A.request.get(B+"/customers").status==404)
+    for code,name,qc in [("CAP-28","28 mm bottle cap",False),("PF-500","500 ml PET preform",True),("JAR-1L","1 L food jar",False)]:
         A.goto(B+"/products"); A.click("text=New product"); A.fill("#code",code); A.fill("#name",name); A.fill("#cycleTimeSec","8")
         if qc: A.check("input[name=qcRequired]")
         btn(A,"Save")
     for code in ["TOYO-01","TOYO-02"]:
         A.goto(B+"/assets"); A.click("text=New machine"); A.fill("#code",code); A.fill("#name","Toyo Si-180"); A.select_option("#status","AVAILABLE"); btn(A,"Save")
     A.goto(B+"/assets?tab=molds"); A.click("text=New mold"); A.fill("#code","MD-CAP28"); A.fill("#name","Cap mold 24-cav"); A.fill("#cavities","24"); combo(A,"productId","CAP-28"); btn(A,"Save")
-    ck("master data created (customer, 2 products, 2 machines, mold)", sql(f"SELECT (SELECT count(*) FROM {T('\"Customer\"')})||'/'||(SELECT count(*) FROM {T('\"Product\"')})||'/'||(SELECT count(*) FROM {T('\"Machine\"')})||'/'||(SELECT count(*) FROM {T('\"Mold\"')})")=="1/2/2/1")
+    ck("master data created (3 products, 2 machines, mold)", sql(f"SELECT (SELECT count(*) FROM {T('\"Product\"')})||'/'||(SELECT count(*) FROM {T('\"Machine\"')})||'/'||(SELECT count(*) FROM {T('\"Mold\"')})")=="3/2/1")
+    pid=dict(r.split("|") for r in sql(f"SELECT code||'|'||id FROM {T('\"Product\"')}").split("\n"))
 
-    # ── 4. Sales creates an order with several products
+    # ── 4. Sales manager gives a sheet of products and amounts — no customer, no date
     S=ctx(); login(S,"sara"); S.goto(B+"/orders/new")
-    combo(S,"customerId","Zakho Water"); S.fill("#requestedDeliveryDate","2026-11-10"); S.select_option("#priority","HIGH")
-    combo(S,"productId[]","CAP-28",0); S.locator('input[name="quantity[]"]').nth(0).fill("10000")
-    S.click("text=Add product"); combo(S,"productId[]","PF-500",1); S.locator('input[name="quantity[]"]').nth(1).fill("6000")
-    S.fill("#packaging","Cartons of 1,000, pallet-wrapped"); btn(S,"Save & confirm")
+    ck("4. order form has no customer or date fields", S.locator("#customerId").count()==0 and S.locator("input[type=date]").count()==0)
+    S.fill("input[aria-label='CAP-28 Quantity']","10000"); S.fill("input[aria-label='PF-500 Quantity']","6000")
+    S.get_by_role("button", name=re.compile("^(Save order|Save)$")).click()
     S.wait_for_url(re.compile(r".*/orders/c[a-z0-9]+$"), wait_until="commit"); S.wait_for_load_state("networkidle")
     oid=S.url.split("/")[-1]; onum=re.search(r"ORD-\d{4}-\d{4}", main_text(S)).group(0); print("   order", onum)
-    ck("4. sales order with 2 products created and confirmed", sql(f"SELECT count(*) FROM {T('\"OrderLine\"')} WHERE {T('\"orderId\"')}='{oid}'")=="2" and onum.endswith("-0001"))
+    ck("4. order with 2 products saved as Open", sql(f"SELECT count(*) FROM {T('\"OrderLine\"')} WHERE {T('\"orderId\"')}='{oid}'")=="2" and sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="OPEN")
+    S.goto(B+f"/orders/{oid}/edit"); S.fill("input[aria-label='JAR-1L Quantity']","500"); S.fill("input[aria-label='PF-500 Quantity']","6500")
+    S.get_by_role("button", name=re.compile("^(Save order|Save)$")).click(); S.wait_for_url(re.compile(r".*/orders/c[a-z0-9]+$"), wait_until="commit"); S.wait_for_load_state("networkidle")
+    ck("4. order edited: 3 products, 17,000 pcs", sql(f"SELECT count(*)||'/'||SUM(quantity) FROM {T('\"OrderLine\"')} WHERE {T('\"orderId\"')}='{oid}'")=="3/17000")
+    # 60 products on one order — the sheet handles big orders
+    vals=",".join(f"('BULK-{i:03d}','Bulk product {i}',now(),'cx{i:022d}')" for i in range(60))
+    sql(f"INSERT INTO {T('\"Product\"')} (code,name,{T('\"updatedAt\"')},id) VALUES {vals}")
+    S.goto(B+"/orders/new")
+    for i in range(60): S.fill(f"input[aria-label='BULK-{i:03d} Quantity']",str(100+i))
+    S.get_by_role("button", name=re.compile("^(Save order|Save)$")).click(); S.wait_for_url(re.compile(r".*/orders/c[a-z0-9]+$"), wait_until="commit"); S.wait_for_load_state("networkidle")
+    big=S.url.split("/")[-1]
+    ck("4. one order with 60 products saved", sql(f"SELECT count(*) FROM {T('\"OrderLine\"')} WHERE {T('\"orderId\"')}='{big}'")=="60")
 
-    # ── 5. Production is scheduled and reports partial production
-    def schedule(line_text, machine, start, end, qty, mold=None):
-        S.goto(B+"/schedule?view=week&date=2026-10-22&new=1"); combo(S,"orderLineId",line_text); combo(S,"machineId",machine)
-        if mold: combo(S,"moldId",mold)
-        S.fill("#plannedStart",start); S.fill("#plannedEnd",end); S.fill("#plannedQty",qty); btn(S,"Schedule")
-        if S.locator("input[name=acknowledge]").count(): S.check("input[name=acknowledge]"); btn(S,"Save with these issues")
-    schedule(f"{onum} · 28","TOYO-01","2026-10-22T07:00","2026-10-23T07:00","10000","MD-CAP28")
-    schedule(f"{onum} · 500","TOYO-02","2026-10-22T07:00","2026-10-23T07:00","6000")
-    jobs=dict(r.split("|") for r in sql(f"SELECT p.code||'|'||j.id FROM {T('\"ProductionJob\"')} j JOIN {T('\"OrderLine\"')} l ON l.id=j.{T('\"orderLineId\"')} JOIN {T('\"Product\"')} p ON p.id=l.{T('\"productId\"')} WHERE l.{T('\"orderId\"')}='{oid}'").split("\n"))
-    ck("5. both order lines scheduled on machines", len(jobs)==2 and sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="SCHEDULED")
-    j1,j2=jobs["CAP-28"],jobs["PF-500"]
-    P.goto(B+f"/production/{j1}"); btn(P,"Start job"); P.fill("#qtyGood","4000"); P.fill("#qtyDefective","35"); btn(P,"Add quantity")
-    ck("5. partial production reported (4,000 of 10,000)", "4,000 of 10,000" in main_text(P) and sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="IN_PRODUCTION")
+    # ── 5. Production types what was made today, per shift — stock goes up automatically
+    P.goto(B+"/production/daily?shift=A")
+    P.fill(f"input[name='qty_{pid['CAP-28']}']","4000"); P.fill(f"input[name='qty_{pid['PF-500']}']","6500")
+    btn(P,"Save all")
+    ck("5. daily sheet saved 2 entries", "Saved 2 products" in main_text(P) and sql(f"SELECT count(*) FROM {T('\"ProductionEntry\"')}")=="2")
+    P.goto(B+"/production/daily?shift=B"); P.fill(f"input[name='qty_{pid['CAP-28']}']","6000"); btn(P,"Save all")
+    P.goto(B+"/production/daily?shift=B"); P.fill(f"input[name='qty_{pid['CAP-28']}']","500"); btn(P,"Save all")
+    ck("5. same shift + product adds to the existing entry", sql(f"SELECT quantity FROM {T('\"ProductionEntry\"')} WHERE shift='B'")=="6500")
+    stock=lambda code: int(sql(f"SELECT COALESCE(SUM(qty),0) FROM {T('\"StockMovement\"')} WHERE {T('\"productId\"')}='{pid[code]}'"))
+    ck("5. stock = produced (CAP-28 10,500, PF-500 6,500)", stock("CAP-28")==10500 and stock("PF-500")==6500)
+    # correct a typing mistake
+    eB=sql(f"SELECT id FROM {T('\"ProductionEntry\"')} WHERE shift='B'")
+    P.goto(B+"/production"); P.locator("li", has=P.locator(f"a[href='/qc/entries/{eB}']")).get_by_role("button", name="Correct").click()
+    P.fill("input[name=quantity]","6000"); P.fill("input[name=reason]","typed 500 twice"); btn(P,"Save")
+    ck("5. entry corrected → stock follows", sql(f"SELECT quantity FROM {T('\"ProductionEntry\"')} WHERE id='{eB}'")=="6000" and stock("CAP-28")==10000)
+    P.goto(B+"/production"); ck("5. production page shows today's total 16,500", "16,500" in main_text(P))
+    ck("5. no schedule page any more", P.request.get(B+"/schedule").status==404)
 
-    # ── 6. A maintenance issue linked to the machine and the job
-    btn(P,"Pause"); P.select_option("#category","BREAKDOWN"); P.fill("#reason","Ejector pin stuck"); P.check("input[name=machineDown]"); btn(P,"Pause job")
-    mr=sql(f"SELECT id||'|'||number||'|'||{T('\"machineId\"')} FROM {T('\"MaintenanceRequest\"')} WHERE {T('\"jobId\"')}='{j1}'").split("|")
-    mach1=sql(f"SELECT {T('\"machineId\"')} FROM {T('\"ProductionJob\"')} WHERE id='{j1}'")
-    ck("6. maintenance request linked to machine and production job", mr[1].startswith("MR-") and mr[2]==mach1)
+    # ── 6. A maintenance issue on a machine
+    P.goto(B+"/service/requests/new"); combo(P,"machineId","TOYO-01"); P.fill("#title","Ejector pin stuck"); P.check("input[name=machineDown]"); btn(P,"Send request")
+    mr=sql(f"SELECT id||'|'||number FROM {T('\"MaintenanceRequest\"')} LIMIT 1").split("|")
+    ck("6. maintenance request created; machine marked down", mr[1].startswith("MR-") and sql(f"SELECT status FROM {T('\"Machine\"')} WHERE code='TOYO-01'")=="DOWN")
     Tq=ctx(); login(Tq,"tariq"); Tq.goto(B+f"/service/requests/{mr[0]}"); btn(Tq,"Start work"); btn(Tq,"Repair completed")
     Tq.fill("textarea[placeholder='What was repaired or replaced?']","Freed and greased ejector pin"); btn(Tq,"Confirm")
     Q=ctx(); login(Q,"qamar"); Q.goto(B+f"/service/requests/{mr[0]}"); btn(Q,"Verify")
-    P.goto(B+f"/production/{j1}"); btn(P,"Resume"); btn(P,"New batch"); P.fill("#qtyGood","6000"); btn(P,"Add quantity")
-    btn(P,"Complete job"); P.get_by_role("button", name="Complete job").last.click(); P.wait_for_timeout(1200)
-    P.goto(B+f"/production/{j2}"); btn(P,"Start job"); P.fill("#qtyGood","6000"); btn(P,"Add quantity"); btn(P,"New batch"); P.fill("#qtyGood","500"); btn(P,"Add quantity")
-    btn(P,"Complete job"); P.get_by_role("button", name="Complete job").last.click(); P.wait_for_timeout(1200)
-    b=lambda j: [r.split("|") for r in sql(f"SELECT id||'|'||number FROM {T('\"Batch\"')} WHERE {T('\"jobId\"')}='{j}' ORDER BY {T('\"createdAt\"')}").split("\n")]
-    (c1,c1n),(c2,c2n)=b(j1); (p1,p1n),(p2,p2n)=b(j2)
-    ck("6. repair verified, job resumed and both jobs completed", sql(f"SELECT string_agg(status::text,',') FROM {T('\"ProductionJob\"')} WHERE id IN ('{j1}','{j2}')")=="COMPLETED,COMPLETED")
-    ck("   preform batches wait for QC (product requires QC)", sql(f"SELECT string_agg({T('\"qcStatus\"')}::text,',' ORDER BY {T('\"createdAt\"')}) FROM {T('\"Batch\"')} WHERE {T('\"jobId\"')}='{j2}'")=="PENDING,PENDING")
+    ck("6. repair verified and machine available again", sql(f"SELECT status FROM {T('\"MaintenanceRequest\"')} WHERE id='{mr[0]}'")=="VERIFIED" and sql(f"SELECT status FROM {T('\"Machine\"')} WHERE code='TOYO-01'")=="AVAILABLE")
 
-    # ── 7. QC holds one batch and rejects another; approves the rest
-    def inspect(batch, decision, insp, acc, rej=0, desc=None, cat="Incorrect dimensions"):
-        Q.goto(B+f"/qc/batches/{batch}"); Q.check(f"input[value={decision}]", force=True); Q.fill("#qtyInspected",str(insp)); Q.fill("#qtyAccepted",str(acc))
-        if rej: Q.fill("#qtyRejected",str(rej))
-        if desc and Q.locator("#categoryId").count(): Q.select_option("#categoryId", label=cat); Q.fill("#issueDescription",desc)
-        label={"APPROVE":"Approve","HOLD":"Hold","REJECT":"Reject","PARTIAL":"Partial"}[decision]
-        Q.get_by_role("button", name=re.compile(f"^Save — {label}")).click(); Q.wait_for_load_state("networkidle"); Q.wait_for_timeout(1000)
-    inspect(c2,"HOLD",50,44,6,"Cap thread incomplete on 6 of 50")
-    inspect(p1,"APPROVE",80,80)
-    inspect(p2,"REJECT",40,10,30,"Black specks in the wall","Contamination / black specks")
-    q=lambda bid: sql(f"SELECT {T('\"qcStatus\"')} FROM {T('\"Batch\"')} WHERE id='{bid}'")
-    ck("7. QC held a cap batch and rejected a preform batch", q(c2)=="HOLD" and q(p2)=="REJECTED" and q(p1)=="APPROVED")
+    # ── 7. QC inspects daily entries: approve one, reject part of another
+    eA_cap=sql(f"SELECT id FROM {T('\"ProductionEntry\"')} WHERE shift='A' AND {T('\"productId\"')}='{pid['CAP-28']}'")
+    eA_pf=sql(f"SELECT id FROM {T('\"ProductionEntry\"')} WHERE shift='A' AND {T('\"productId\"')}='{pid['PF-500']}'")
+    Q.goto(B+"/qc"); ck("7. QC sees today's entries, QC-required product first", "PF-500" in main_text(Q))
+    Q.goto(B+f"/qc/entries/{eA_cap}"); Q.fill("input[name=qtyInspected]","50"); Q.get_by_role("button", name="Approve").click(); Q.wait_for_load_state("networkidle"); Q.wait_for_timeout(1000)
+    Q.goto(B+f"/qc/entries/{eA_pf}"); Q.fill("input[name=qtyInspected]","500"); Q.fill("input[name=qtyRejected]","300")
+    Q.select_option("select[name=categoryId]", label="Contamination / black specks"); Q.fill("textarea[name=issueDescription]","Black specks in the wall")
+    Q.get_by_role("button", name=re.compile("^Reject 300")).click(); Q.wait_for_load_state("networkidle"); Q.wait_for_timeout(1000)
+    q=lambda e: sql(f"SELECT {T('\"qcStatus\"')} FROM {T('\"ProductionEntry\"')} WHERE id='{e}'")
+    ck("7. QC approved one entry and rejected another", q(eA_cap)=="APPROVED" and q(eA_pf)=="REJECTED")
+    ck("7. rejected pieces left stock automatically (PF-500 6,200)", stock("PF-500")==6200)
+    ck("7. a quality issue was opened for the rejection", sql(f"SELECT count(*) FROM {T('\"QualityIssue\"')} WHERE {T('\"entryId\"')}='{eA_pf}'")=="1")
+    P.goto(B+"/production"); ck("7. inspected entries can't be corrected any more", P.locator("li", has=P.locator(f"a[href='/qc/entries/{eA_pf}']")).get_by_role("button", name="Correct").count()==0)
 
-    # ── 9. Warehouse receives eligible finished products
-    W=ctx(); login(W,"walid")
-    for bid in [c1,c2,p1]:
-        W.goto(B+f"/inventory?tab=awaiting&batch={bid}"); btn(W,"Confirm receipt")
-    ck("9. released stock available; held batch went to quarantine", bal(c1).get("AVAILABLE")==4000 and bal(c2).get("QUARANTINE")==6000 and bal(p1).get("AVAILABLE")==6000)
+    # ── 8/9/10. Warehouse: stock only — goods go out, can't go below zero
+    W=ctx(); login(W,"walid"); W.goto(B+"/inventory")
+    ck("9. warehouse sees stock per product", "10,000" in main_text(W) and "6,200" in main_text(W))
+    W.fill(f"input[name='out_{pid['CAP-28']}']","4000"); W.fill(f"input[name='out_{pid['PF-500']}']","3000"); W.fill("input[name=reference]",onum)
+    W.get_by_role("button", name=re.compile("^Take out")).click(); W.wait_for_load_state("networkidle"); W.wait_for_timeout(1000)
+    ck("10. goods taken out → stock reduced (6,000 / 3,200)", stock("CAP-28")==6000 and stock("PF-500")==3200)
+    W.goto(B+"/inventory"); W.fill(f"input[name='out_{pid['PF-500']}']","3200"); W.evaluate(f"document.querySelector(\"input[name='out_{pid['PF-500']}']\").removeAttribute('max')")
+    W.fill(f"input[name='out_{pid['PF-500']}']","9999"); W.get_by_role("button", name=re.compile("^Take out")).click(); W.wait_for_load_state("networkidle"); W.wait_for_timeout(1000)
+    ck("8. can't take out more than is in stock", stock("PF-500")==3200)
+    ck("8. no shipments or customers pages", W.request.get(B+"/shipments").status==404)
+    A.goto(B+"/inventory"); combo(A,"productId","PF-500"); A.fill("#qty","-200"); A.select_option("#kind","SCRAP"); A.fill("#reason","Scrapped rejected preforms"); btn(A,"Save adjustment")
+    ck("8. supervisor adjustment logged", stock("PF-500")==3000)
 
-    # ── 8. Held and rejected quantities can't be dispatched
-    W.goto(B+f"/shipments/new?order={oid}")
-    ck("8. held batch can't be chosen for a shipment", W.locator(f"input[name='qty_{c2}']").count()==0 or W.locator(f"input[name='qty_{c2}']").is_disabled())
-    ck("8. rejected batch is not offered", W.locator(f"input[name='qty_{p2}']").count()==0 or W.locator(f"input[name='qty_{p2}']").is_disabled())
+    # ── 11. Stock always equals the ledger
+    neg=sql(f"SELECT count(*) FROM (SELECT {T('\"productId\"')} FROM {T('\"StockMovement\"')} GROUP BY 1 HAVING SUM(qty)<0) x")
+    made=int(sql(f"SELECT SUM(quantity) FROM {T('\"ProductionEntry\"')}")); inmv=int(sql(f"SELECT SUM(qty) FROM {T('\"StockMovement\"')} WHERE type='PRODUCTION'"))
+    ck(f"11. production entries ({made}) = stock in ({inmv}); no product below zero", made==inmv==16500 and neg=="0")
 
-    # ── 10. Partial dispatch, then the remaining shipment
-    W.fill(f"input[name='qty_{c1}']","4000"); W.fill(f"input[name='qty_{p1}']","3000"); W.fill("#vehicle","DHK 12345"); W.fill("#driver","Hassan")
-    btn(W,"Reserve stock & create shipment"); btn(W,"Confirm dispatch")
-    ck("10. first shipment dispatched → order partially delivered", sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="PARTIALLY_DELIVERED")
-    inspect(c2,"APPROVE",80,80)  # re-inspection after sorting: released
-    ck("   QC approval moved the held stock back to available", bal(c2).get("AVAILABLE")==6000 and bal(c2).get("QUARANTINE",0)==0)
-    W.goto(B+f"/shipments/new?order={oid}"); W.fill(f"input[name='qty_{c2}']","6000"); W.fill(f"input[name='qty_{p1}']","3000")
-    btn(W,"Reserve stock & create shipment"); btn(W,"Confirm dispatch"); s2=W.url.split("/")[-1]
-    ck("10. second shipment completes the order → Delivered", sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="DELIVERED")
-    W.goto(B+f"/print/shipments/{s2}"); W.screenshot(path=O+"delivery-note.png", full_page=True)
-
-    # ── 11. Stock and order quantities stay consistent
-    shipped=dict(r.split("|") for r in sql(f"SELECT p.code||'|'||SUM(sl.qty) FROM {T('\"ShipmentLine\"')} sl JOIN {T('\"Shipment\"')} s ON s.id=sl.{T('\"shipmentId\"')} JOIN {T('\"OrderLine\"')} l ON l.id=sl.{T('\"orderLineId\"')} JOIN {T('\"Product\"')} p ON p.id=l.{T('\"productId\"')} WHERE s.status='CONFIRMED' GROUP BY p.code").split("\n"))
-    ledger=int(sql(f"SELECT SUM(qty) FROM {T('\"StockMovement\"')} WHERE state='SHIPPED'"))
-    onhand=int(sql(f"SELECT COALESCE(SUM(qty),0) FROM {T('\"StockMovement\"')} WHERE state IN ('AVAILABLE','RESERVED','QUARANTINE')"))
-    ck(f"11. shipped = ordered per product {shipped}", shipped=={"CAP-28":"10000","PF-500":"6000"})
-    ck(f"11. stock ledger shipped ({ledger}) = shipment lines; nothing left on hand ({onhand})", ledger==16000 and onhand==0)
-    ck("11. every batch balance is non-negative", sql(f"SELECT count(*) FROM (SELECT {T('\"batchId\"')},state,SUM(qty) s FROM {T('\"StockMovement\"')} GROUP BY 1,2 HAVING SUM(qty)<0) x")=="0")
-
-    # ── 12. Management sees the order's full history
-    A.goto(B+f"/orders/{oid}"); hist=main_text(A); A.screenshot(path=O+"order-history.png", full_page=True)
-    need=[H("order.create_confirm"),H("job.start"),H("production.report"),H("maintenance.create"),H("qc.hold"),H("warehouse.receive"),H("shipment.confirm")]
+    # ── 12. Order complete; history shows what happened
+    S.goto(B+f"/orders/{oid}"); btn(S,"Mark completed")
+    ck("12. sales marked the order completed", sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="COMPLETED")
+    S.goto(B+f"/orders/{oid}"); hist=main_text(S)
+    need=[H("order.create"),H("order.update"),H("order.complete")]
     missing=[x for x in need if x not in hist]
-    ck(f"12. order page shows planning, production, maintenance, QC, receipts and shipments (missing: {missing})", not missing)
+    ck(f"12. order history shows create, change, complete (missing: {missing})", not missing)
+    S.goto(B+f"/orders/{big}"); btn(S,"Delete order"); S.locator("input:focus").fill("Entered as a test"); S.get_by_role("button", name="Confirm").click(); S.wait_for_url("**/orders?deleted=1", wait_until="commit")
+    ck("12. an order entered by mistake can be deleted", sql(f"SELECT count(*) FROM {T('\"Order\"')} WHERE id='{big}'")=="0")
 
     # ── 3. Everyone can view, but can't change without permission
     W.goto(B+f"/orders/{oid}"); ck("3. warehouse can view the order", onum in main_text(W))
-    ck("3. …but has no edit/hold/cancel buttons", W.get_by_role("button", name="Put on hold").count()==0 and W.locator(f"a[href='/orders/{oid}/edit']").count()==0)
-    P.goto(B+"/customers"); ck("3. production can view customers but not add them", "Zakho" in main_text(P) and P.get_by_text("New customer").count()==0)
-    Q.goto(B+f"/production/{j1}"); ck("3. QC sees production read-only", Q.get_by_role("button", name="Add quantity").count()==0)
+    ck("3. …but has no edit/complete buttons", W.get_by_role("button", name="Reopen").count()==0 and W.locator(f"a[href='/orders/{oid}/edit']").count()==0)
+    Q.goto(B+"/production"); ck("3. QC sees production read-only", Q.get_by_role("button", name="Correct").count()==0 and Q.locator("a[href^='/production/daily']").count()==0)
 
-    # ── 13. Search, filters, reports, exports on real records
+    # ── 13. Search, filters, reports, exports
     A.goto(B+"/search?q="+onum); ck("13. search by exact order number opens the order", A.url.endswith(f"/orders/{oid}"))
-    A.goto(B+"/search?q="+c2n); ck("13. search by batch number opens the batch", "/qc/batches/" in A.url)
     A.goto(B+"/search?q=toyo-01"); ck("13. search by machine number", "/history?machine=" in A.url)
-    A.goto(B+"/orders?status=DELIVERED"); ck("13. order list status filter", onum in main_text(A))
-    A.goto(B+"/reports/production?from=2026-10-01&to=2026-10-31&group=product"); rep=main_text(A)
-    ck("13. production report = 16,500 good pieces", "16,500" in rep)
-    A.goto(B+"/reports/quality?from=2026-10-01&to=2026-10-31"); ck("13. rejection report shows the rejected pieces", "30" in main_text(A))
-    A.goto(B+"/reports/on-time?from=2026-11-01&to=2026-11-30"); ck("13. on-time delivery report", "On time" in main_text(A))
-    r=A.request.get(B+"/api/reports/shipments?from=2026-10-01&to=2026-10-31"); rows=list(csv.reader(io.StringIO(r.body().decode("utf-8").lstrip("﻿"))))
-    ck("13. CSV export of shipments totals 16,000 pieces", r.status==200 and rows[-1][0]=="Total" and int(float(rows[-1][5]))==16000)
-    A.goto(B+"/print/reports/outstanding"); ck("13. printable PDF report opens", A.locator("img[src='/brand/bereket-logo.jpg']").count()==1)
+    A.goto(B+"/orders?status=COMPLETED"); ck("13. order list status filter", onum in main_text(A))
+    day=sql(f"SELECT day::text FROM {T('\"ProductionEntry\"')} LIMIT 1")
+    A.goto(B+f"/reports/production?from={day}&to={day}&group=product"); rep=main_text(A)
+    ck("13. production report = 16,500 pieces", "16,500" in rep)
+    A.goto(B+f"/reports/quality?from={day}&to={day}"); ck("13. rejection report shows the 300 rejected pieces", "300" in main_text(A))
+    A.goto(B+"/reports/demand"); ck("13. ordered-vs-stock report opens", "Ordered vs. stock" in main_text(A))
+    r=A.request.get(B+f"/api/reports/movements?from={day}&to={day}"); rows=list(csv.reader(io.StringIO(r.body().decode("utf-8").lstrip("\ufeff"))))
+    ck("13. CSV export of stock movements works", r.status==200 and len(rows)>5)
+    A.goto(B+"/print/reports/stock"); ck("13. printable PDF report opens", A.locator("img[src='/brand/bereket-logo.jpg']").count()==1)
 
     # ── 14. Desktop and mobile
-    M=br.new_context(**p.devices["iPhone 13"]).new_page(); M.on("pageerror", lambda e: errs.append(str(e))); login(M,"walid")
+    M=br.new_context(**p.devices["iPhone 13"]).new_page(); M.on("pageerror", lambda e: errs.append(str(e))); login(M,"peter")
     over=[]
-    for path in ["/dashboard","/inventory","/shipments",f"/orders/{oid}","/reports/shipments","/search?q=ORD"]:
+    for path in ["/dashboard","/production","/production/daily","/inventory",f"/orders/{oid}","/orders/new","/reports/stock","/search?q=ORD"]:
         M.goto(B+path); M.wait_for_load_state("networkidle")
         if M.evaluate("document.documentElement.scrollWidth - window.innerWidth")>1: over.append(path)
-    M.goto(B+f"/orders/{oid}"); M.screenshot(path=O+"mobile-order.png", full_page=True)
+    M.goto(B+"/production/daily"); M.screenshot(path=O+"mobile-daily.png", full_page=True)
     ck(f"14. phone layout fits the screen on key pages (overflow: {over})", not over)
 
     # ── 15. Critical actions are in the audit log
     acts=set(sql(f"SELECT DISTINCT action FROM {T('\"AuditLog\"')}").split("\n"))
-    need=["setup.first_admin","user.create","order.create_confirm","job.create","production.report","maintenance.create","maintenance.verify","qc.hold","qc.reject","warehouse.receive","shipment.confirm","report.export"]
+    need=["setup.first_admin","user.create","order.create","order.update","order.complete","order.delete","production.report","production.correct","maintenance.create","maintenance.verify","qc.approve","qc.reject","stock.out","stock.adjust","report.export"]
     ck(f"15. audit log has every critical action (missing: {[a for a in need if a not in acts]})", all(a in acts for a in need))
-    who=sql(f"SELECT u.username FROM {T('\"AuditLog\"')} a JOIN {T('\"User\"')} u ON u.id=a.{T('\"userId\"')} WHERE a.action='shipment.confirm' LIMIT 1")
-    ck("15. audit log records who confirmed the shipment", who=="walid")
+    who=sql(f"SELECT u.username FROM {T('\"AuditLog\"')} a JOIN {T('\"User\"')} u ON u.id=a.{T('\"userId\"')} WHERE a.action='stock.out' LIMIT 1")
+    ck("15. audit log records who took the stock out", who=="walid")
 
     # ── 16. Backup and recovery are documented
     doc=open(os.path.join(ROOT,"docs/BACKUP-RESTORE.md")).read() if os.path.exists(os.path.join(ROOT,"docs/BACKUP-RESTORE.md")) else ""
@@ -222,16 +218,16 @@ with sync_playwright() as p:
     ck("17. export API refuses roles without export permission", P.request.get(B+"/api/reports/production").status==403 and P.request.get(B+"/api/audit").status==403)
     anon=br.new_context(); ck("17. signed-out API calls refused", anon.request.get(B+"/api/reports/production", max_redirects=0).status in (307,401))
 
-    # ── 18. Whole workflow order → final shipment
-    ck("18. full workflow from order creation to final customer shipment completed", sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="DELIVERED" and sql(f"SELECT count(*) FROM {T('\"Shipment\"')} WHERE {T('\"orderId\"')}='{oid}' AND status='CONFIRMED'")=="2")
+    # ── 18. Whole workflow order → production → QC → stock out
+    ck("18. full workflow from order to production, QC and stock out completed", sql(f"SELECT status FROM {T('\"Order\"')} WHERE id='{oid}'")=="COMPLETED" and stock("CAP-28")==6000)
 
     # ── Go-live reset clears test data but keeps people and master data
     A.goto(B+"/admin?tab=system"); A.fill("#confirm","RESET"); A.fill("#reset-password",PW["owner"]); btn(A,"Delete test transactions")
-    left=sql(f"SELECT (SELECT count(*) FROM {T('\"Order\"')})+(SELECT count(*) FROM {T('\"Batch\"')})+(SELECT count(*) FROM {T('\"StockMovement\"')})+(SELECT count(*) FROM {T('\"Shipment\"')})")
+    left=sql(f"SELECT (SELECT count(*) FROM {T('\"Order\"')})+(SELECT count(*) FROM {T('\"ProductionEntry\"')})+(SELECT count(*) FROM {T('\"StockMovement\"')})")
     ck("go-live reset removed all test transactions", left=="0" and "ready for real use" in main_text(A))
-    ck("…kept employees, customers, products, machines and audit log", sql(f"SELECT (SELECT count(*) FROM {T('\"User\"')})||'/'||(SELECT count(*) FROM {T('\"Customer\"')})||'/'||(SELECT count(*) FROM {T('\"Machine\"')})")=="6/1/2" and "system.reset" in sql(f"SELECT action FROM {T('\"AuditLog\"')} ORDER BY {T('\"createdAt\"')} DESC LIMIT 1"))
-    S.goto(B+"/orders/new"); combo(S,"customerId","Zakho Water"); S.fill("#requestedDeliveryDate","2026-11-20"); combo(S,"productId[]","CAP-28",0)
-    S.locator('input[name="quantity[]"]').nth(0).fill("1000"); btn(S,"Save & confirm"); S.wait_for_url(re.compile(r".*/orders/c[a-z0-9]+$"), wait_until="commit")
+    ck("…kept employees, products, machines and audit log", sql(f"SELECT (SELECT count(*) FROM {T('\"User\"')})||'/'||(SELECT count(*) FROM {T('\"Product\"')})||'/'||(SELECT count(*) FROM {T('\"Machine\"')})")=="6/63/2" and "system.reset" in sql(f"SELECT action FROM {T('\"AuditLog\"')} ORDER BY {T('\"createdAt\"')} DESC LIMIT 1"))
+    S.goto(B+"/orders/new"); S.fill("input[aria-label='CAP-28 Quantity']","1000")
+    S.get_by_role("button", name=re.compile("^(Save order|Save)$")).click(); S.wait_for_url(re.compile(r".*/orders/c[a-z0-9]+$"), wait_until="commit")
     ck("…and order numbering starts again at 0001", "-0001" in main_text(S))
 
     ck("no browser errors anywhere", not errs); print("   errors:", errs[:3])

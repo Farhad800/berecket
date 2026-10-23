@@ -14,6 +14,12 @@ def login(pg,u,pw="Demo12345!"):
 
 with sync_playwright() as p:
     br=p.chromium.launch()
+    # Make sure there is an order and a maintenance request to test against (fresh databases have none).
+    if sql("SELECT count(*) FROM \\\"Order\\\"")=="0" or sql("SELECT count(*) FROM \\\"MaintenanceRequest\\\"")=="0":
+        s0=br.new_context().new_page(); login(s0,"demo.sales"); s0.goto(B+"/orders/new"); s0.locator("input[data-q]").first.fill("100")
+        s0.get_by_role("button", name="Save order").click(); s0.wait_for_url(re.compile(r".*/orders/c[a-z0-9]+$"), wait_until="commit")
+        login(s0,"demo.production"); s0.goto(B+"/service/requests/new"); s0.locator('[id="machineId"]').click(); s0.keyboard.press("Enter")
+        s0.fill("#title","Security test request"); s0.get_by_role("button", name="Send request").click(); s0.wait_for_timeout(1500); s0.context.close()
     anon=br.new_context(); ap=anon.new_page()
     # 1. Signed-out access
     for path in ["/dashboard","/orders","/reports/production","/admin","/audit","/inventory"]:
