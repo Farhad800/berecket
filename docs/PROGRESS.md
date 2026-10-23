@@ -26,3 +26,15 @@ Results: acceptance 48/48 (fresh DB), security 28/28, stage 6 23/23, stage 7 41/
 Open items for the owner: Vercel Pro (commercial use), Neon Launch + 7-day history, GitHub backup secrets,
 repo private, BLOB token Sensitive, SETUP_TOKEN rotated (done), native-speaker review of ar/tr texts,
 go-live reset when testing ends.
+
+## Redesign (started 23 Oct 2026) — owner's decisions
+- Remove Production Schedule (jobs) completely. Production = daily entries: date + shift + product + good qty (no machine, no defects, no order link).
+- Orders = order number + product lines + amounts only. No customer, no date, no priority, no notes. Status: Open / Completed / Cancelled.
+- Remove customers completely.
+- Warehouse = stock only: production entries add stock automatically; warehouse records stock out + adjustments. No shipments, no delivery notes, no receipts, no locations.
+- QC inspects daily production entries (accept/reject pieces, defect type, quality issues + corrective actions). Rejected pieces leave stock.
+- Maintenance/service stay (no job links). Downtime records dropped (were tied to jobs).
+Checklist:
+- [ ] schema + migration  - [ ] orders  - [ ] daily production  - [ ] QC + warehouse
+- [ ] cleanup (nav, perms, dashboard, reports, search, history, service, go-live tools, demo, i18n)
+- [ ] tests (new acceptance), docs, deploy
