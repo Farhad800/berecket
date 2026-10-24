@@ -454,7 +454,8 @@
     },
     "system": {
       "reset": "Test data cleared",
-      "remove_demo_users": "Demo accounts removed"
+      "remove_demo_users": "Demo accounts removed",
+      "remove_items": "All items removed"
     },
     "auth": {
       "login": "Signed in",
@@ -1313,6 +1314,19 @@
       "inspections": "QC inspections",
       "issues": "Quality issues",
       "movements": "Stock movements"
+    },
+    "itemsTitle": "Replace the item list",
+    "itemsIntro": "Removes every product, sticker and material so a corrected Excel list can be imported in their place. Machines, molds, employees and the audit log stay.",
+    "itemsWarning": "This can't be undone. Keep the Excel file so you can import it again.",
+    "typeDeleteItems": "Type DELETE ITEMS to confirm",
+    "itemsButton": "Remove all {n} items",
+    "itemsDone": "{n} items removed. Now import the new list:",
+    "itemsImportNow": "Import from Excel",
+    "itemsUsed": "{n} items are already used by orders, production or stock, so the list can't be removed. Clear the test transactions first (above).",
+    "items": {
+      "products": "Products",
+      "stickers": "Stickers",
+      "materials": "Materials"
     }
   },
   "daily": {

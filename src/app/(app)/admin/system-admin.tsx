@@ -2,18 +2,23 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { AlertTriangle, Trash2, UserMinus } from "lucide-react";
+import { AlertTriangle, PackageX, Trash2, UserMinus } from "lucide-react";
+import Link from "next/link";
 import { useFormAction } from "@/components/use-form-action";
 import { Alert, Button, Card, Field, Input } from "@/components/ui";
-import { removeDemoUsersAction, resetDataAction } from "@/app/actions/system";
+import { removeAllItemsAction, removeDemoUsersAction, resetDataAction } from "@/app/actions/system";
 
 type Counts = Record<string, number>;
 
-export default function SystemAdmin({ ops, master, demoUsers }: { ops: Counts; master: Counts; demoUsers: number }) {
+type Items = { products: number; stickers: number; materials: number; used: number };
+
+export default function SystemAdmin({ ops, master, demoUsers, items }: { ops: Counts; master: Counts; demoUsers: number; items: Items }) {
   const t = useTranslations("sys");
   const [scope, setScope] = useState<"operations" | "everything">("operations");
   const reset = useFormAction(resetDataAction, { resetOnSuccess: true });
   const demo = useFormAction(removeDemoUsersAction, { resetOnSuccess: true });
+  const wipe = useFormAction(removeAllItemsAction, { resetOnSuccess: true });
+  const itemsTotal = items.products + items.stickers + items.materials;
   const opsTotal = Object.values(ops).reduce((a, b) => a + b, 0);
 
   return (
@@ -57,6 +62,31 @@ export default function SystemAdmin({ ops, master, demoUsers }: { ops: Counts; m
             </Button>
           </form>
         )}
+      </Card>
+
+      <Card>
+        <h2 className="flex items-center gap-2 font-bold"><PackageX className="size-5 text-red-600" /> {t("itemsTitle")}</h2>
+        <p className="mt-1 text-sm text-muted">{t("itemsIntro")}</p>
+        <dl className="mt-3 grid grid-cols-3 gap-x-4 text-sm sm:max-w-md">
+          {(["products", "stickers", "materials"] as const).map((k) => (
+            <div key={k} className="flex justify-between gap-2 border-b border-line py-1"><dt className="text-muted">{t(`items.${k}`)}</dt><dd className="font-semibold tabular-nums">{items[k].toLocaleString("en")}</dd></div>
+          ))}
+        </dl>
+        {wipe.state?.ok ? (
+          <div className="mt-4"><Alert tone="green">{t("itemsDone", { n: (wipe.state.data as { removed: number }).removed.toLocaleString("en") })} <Link href="/import" className="font-semibold underline">{t("itemsImportNow")}</Link></Alert></div>
+        ) : items.used > 0 ? (
+          <div className="mt-4"><Alert tone="amber">{t("itemsUsed", { n: items.used.toLocaleString("en") })}</Alert></div>
+        ) : itemsTotal > 0 ? (
+          <form onSubmit={wipe.onSubmit} className="mt-4 space-y-3">
+            {wipe.error && <Alert>{wipe.error}</Alert>}
+            <Alert tone="amber"><AlertTriangle className="me-1 inline size-4" /> {t("itemsWarning")}</Alert>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label={t("typeDeleteItems")} name="items-confirm"><Input name="confirm" id="items-confirm" autoComplete="off" dir="ltr" required /></Field>
+              <Field label={t("yourPassword")} name="items-password"><Input name="password" id="items-password" type="password" autoComplete="current-password" required /></Field>
+            </div>
+            <Button type="submit" variant="danger" disabled={wipe.pending}>{wipe.pending ? t("working") : t("itemsButton", { n: itemsTotal.toLocaleString("en") })}</Button>
+          </form>
+        ) : null}
       </Card>
 
       <Card>

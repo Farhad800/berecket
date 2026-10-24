@@ -83,3 +83,30 @@ export async function removeDemoUsers(db: PrismaClient) {
   ]);
   return ids.length;
 }
+
+/** Products, stickers and materials, and how many of them are already used (orders, production or stock). */
+export async function itemsPreview(db: PrismaClient) {
+  const [byKind, used] = await Promise.all([
+    db.product.groupBy({ by: ["kind"], _count: true }),
+    db.product.count({ where: { OR: [{ orderLines: { some: {} } }, { entries: { some: {} } }, { stockMovements: { some: {} } }] } }),
+  ]);
+  const n = (k: string) => byKind.find((b) => b.kind === k)?._count ?? 0;
+  return { products: n("PRODUCT"), stickers: n("STICKER"), materials: n("MATERIAL"), used };
+}
+
+/**
+ * Removes every product, sticker and material so a corrected list can be imported in their place.
+ * Machines, molds, employees and the audit log stay. Refuses while any item is used by orders,
+ * production or stock — those records must be cleared first, so history never points at nothing.
+ */
+export async function removeAllItems(db: PrismaClient) {
+  return db.$transaction(async (tx) => {
+    const used = await tx.product.count({ where: { OR: [{ orderLines: { some: {} } }, { entries: { some: {} } }, { stockMovements: { some: {} } }] } });
+    if (used > 0) return { removed: 0, used };
+    const files = await tx.attachment.findMany({ where: { entityType: "Product" }, select: { storageKey: true } });
+    await tx.attachment.deleteMany({ where: { entityType: "Product" } });
+    await tx.comment.deleteMany({ where: { entityType: "Product" } });
+    const { count } = await tx.product.deleteMany({});
+    return { removed: count, used: 0, files: files.map((f) => f.storageKey) };
+  }, { timeout: 120_000 });
+}

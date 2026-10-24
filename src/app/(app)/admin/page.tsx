@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { can, pageUser } from "@/lib/auth";
-import { resetPreview } from "@/lib/data-reset";
+import { resetPreview, itemsPreview } from "@/lib/data-reset";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/time";
 import { RESOURCES, RESOURCE_ACTIONS } from "@/lib/permissions";
@@ -102,6 +102,6 @@ async function RolesTab() {
 }
 
 async function SystemTab() {
-  const p = await resetPreview(db);
-  return <SystemAdmin ops={p.operations} master={p.master} demoUsers={p.demoUsers} />;
+  const [p, items] = await Promise.all([resetPreview(db), itemsPreview(db)]);
+  return <SystemAdmin ops={p.operations} master={p.master} demoUsers={p.demoUsers} items={items} />;
 }

@@ -2,6 +2,9 @@
 
 Day-to-day running of the Bereket Plastic FMS. No programming needed for anything in sections 1–6.
 
+## Replacing the whole item list
+Administration → System → **Replace the item list** removes every product, sticker and material (machines, molds, employees and the audit log stay). Type `DELETE ITEMS` and your password. It is refused while any item is used by orders, production or stock — clear the test transactions first. Then import the corrected Excel file (Products → Import from Excel).
+
 ## 1. Daily and weekly checks
 
 | When | Check | Where |

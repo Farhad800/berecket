@@ -454,7 +454,8 @@
     },
     "system": {
       "reset": "Test verileri temizlendi",
-      "remove_demo_users": "Demo hesaplar kaldırıldı"
+      "remove_demo_users": "Demo hesaplar kaldırıldı",
+      "remove_items": "Tüm kalemler silindi"
     },
     "auth": {
       "login": "Giriş yaptı",
@@ -1313,6 +1314,19 @@
       "inspections": "KK muayeneleri",
       "issues": "Kalite sorunları",
       "movements": "Stok hareketleri"
+    },
+    "itemsTitle": "Kalem listesini değiştir",
+    "itemsIntro": "Düzeltilmiş Excel listesi içe aktarılabilsin diye tüm ürün, etiket ve malzemeleri siler. Makineler, kalıplar, çalışanlar ve denetim kaydı kalır.",
+    "itemsWarning": "Geri alınamaz. Tekrar içe aktarmak için Excel dosyasını saklayın.",
+    "typeDeleteItems": "Onaylamak için DELETE ITEMS yazın",
+    "itemsButton": "Tüm {n} kalemi sil",
+    "itemsDone": "{n} kalem silindi. Şimdi yeni listeyi içe aktarın:",
+    "itemsImportNow": "Excel'den içe aktar",
+    "itemsUsed": "{n} kalem sipariş, üretim veya stokta kullanılıyor; liste silinemez. Önce test işlemlerini temizleyin (yukarıda).",
+    "items": {
+      "products": "Ürünler",
+      "stickers": "Etiketler",
+      "materials": "Malzemeler"
     }
   },
   "daily": {
