@@ -232,7 +232,9 @@
     "sameForAll": "İsteğe bağlı — listedeki tüm etiketlere uygulanır:",
     "saveLabels": "{n} etiketi kaydet",
     "labelsSaved": "{n} etiket ürün olarak kaydedildi.",
-    "labelsSkipped": "{n} tanesi zaten vardı, atlandı."
+    "labelsSkipped": "{n} tanesi zaten vardı, atlandı.",
+    "name2": "İkinci ad (Türkçe / İngilizce)",
+    "name2Hint": "Ana adın altında gösterilir."
   },
   "status": {
     "machine": {
@@ -435,7 +437,9 @@
     },
     "stock": {
       "adjust": "Stok düzeltildi",
-      "out": "Stoktan çıkış"
+      "out": "Stoktan çıkış",
+      "receive": "Etiket / malzeme girişi",
+      "use": "Etiket / malzeme kullanımı"
     },
     "shipment": {
       "create": "Sevkiyat taslağı, stok ayrıldı",
@@ -851,7 +855,7 @@
     "whichMachine": "Hangi makine?"
   },
   "wh": {
-    "ledgerNote": "Stok günlük üretimle otomatik artar, KK reddinde veya mal çıkışında azalır. Toplamlar elle girilemez.",
+    "ledgerNote": "Ürünler günlük üretimle, etiket ve malzemeler girişle artar. Kullanım, çıkış veya redde azalır. Toplamlar elle girilemez.",
     "searchStock": "Parti, ürün veya sipariş…",
     "noStock": "Eşleşen ürün yok.",
     "adjustTitle": "Stok düzeltmesi",
@@ -870,7 +874,7 @@
     "locationName": "Yer adı",
     "receiptsCount": "{n} kabul",
     "receiveTitle": "Mamul kabul",
-    "received": "{number} kaydedildi.",
+    "received": "Gelen",
     "receivedQuarantine": "{number} kaydedildi — partinin KK durumu nedeniyle {n} adet karantinaya alındı.",
     "waiting": "{n} adet bekliyor",
     "willQuarantine": "karantinaya alınacak",
@@ -901,12 +905,33 @@
       "PRODUCTION": "Üretim",
       "QC_REJECT": "KK reddi",
       "OUT": "Çıkış",
-      "ADJUST": "Düzeltme"
+      "ADJUST": "Düzeltme",
+      "RECEIVE": "Giriş",
+      "USE": "Kullanım"
     },
     "tab": {
-      "stock": "Stok",
-      "movements": "Hareketler"
-    }
+      "stock": "Ürünler",
+      "movements": "Hareketler",
+      "stickers": "Etiketler",
+      "materials": "Malzemeler"
+    },
+    "receiveMode": "Giriş",
+    "useMode": "Kullanım (çıkış)",
+    "filterItems": "Ada veya koda göre süz…",
+    "onlyInStock": "Yalnızca stokta olanlar",
+    "receivedSaved": "Kaydedildi: {n} kalem giriş.",
+    "usedSaved": "Kaydedildi: {n} kalem kullanıldı.",
+    "item": "Kalem",
+    "used": "Kullanılan",
+    "receiveRefHint": "örn. tedarikçi, fatura no",
+    "useRefHint": "örn. makine, sipariş veya kişi",
+    "saveReceive": "Girişi kaydet · {n} kalem",
+    "saveUse": "Kullanımı kaydet · {n} kalem",
+    "itemsN": "Kalemler",
+    "withStock": "Stoktaki kalemler",
+    "totalKg": "Toplam kg",
+    "noStickers": "Henüz etiket yok. Excel'den içe aktararak ekleyin.",
+    "noMaterials": "Henüz malzeme yok. Excel'den içe aktararak ekleyin."
   },
   "rep": {
     "intro": "Fabrika kayıtlarından canlı rakamlar. Bir rapor seçin, tarihleri ve filtreleri ayarlayın, sonra Excel (CSV) veya PDF olarak dışa aktarın.",
@@ -1428,6 +1453,22 @@
       "adjusted": {
         "title": "Stok düzeltildi: {product} {qty}",
         "body": "{reason} · {by}"
+      },
+      "stickersIn": {
+        "title": "Etiket girişi: {n} kalem",
+        "body": "{ref} · {by}"
+      },
+      "materialsIn": {
+        "title": "Malzeme girişi: {n} kalem",
+        "body": "{ref} · {by}"
+      },
+      "stickersUsed": {
+        "title": "Etiket kullanımı: {n} kalem",
+        "body": "{ref} · {by}"
+      },
+      "materialsUsed": {
+        "title": "Malzeme kullanımı: {n} kalem",
+        "body": "{ref} · {by}"
       }
     },
     "product": {

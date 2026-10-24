@@ -183,7 +183,7 @@ export const REPORTS: ReportDef[] = [
       const rows: Row[] = demand
         .map((d) => {
           const p = products.find((x) => x.id === d.productId)!;
-          const ordered = d._sum.quantity ?? 0, inStock = stock.find((s) => s.productId === d.productId)?._sum.qty ?? 0;
+          const ordered = d._sum.quantity ?? 0, inStock = Number(stock.find((s) => s.productId === d.productId)?._sum.qty ?? 0);
           return {
             product: `${p.code} · ${p.name}`, orders: d._count.orderId, ordered, stock: inStock,
             made: made.find((m) => m.productId === d.productId)?._sum.quantity ?? 0, short: Math.max(ordered - inStock, 0),
@@ -457,16 +457,16 @@ export const REPORTS: ReportDef[] = [
     filters: ["range", "product"],
     async run(q) {
       const [onHand, moves] = await Promise.all([
-        db.stockMovement.groupBy({ by: ["productId"], where: q.product ? { productId: q.product } : {}, _sum: { qty: true } }),
-        db.stockMovement.groupBy({ by: ["productId", "type"], where: { createdAt: { gte: q.start, lt: q.end }, ...(q.product ? { productId: q.product } : {}) }, _sum: { qty: true } }),
+        db.stockMovement.groupBy({ by: ["productId"], where: { product: { kind: "PRODUCT" }, ...(q.product ? { productId: q.product } : {}) }, _sum: { qty: true } }),
+        db.stockMovement.groupBy({ by: ["productId", "type"], where: { product: { kind: "PRODUCT" }, createdAt: { gte: q.start, lt: q.end }, ...(q.product ? { productId: q.product } : {}) }, _sum: { qty: true } }),
       ]);
       const ids = [...new Set([...onHand.map((x) => x.productId), ...moves.map((x) => x.productId)])];
       const products = await db.product.findMany({ where: { id: { in: ids } }, select: { id: true, code: true, name: true } });
-      const mv = (pid: string, type: string) => moves.find((m) => m.productId === pid && m.type === type)?._sum.qty ?? 0;
+      const mv = (pid: string, type: string) => Number(moves.find((m) => m.productId === pid && m.type === type)?._sum.qty ?? 0);
       const rows: Row[] = products
         .map((p) => ({
           product: `${p.code} · ${p.name}`, produced: mv(p.id, "PRODUCTION"), rejected: -mv(p.id, "QC_REJECT"), out: -mv(p.id, "OUT"),
-          adjusted: mv(p.id, "ADJUST"), stock: onHand.find((o) => o.productId === p.id)?._sum.qty ?? 0,
+          adjusted: mv(p.id, "ADJUST"), stock: Number(onHand.find((o) => o.productId === p.id)?._sum.qty ?? 0),
         }))
         .sort((a, b) => b.stock - a.stock);
       return {
@@ -496,7 +496,7 @@ export const REPORTS: ReportDef[] = [
     section: "warehouse",
     icon: "ArrowDownUp",
     filters: ["range", "product", "type"],
-    typeFilter: { ns: "wh.mv", values: ["PRODUCTION", "QC_REJECT", "OUT", "ADJUST"] },
+    typeFilter: { ns: "wh.mv", values: ["PRODUCTION", "QC_REJECT", "OUT", "ADJUST", "RECEIVE", "USE"] },
     async run(q) {
       const name = await userNames();
       const list = await db.stockMovement.findMany({
@@ -506,10 +506,10 @@ export const REPORTS: ReportDef[] = [
         include: { product: true },
       });
       const rows: Row[] = list.map((m) => ({
-        at: m.createdAt, type: m.type, product: m.product.code, qty: m.qty, reference: m.reference ?? m.reason, by: name(m.createdById),
+        at: m.createdAt, type: m.type, product: m.product.code, qty: Number(m.qty), reference: m.reference ?? m.reason, by: name(m.createdById),
         ...(m.entryId ? { _href: { product: `/qc/entries/${m.entryId}` } } : {}),
       }));
-      const typed = (t: string) => sum(list.filter((m) => m.type === t), (m) => m.qty);
+      const typed = (t: string) => sum(list.filter((m) => m.type === t), (m) => Number(m.qty));
       return {
         columns: [
           { key: "at", label: "rep.col.when", type: "datetime" },

@@ -10,7 +10,7 @@ import { saveDailyEntriesAction, type SheetResult } from "@/app/actions/producti
 import MoldSelect, { moldMatch, newGroup } from "@/components/mold-select";
 
 type Shift = "A" | "B" | "C";
-export type SheetRow = { id: string; code: string; name: string; mold: string | null; ordered: number; stock: number; entered: Record<Shift, number> };
+export type SheetRow = { id: string; code: string; name: string; name2: string | null; mold: string | null; ordered: number; stock: number; entered: Record<Shift, number> };
 const nf = (n: number) => n.toLocaleString("en");
 
 export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow[]; day: string; today: string; shift: Shift }) {
@@ -29,7 +29,7 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
 
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    return rows.filter((r) => (!onlyOrdered || r.ordered > 0 || Number(vals[r.id]) > 0) && moldMatch(r.mold, mold) && (!q || `${r.code} ${r.name} ${r.mold ?? ""}`.toLowerCase().includes(q)));
+    return rows.filter((r) => (!onlyOrdered || r.ordered > 0 || Number(vals[r.id]) > 0) && moldMatch(r.mold, mold) && (!q || `${r.code} ${r.name} ${r.name2 ?? ""} ${r.mold ?? ""}`.toLowerCase().includes(q)));
   }, [rows, filter, onlyOrdered, vals, mold]);
   const filled = Object.entries(vals).filter(([, v]) => Number(v) > 0);
   const pieces = filled.reduce((s, [, v]) => s + Number(v), 0);
@@ -84,7 +84,7 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{r.name}</p>
                 <p className="text-xs text-muted">
-                  <span dir="ltr">{r.code}</span>
+                  <span dir="ltr">{r.name2 ? `${r.name2} · ` : ""}{r.code}</span>
                   <span className="md:hidden"> · {t("daily.inOrders")}: {nf(r.ordered)} · {t("order.inStock")}: {nf(r.stock)}{r.entered[shift] > 0 && ` · ${t("daily.alreadyShift", { shift })}: ${nf(r.entered[shift])}`}</span>
                 </p>
               </div>

@@ -113,7 +113,9 @@ model Counter {
 model Product {
   id             String            @id @default(cuid())
   code           String            @unique
+  kind           ItemKind          @default(PRODUCT)
   name           String
+  name2          String? // second name (e.g. Turkish) shown under the main one
   specifications String?
   unit           String            @default("pcs")
   material       String?
@@ -133,6 +135,7 @@ model Product {
 
   @@index([name])
   @@index([moldId])
+  @@index([kind])
 }
 
 enum MachineStatus {
@@ -442,6 +445,15 @@ enum StockMoveType {
   QC_REJECT // automatic, pieces rejected by QC
   OUT // goods leaving the warehouse
   ADJUST // count correction, damage, scrap
+  RECEIVE // stickers / materials received (bought, delivered)
+  USE // stickers / materials taken to production
+}
+
+/// What a stock item is. Only PRODUCT is made on machines, ordered and inspected by QC.
+enum ItemKind {
+  PRODUCT
+  STICKER // printed labels kept in stock
+  MATERIAL // granules, dyes, regrind, nylon, cartons, tape, pallets…
 }
 
 /// Stock ledger: the balance of a product is the sum of its movements. Never edited.
@@ -450,7 +462,7 @@ model StockMovement {
   productId   String
   product     Product          @relation(fields: [productId], references: [id])
   type        StockMoveType
-  qty         Int // + in, − out
+  qty         Decimal          @db.Decimal(14, 3) // + in, − out (pieces, or kg for materials)
   entryId     String?
   entry       ProductionEntry? @relation(fields: [entryId], references: [id])
   reference   String? // e.g. who/where the goods went

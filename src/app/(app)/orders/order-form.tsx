@@ -8,7 +8,7 @@ import { Alert, Button, cn } from "@/components/ui";
 import { createOrderAction, updateOrderAction } from "@/app/actions/orders";
 import MoldSelect, { moldMatch, newGroup } from "@/components/mold-select";
 
-type Product = { id: string; code: string; name: string; mold?: string | null };
+type Product = { id: string; code: string; name: string; name2?: string | null; mold?: string | null };
 
 /**
  * The order sheet: every product with an amount box. The Sales Manager types the amounts
@@ -28,7 +28,7 @@ export default function OrderForm({ products, initial }: { products: Product[]; 
   const pieces = chosen.reduce((s, p) => s + Number(qty[p.id]), 0);
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    return products.filter((p) => (!onlyChosen || Number(qty[p.id]) > 0) && moldMatch(p.mold, mold) && (!q || `${p.code} ${p.name} ${p.mold ?? ""}`.toLowerCase().includes(q)));
+    return products.filter((p) => (!onlyChosen || Number(qty[p.id]) > 0) && moldMatch(p.mold, mold) && (!q || `${p.code} ${p.name} ${p.name2 ?? ""} ${p.mold ?? ""}`.toLowerCase().includes(q)));
   }, [products, filter, onlyChosen, qty, mold]);
 
   const onKey = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -70,7 +70,7 @@ export default function OrderForm({ products, initial }: { products: Product[]; 
               {p.mold && newGroup(shown, i) && <p className="col-span-2 -mx-4 -mt-2 mb-1 bg-surface-2 px-4 py-1 text-xs font-bold text-muted" dir="ltr">{p.mold}</p>}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{p.name}</p>
-                <p className="text-xs text-muted" dir="ltr">{p.code}</p>
+                <p className="truncate text-xs text-muted" dir="ltr">{p.name2 ? `${p.name2} · ` : ""}{p.code}</p>
               </div>
               <div className="flex items-center gap-1">
                 <input

@@ -106,7 +106,7 @@ with sync_playwright() as p:
     P.goto(B+"/production/daily?shift=B"); P.fill(f"input[name='qty_{pid['CAP-28']}']","6000"); btn(P,"Save all")
     P.goto(B+"/production/daily?shift=B"); P.fill(f"input[name='qty_{pid['CAP-28']}']","500"); btn(P,"Save all")
     ck("5. same shift + product adds to the existing entry", sql(f"SELECT quantity FROM {T('\"ProductionEntry\"')} WHERE shift='B'")=="6500")
-    stock=lambda code: int(sql(f"SELECT COALESCE(SUM(qty),0) FROM {T('\"StockMovement\"')} WHERE {T('\"productId\"')}='{pid[code]}'"))
+    stock=lambda code: int(float(sql(f"SELECT COALESCE(SUM(qty),0) FROM {T('\"StockMovement\"')} WHERE {T('\"productId\"')}='{pid[code]}'")))
     ck("5. stock = produced (CAP-28 10,500, PF-500 6,500)", stock("CAP-28")==10500 and stock("PF-500")==6500)
     # correct a typing mistake
     eB=sql(f"SELECT id FROM {T('\"ProductionEntry\"')} WHERE shift='B'")
@@ -154,7 +154,7 @@ with sync_playwright() as p:
 
     # ── 11. Stock always equals the ledger
     neg=sql(f"SELECT count(*) FROM (SELECT {T('\"productId\"')} FROM {T('\"StockMovement\"')} GROUP BY 1 HAVING SUM(qty)<0) x")
-    made=int(sql(f"SELECT SUM(quantity) FROM {T('\"ProductionEntry\"')}")); inmv=int(sql(f"SELECT SUM(qty) FROM {T('\"StockMovement\"')} WHERE type='PRODUCTION'"))
+    made=int(sql(f"SELECT SUM(quantity) FROM {T('\"ProductionEntry\"')}")); inmv=int(float(sql(f"SELECT SUM(qty) FROM {T('\"StockMovement\"')} WHERE type='PRODUCTION'")))
     ck(f"11. production entries ({made}) = stock in ({inmv}); no product below zero", made==inmv==16500 and neg=="0")
 
     # ── 12. Order complete; history shows what happened

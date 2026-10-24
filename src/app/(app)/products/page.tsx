@@ -19,10 +19,12 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const molds = await db.mold.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } });
   const mold = sp.mold === "none" ? "none" : molds.find((m) => m.id === sp.mold);
   const where: Prisma.ProductWhereInput = {
+    kind: "PRODUCT",
     archivedAt: sp.archived === "1" ? { not: null } : null,
     ...(mold === "none" ? { moldId: null } : mold ? { moldId: mold.id } : {}),
     ...(q ? { OR: [
       { name: { contains: q, mode: "insensitive" } },
+      { name2: { contains: q, mode: "insensitive" } },
       { code: { contains: q, mode: "insensitive" } },
       { material: { contains: q, mode: "insensitive" } },
       { mold: { code: { contains: q, mode: "insensitive" } } },
@@ -38,6 +40,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     { name: "moldId", label: t("md.mold"), type: "combo" as const, options: moldOptions, hint: t("md.moldOfProductHint") },
     { name: "code", label: t("md.productCode"), required: true, ltr: true },
     { name: "name", label: t("md.productName"), required: true, hint: t("md.productNameHint") },
+    { name: "name2", label: t("md.name2"), hint: t("md.name2Hint") },
     { name: "material", label: t("md.material"), hint: "PP, HDPE, ABS…" },
     { name: "color", label: t("md.color") },
     { name: "weightGrams", label: t("md.weightGrams"), type: "number" as const, step: "0.01", min: 0, ltr: true },
@@ -80,7 +83,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           id: p.id,
           title: p.name,
           code: p.code,
-          subtitle: p.specifications ?? undefined,
+          subtitle: [p.name2, p.specifications].filter(Boolean).join(" — ") || undefined,
           archived: !!p.archivedAt,
           badges: p.qcRequired ? [{ label: t("md.qcRequiredShort"), tone: "amber" as const }] : [],
           facts: [
@@ -89,7 +92,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             ...(p.weightGrams ? [{ label: t("md.weightGrams"), value: `${p.weightGrams} g` }] : []),
             ...(p.cycleTimeSec ? [{ label: t("md.cycleTime"), value: `${p.cycleTimeSec} s` }] : []),
           ],
-          initial: { ...p, moldId: p.moldId ?? "", weightGrams: p.weightGrams?.toString() ?? "", cycleTimeSec: p.cycleTimeSec?.toString() ?? "" },
+          initial: { ...p, name2: p.name2 ?? "", moldId: p.moldId ?? "", weightGrams: p.weightGrams?.toString() ?? "", cycleTimeSec: p.cycleTimeSec?.toString() ?? "" },
         }))}
       />
     </>

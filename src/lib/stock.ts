@@ -8,7 +8,7 @@ export async function getStock(productIds?: string[], tx: Tx = db): Promise<Map<
     where: productIds ? { productId: { in: productIds } } : {},
     _sum: { qty: true },
   });
-  return new Map(rows.map((r) => [r.productId, r._sum.qty ?? 0]));
+  return new Map(rows.map((r) => [r.productId, Number(r._sum.qty ?? 0)]));
 }
 
 /** Locks the product row so two people can't take the same stock out at the same moment. */

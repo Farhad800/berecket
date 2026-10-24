@@ -39,11 +39,14 @@ export const SHEETS: Record<SheetKey, { title: string; cols: Col[] }> = {
     cols: [
       { key: "mold", title: "Mold code", aliases: ["mold code", "mould code", "mold", "mould"], example: ["MD-CAP28", "MD-CAP28"] },
       { key: "code", title: "Product code", aliases: ["product code", "code", "label code"], example: ["", "CAP28-ZAKHO"] },
-      { key: "name", title: "Label / product name", aliases: ["label / product name", "label", "product name", "name", "product"], required: true, example: ["Zakho Water cap blue", "Duhok Juice cap red"] },
+      { key: "name", title: "Label / product name", aliases: ["label / product name", "label", "product name", "name", "product", "arabic name"], required: true, example: ["Zakho Water cap blue", "Duhok Juice cap red"] },
       { key: "material", title: "Material", aliases: ["material"], example: ["PP", "PP"] },
       { key: "color", title: "Color", aliases: ["color", "colour"], example: ["Blue", "Red"] },
       { key: "weightGrams", title: "Weight (g)", aliases: ["weight (g)", "weight", "grams"], example: [2.1, 2.1] },
       { key: "qcRequired", title: "QC required (yes/no)", aliases: ["qc required (yes/no)", "qc required", "qc"], example: ["no", "yes"] },
+      { key: "name2", title: "Second name", aliases: ["second name", "name 2", "turkish name", "english name", "description 2"], example: ["", ""] },
+      { key: "kind", title: "Kind (product/sticker/material)", aliases: ["kind (product/sticker/material)", "kind", "item type", "type"], example: ["product", "product"] },
+      { key: "unit", title: "Unit (pcs/kg)", aliases: ["unit (pcs/kg)", "unit"], example: ["pcs", "pcs"] },
     ],
   },
 };
@@ -185,6 +188,12 @@ export type Plan = {
   empty: boolean;
 };
 
+const KIND: Record<string, "PRODUCT" | "STICKER" | "MATERIAL"> = {
+  product: "PRODUCT", products: "PRODUCT", منتج: "PRODUCT", ürün: "PRODUCT", urun: "PRODUCT",
+  sticker: "STICKER", stickers: "STICKER", label: "STICKER", etiket: "STICKER", ستيكر: "STICKER", اتيكيت: "STICKER",
+  material: "MATERIAL", materials: "MATERIAL", مادة: "MATERIAL", مواد: "MATERIAL", malzeme: "MATERIAL", hammadde: "MATERIAL",
+};
+const UNIT: Record<string, string> = { pcs: "pcs", pc: "pcs", piece: "pcs", pieces: "pcs", عدد: "pcs", adet: "pcs", kg: "kg", كغم: "kg", كيلو: "kg" };
 const num = (s: string) => (s === "" ? undefined : Number(s.replace(",", ".")));
 const yes = (s: string) => /^(y|yes|true|1|x|✓|نعم|evet|e)$/i.test(s.trim());
 
@@ -233,12 +242,12 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
   const moldCodes = new Set([...moldByCode.keys(), ...seenMo]);
 
   // Products
-  const products = await c.product.findMany({ select: { id: true, code: true, name: true, moldId: true, material: true, color: true, weightGrams: true, qcRequired: true } });
+  const products = await c.product.findMany({ select: { id: true, code: true, name: true, name2: true, kind: true, unit: true, moldId: true, material: true, color: true, weightGrams: true, qcRequired: true } });
   const productByCode = new Map(products.map((p) => [p.code, p]));
   const moldIdToCode = new Map(molds.map((m) => [m.id, m.code]));
   const productByMoldName = new Map(products.filter((p) => p.moldId).map((p) => [`${moldIdToCode.get(p.moldId!)}|${p.name.toLowerCase()}`, p]));
   const seenP = new Set<string>(), seenPn = new Set<string>();
-  const productRows: { code?: string; mold?: string; data: { name: string; material?: string; color?: string; weightGrams?: number; qcRequired?: boolean }; existing?: (typeof products)[number] }[] = [];
+  const productRows: { code?: string; mold?: string; data: { name: string; name2?: string; kind?: "PRODUCT" | "STICKER" | "MATERIAL"; unit?: string; material?: string; color?: string; weightGrams?: number; qcRequired?: boolean }; existing?: (typeof products)[number] }[] = [];
   for (const { row, v } of sheets.products ?? []) {
     const code = v.code ? v.code.toUpperCase() : undefined;
     const mold = v.mold ? v.mold.toUpperCase() : undefined;
@@ -251,12 +260,17 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
     const mn = `${mold}|${v.name.toLowerCase()}`;
     if (!code && seenPn.has(mn)) { err("products", row, `"${v.name}" appears twice on mold ${mold}.`); continue; }
     if (code) seenP.add(code); else seenPn.add(mn);
+    const kind = v.kind ? KIND[norm(v.kind)] : undefined;
+    if (v.kind && !kind) { err("products", row, `Kind must be product, sticker or material (not "${v.kind}").`); continue; }
+    const unit = v.unit ? UNIT[norm(v.unit)] : undefined;
+    if (v.unit && !unit) { err("products", row, `Unit must be pcs or kg (not "${v.unit}").`); continue; }
+    if ((v.name2 ?? "").length > 160) { err("products", row, "Second name is longer than 160 characters."); continue; }
     const weightGrams = num(v.weightGrams ?? "");
     if (weightGrams !== undefined && (Number.isNaN(weightGrams) || weightGrams < 0)) { err("products", row, "Weight must be a number."); continue; }
     const existing = code ? productByCode.get(code) : productByMoldName.get(mn);
     productRows.push({
       code, mold, existing,
-      data: { name: v.name, material: v.material || undefined, color: v.color || undefined, weightGrams, qcRequired: v.qcRequired ? yes(v.qcRequired) : undefined },
+      data: { name: v.name, name2: v.name2 || undefined, kind, unit, material: v.material || undefined, color: v.color || undefined, weightGrams, qcRequired: v.qcRequired ? yes(v.qcRequired) : undefined },
     });
   }
 

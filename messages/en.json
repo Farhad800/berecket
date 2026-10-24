@@ -232,7 +232,9 @@
     "sameForAll": "Optional — applied to every label in this list:",
     "saveLabels": "Save {n} labels",
     "labelsSaved": "{n} labels saved as products.",
-    "labelsSkipped": "{n} were already there and were skipped."
+    "labelsSkipped": "{n} were already there and were skipped.",
+    "name2": "Second name (Turkish / English)",
+    "name2Hint": "Shown under the main name."
   },
   "status": {
     "machine": {
@@ -435,7 +437,9 @@
     },
     "stock": {
       "adjust": "Stock adjusted",
-      "out": "Stock taken out"
+      "out": "Stock taken out",
+      "receive": "Stickers / materials received",
+      "use": "Stickers / materials used"
     },
     "shipment": {
       "create": "Shipment drafted, stock reserved",
@@ -851,7 +855,7 @@
     "whichMachine": "Which machine?"
   },
   "wh": {
-    "ledgerNote": "Stock goes up automatically from daily production and down when QC rejects or goods go out. Totals can't be typed in.",
+    "ledgerNote": "Products go up from daily production; stickers and materials go up when received. Everything goes down when used, taken out or rejected. Totals can't be typed in.",
     "searchStock": "Batch, product or order…",
     "noStock": "No products match.",
     "adjustTitle": "Stock adjustment",
@@ -870,7 +874,7 @@
     "locationName": "Location name",
     "receiptsCount": "{n} receipts",
     "receiveTitle": "Receive finished goods",
-    "received": "{number} saved.",
+    "received": "Received",
     "receivedQuarantine": "{number} saved — {n} pcs went to quarantine because of the batch's QC status.",
     "waiting": "{n} pcs waiting",
     "willQuarantine": "will be placed in quarantine",
@@ -901,12 +905,33 @@
       "PRODUCTION": "Produced",
       "QC_REJECT": "QC rejected",
       "OUT": "Out",
-      "ADJUST": "Adjustment"
+      "ADJUST": "Adjustment",
+      "RECEIVE": "Received",
+      "USE": "Used"
     },
     "tab": {
-      "stock": "Stock",
-      "movements": "Movements"
-    }
+      "stock": "Products",
+      "movements": "Movements",
+      "stickers": "Stickers",
+      "materials": "Materials"
+    },
+    "receiveMode": "Received (in)",
+    "useMode": "Used (out)",
+    "filterItems": "Filter by name or code…",
+    "onlyInStock": "Only items in stock",
+    "receivedSaved": "Saved: {n} items received.",
+    "usedSaved": "Saved: {n} items used.",
+    "item": "Item",
+    "used": "Used",
+    "receiveRefHint": "e.g. supplier, invoice number",
+    "useRefHint": "e.g. machine, order or person",
+    "saveReceive": "Save receipt · {n} items",
+    "saveUse": "Save use · {n} items",
+    "itemsN": "Items",
+    "withStock": "Items in stock",
+    "totalKg": "Total in kg",
+    "noStickers": "No stickers yet. Add them with Import from Excel.",
+    "noMaterials": "No materials yet. Add them with Import from Excel."
   },
   "rep": {
     "intro": "Live figures from the factory's records. Pick a report, set the dates and filters, then export to Excel (CSV) or PDF.",
@@ -1428,6 +1453,22 @@
       "adjusted": {
         "title": "Stock adjusted: {product} {qty}",
         "body": "{reason} · by {by}"
+      },
+      "stickersIn": {
+        "title": "Stickers received: {n} items",
+        "body": "{ref} · by {by}"
+      },
+      "materialsIn": {
+        "title": "Materials received: {n} items",
+        "body": "{ref} · by {by}"
+      },
+      "stickersUsed": {
+        "title": "Stickers used: {n} items",
+        "body": "{ref} · by {by}"
+      },
+      "materialsUsed": {
+        "title": "Materials used: {n} items",
+        "body": "{ref} · by {by}"
       }
     },
     "product": {

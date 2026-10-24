@@ -38,8 +38,12 @@ export async function globalSearch(raw: string, me: CurrentUser): Promise<Search
       status: { ns: "status.order", value: o.status, tone: ORDER_TONE[o.status] }, exact: same(o.number, q),
     })))],
     ["products", !may("products:view") ? skip : db.product.findMany({
-      where: { OR: [{ code: ci(q) }, { name: ci(q) }] }, orderBy: { code: "asc" }, take: TAKE, select: { code: true, name: true },
-    }).then((r) => r.map((p) => ({ title: p.code, sub: p.name, href: `/production?product=${encodeURIComponent(p.code)}`, exact: same(p.code, q) })))],
+      where: { OR: [{ code: ci(q) }, { name: ci(q) }, { name2: ci(q) }] }, orderBy: { code: "asc" }, take: TAKE, select: { code: true, name: true, name2: true, kind: true },
+    }).then((r) => r.map((p) => ({
+      title: p.code, sub: [p.name, p.name2].filter(Boolean).join(" · "),
+      href: p.kind === "PRODUCT" ? `/production?product=${encodeURIComponent(p.code)}` : `/inventory?tab=${p.kind === "STICKER" ? "stickers" : "materials"}&q=${encodeURIComponent(p.code)}`,
+      exact: same(p.code, q),
+    })))],
     ["machines", !may("assets:view") ? skip : db.machine.findMany({
       where: { OR: [{ code: ci(q) }, { name: ci(q) }, { model: ci(q) }] }, orderBy: { code: "asc" }, take: TAKE, select: { id: true, code: true, name: true, status: true },
     }).then((r) => r.map((m) => ({

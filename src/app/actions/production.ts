@@ -41,7 +41,7 @@ export async function saveDailyEntriesAction(_: unknown, fd: FormData) {
     }
     if (rows.length === 0) throw new UserError("Type the quantity for at least one product.");
     if (rows.length > 1000) throw new UserError("Save at most 1,000 products at a time.");
-    const products = await db.product.findMany({ where: { id: { in: rows.map((r) => r.productId) }, archivedAt: null }, select: { id: true, code: true } });
+    const products = await db.product.findMany({ where: { id: { in: rows.map((r) => r.productId) }, archivedAt: null, kind: "PRODUCT" }, select: { id: true, code: true } });
     if (products.length !== new Set(rows.map((r) => r.productId)).size) throw new UserError("One of the products is archived or doesn't exist. Reload the page.");
     const code = new Map(products.map((p) => [p.id, p.code]));
 

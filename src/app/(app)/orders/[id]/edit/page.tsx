@@ -15,9 +15,9 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
   if (!order) notFound();
   if (order.status !== "OPEN") redirect(`/orders/${id}`);
   const products = await db.product.findMany({
-    where: { OR: [{ archivedAt: null }, { id: { in: order.lines.map((l) => l.productId) } }] },
+    where: { OR: [{ archivedAt: null, kind: "PRODUCT" }, { id: { in: order.lines.map((l) => l.productId) } }] },
     orderBy: [{ mold: { code: "asc" } }, { code: "asc" }],
-    select: { id: true, name: true, code: true, mold: { select: { code: true } } },
+    select: { id: true, name: true, name2: true, code: true, mold: { select: { code: true } } },
   });
   return (
     <>

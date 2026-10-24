@@ -9,7 +9,7 @@ export const metadata = { title: "New order" };
 export default async function NewOrderPage() {
   await pageUser("orders:create");
   const t = await getTranslations();
-  const products = await db.product.findMany({ where: { archivedAt: null }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, name: true, code: true, mold: { select: { code: true } } } });
+  const products = await db.product.findMany({ where: { archivedAt: null, kind: "PRODUCT" }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, name: true, name2: true, code: true, mold: { select: { code: true } } } });
   if (products.length === 0) {
     return (
       <>

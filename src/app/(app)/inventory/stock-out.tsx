@@ -8,7 +8,7 @@ import { Alert, Button, Input, cn } from "@/components/ui";
 import { stockOutAction, type OutResult } from "@/app/actions/warehouse";
 import MoldSelect, { moldMatch, newGroup } from "@/components/mold-select";
 
-type Row = { id: string; code: string; name: string; mold: string | null; stock: number };
+type Row = { id: string; code: string; name: string; name2: string | null; mold: string | null; stock: number };
 const nf = (n: number) => n.toLocaleString("en");
 
 /** Stock per product; warehouse staff can type pieces going out for many products at once. */
@@ -22,7 +22,7 @@ export default function StockOut({ rows, canOut }: { rows: Row[]; canOut: boolea
   const result = state?.ok ? (state.data as OutResult) : null;
   const shown = useMemo(() => {
     const q = filter.trim().toLowerCase();
-    return rows.filter((r) => (showAll || r.stock !== 0 || Number(vals[r.id]) > 0) && moldMatch(r.mold, mold) && (!q || `${r.code} ${r.name} ${r.mold ?? ""}`.toLowerCase().includes(q)));
+    return rows.filter((r) => (showAll || r.stock !== 0 || Number(vals[r.id]) > 0) && moldMatch(r.mold, mold) && (!q || `${r.code} ${r.name} ${r.name2 ?? ""} ${r.mold ?? ""}`.toLowerCase().includes(q)));
   }, [rows, filter, showAll, vals, mold]);
   const filled = Object.entries(vals).filter(([, v]) => Number(v) > 0);
   const pieces = filled.reduce((s, [, v]) => s + Number(v), 0);
@@ -51,7 +51,7 @@ export default function StockOut({ rows, canOut }: { rows: Row[]; canOut: boolea
               {r.mold && newGroup(shown, i) && <p className="col-span-full -mx-4 -mt-2 mb-1 bg-surface-2 px-4 py-1 text-xs font-bold text-muted" dir="ltr">{r.mold}</p>}
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{r.name}</p>
-                <p className="text-xs text-muted" dir="ltr">{r.code}</p>
+                <p className="truncate text-xs text-muted" dir="ltr">{r.name2 ? `${r.name2} · ` : ""}{r.code}</p>
               </div>
               <span className={cn("text-end text-base font-bold tabular-nums", r.stock === 0 && "font-normal text-muted")}>{nf(r.stock)}</span>
               {canOut && (

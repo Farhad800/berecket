@@ -40,7 +40,7 @@ function parseLines(raw: Record<string, unknown>) {
 }
 
 async function checkProducts(ids: string[]) {
-  const found = await db.product.count({ where: { id: { in: ids }, archivedAt: null } });
+  const found = await db.product.count({ where: { id: { in: ids }, archivedAt: null, kind: "PRODUCT" } });
   if (found !== ids.length) throw new UserError("One of the products is archived or doesn't exist.");
 }
 

@@ -29,6 +29,8 @@ d.
 4. QC also verifies completed repairs.
 
 ## Warehouse
+The warehouse has four tabs: **Products**, **Stickers**, **Materials** (granules, dyes, regrind, nylon, cartons, tape, pallets — in kg or pieces) and **Movements**.
+- **Stickers / Materials:** choose **Received (in)** when a delivery arrives or **Used (out)** when it goes to production, type the quantity next to each item (kg can have decimals, e.g. 25.5), add a reference (supplier, invoice, machine) and save. You can't use more than is in stock.
 1. **Warehouse Stock**: current stock of every product (it rises from production and falls with QC rejects and goods going out — totals can't be typed in).
 2. Goods leaving: type the pieces going out next to each product, add a reference (order number, truck…) and press **Take out**. You can't take out more than is in stock.
 3. Stock corrections (count differences, damage, scrap) need a reason and supervisor permission (*Warehouse: approve*).

@@ -23,6 +23,7 @@ function clean<T extends Record<string, unknown>>(o: T) {
 const productSchema = z.object({
   code,
   name: z.string().trim().min(2, "Required").max(160),
+  name2: z.string().trim().max(160).optional(),
   specifications: opt,
   unit: z.string().trim().max(12).default("pcs"),
   material: z.string().trim().max(80).optional(),

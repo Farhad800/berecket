@@ -21,8 +21,8 @@ export async function getDashboard() {
       db.qualityIssue.count({ where: { status: { not: "RESOLVED" } } }),
       db.machine.count({ where: { status: { in: ["DOWN", "MAINTENANCE"] }, archivedAt: null } }),
       db.maintenanceRequest.count({ where: { status: { in: ["OPEN", "IN_PROGRESS", "WAITING_PARTS"] } } }),
-      db.stockMovement.aggregate({ _sum: { qty: true } }),
-      db.stockMovement.aggregate({ _sum: { qty: true }, where: { type: "OUT", createdAt: { gte: weekAgo } } }),
+      db.stockMovement.aggregate({ _sum: { qty: true }, where: { product: { kind: "PRODUCT" } } }),
+      db.stockMovement.aggregate({ _sum: { qty: true }, where: { type: "OUT", createdAt: { gte: weekAgo }, product: { kind: "PRODUCT" } } }),
       db.auditLog.findMany({
         where: { NOT: { action: { startsWith: "auth." } } },
         orderBy: { createdAt: "desc" },
