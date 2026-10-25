@@ -111,31 +111,41 @@ model Counter {
 // ───────────────────────────── Master data ─────────────────────────────
 
 model Product {
-  id             String            @id @default(cuid())
-  code           String            @unique
-  kind           ItemKind          @default(PRODUCT)
-  name           String
-  name2          String? // second name (e.g. Turkish) shown under the main one
-  specifications String?
-  unit           String            @default("pcs")
-  material       String?
-  color          String?
-  weightGrams    Decimal?          @db.Decimal(10, 2)
-  cycleTimeSec   Decimal?          @db.Decimal(8, 2)
-  qcRequired     Boolean           @default(false) // shown to QC as "inspect every day's production"
+  id               String             @id @default(cuid())
+  code             String             @unique
+  kind             ItemKind           @default(PRODUCT)
+  name             String
+  name2            String? // second name (e.g. Turkish) shown under the main one
+  specifications   String?
+  unit             String             @default("pcs")
+  material         String?
+  color            String?
+  weightGrams      Decimal?           @db.Decimal(10, 2)
+  cycleTimeSec     Decimal?           @db.Decimal(8, 2)
+  qcRequired       Boolean            @default(false) // shown to QC as "inspect every day's production"
   // One mold makes many products: each printed label on the same molded item is its own product.
-  moldId         String?
-  mold           Mold?             @relation(fields: [moldId], references: [id], onDelete: SetNull)
-  archivedAt     DateTime?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  orderLines     OrderLine[]
-  entries        ProductionEntry[]
-  stockMovements StockMovement[]
+  moldId           String?
+  mold             Mold?              @relation(fields: [moldId], references: [id], onDelete: SetNull)
+  /// The printed label this product carries (1 per piece); null = product has no label.
+  labelId          String?
+  label            Product?           @relation("ProductLabel", fields: [labelId], references: [id], onDelete: SetNull)
+  labelledProducts Product[]          @relation("ProductLabel")
+  piecesPerCarton  Int?
+  /// For packaging/materials stocked in kg but used by the piece (e.g. one nylon bag = 0.012 kg).
+  unitWeightKg     Decimal?           @db.Decimal(12, 6)
+  components       ProductComponent[] @relation("Recipe")
+  usedIn           ProductComponent[] @relation("UsedIn")
+  archivedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  orderLines       OrderLine[]
+  entries          ProductionEntry[]
+  stockMovements   StockMovement[]
 
   @@index([name])
   @@index([moldId])
   @@index([kind])
+  @@index([labelId])
 }
 
 enum MachineStatus {
@@ -453,7 +463,30 @@ enum StockMoveType {
 enum ItemKind {
   PRODUCT
   STICKER // printed labels kept in stock
-  MATERIAL // granules, dyes, regrind, nylon, cartons, tape, pallets…
+  MATERIAL // raw materials: granules, dyes, regrind…
+  PACKAGING // nylon bags, cartons, stretch film, tape, pallets…
+}
+
+enum ComponentBasis {
+  PIECE // per piece produced (labels, handles, grams of material)
+  CARTON // per carton (cartons, nylon bags, tape…)
+}
+
+/// What one product uses: its recipe ("made of") and packaging. Taken off stock when production is entered.
+model ProductComponent {
+  id          String         @id @default(cuid())
+  productId   String
+  product     Product        @relation("Recipe", fields: [productId], references: [id], onDelete: Cascade)
+  componentId String
+  component   Product        @relation("UsedIn", fields: [componentId], references: [id])
+  /// kg item + PIECE: grams per piece · kg item + CARTON: bags per carton (× the item's weight per bag)
+  /// pcs item: pieces per piece or per carton
+  qty         Decimal        @db.Decimal(14, 4)
+  per         ComponentBasis
+  createdAt   DateTime       @default(now())
+
+  @@unique([productId, componentId, per])
+  @@index([componentId])
 }
 
 /// Stock ledger: the balance of a product is the sum of its movements. Never edited.

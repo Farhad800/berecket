@@ -10,7 +10,7 @@ import { db } from "./db";
  * Nothing is saved unless the whole file is valid.
  */
 
-export type SheetKey = "machines" | "molds" | "products";
+export type SheetKey = "machines" | "molds" | "products" | "recipes";
 type Col = { key: string; title: string; aliases: string[]; required?: boolean; example: (string | number)[] };
 
 export const SHEETS: Record<SheetKey, { title: string; cols: Col[] }> = {
@@ -38,7 +38,7 @@ export const SHEETS: Record<SheetKey, { title: string; cols: Col[] }> = {
     title: "Products",
     cols: [
       { key: "mold", title: "Mold code", aliases: ["mold code", "mould code", "mold", "mould"], example: ["MD-CAP28", "MD-CAP28"] },
-      { key: "code", title: "Product code", aliases: ["product code", "code", "label code"], example: ["", "CAP28-ZAKHO"] },
+      { key: "code", title: "Product code", aliases: ["product code", "code", "item code"], example: ["", "CAP28-ZAKHO"] },
       { key: "name", title: "Label / product name", aliases: ["label / product name", "label", "product name", "name", "product", "arabic name"], required: true, example: ["Zakho Water cap blue", "Duhok Juice cap red"] },
       { key: "material", title: "Material", aliases: ["material"], example: ["PP", "PP"] },
       { key: "color", title: "Color", aliases: ["color", "colour"], example: ["Blue", "Red"] },
@@ -47,10 +47,22 @@ export const SHEETS: Record<SheetKey, { title: string; cols: Col[] }> = {
       { key: "name2", title: "Second name", aliases: ["second name", "name 2", "turkish name", "english name", "description 2"], example: ["", ""] },
       { key: "kind", title: "Kind (product/sticker/material)", aliases: ["kind (product/sticker/material)", "kind", "item type", "type"], example: ["product", "product"] },
       { key: "unit", title: "Unit (pcs/kg)", aliases: ["unit (pcs/kg)", "unit"], example: ["pcs", "pcs"] },
+      { key: "labelCode", title: "Label code", aliases: ["label code", "sticker code", "etiket code"], example: ["", ""] },
+      { key: "piecesPerCarton", title: "Pieces per carton", aliases: ["pieces per carton", "pcs per carton", "per carton"], example: ["", 1800] },
+      { key: "unitWeightKg", title: "Weight per bag (kg)", aliases: ["weight per bag (kg)", "weight per bag", "bag weight", "weight per piece (kg)"], example: ["", ""] },
+    ],
+  },
+  recipes: {
+    title: "Recipe",
+    cols: [
+      { key: "product", title: "Product code", aliases: ["product code", "product"], required: true, example: ["CAP28-ZAKHO", "CAP28-ZAKHO"] },
+      { key: "item", title: "Item code", aliases: ["item code", "component code", "material code", "item"], required: true, example: ["RAW-PP", "CARTON-CAP"] },
+      { key: "qty", title: "Quantity", aliases: ["quantity", "qty", "amount"], required: true, example: [2.1, 1] },
+      { key: "per", title: "Per (piece/carton)", aliases: ["per (piece/carton)", "per", "basis"], required: true, example: ["piece", "carton"] },
     ],
   },
 };
-const ORDER: SheetKey[] = ["machines", "molds", "products"];
+const ORDER: SheetKey[] = ["machines", "molds", "products", "recipes"];
 export const MAX_ROWS = 5000;
 const CODE_RE = /^[A-Za-z0-9._\-/]{1,40}$/;
 
@@ -110,8 +122,10 @@ function guessSheet(name: string, headers: string[]): SheetKey | null {
   const n = norm(name);
   if (n.startsWith("machine")) return "machines";
   if (n.startsWith("mold") || n.startsWith("mould")) return "molds";
+  if (n.startsWith("recipe") || n.startsWith("bom")) return "recipes";
   if (n.startsWith("product") || n.startsWith("label")) return "products";
   const h = headers.map(norm);
+  if (h.includes("item code") && h.includes("quantity")) return "recipes";
   if (h.some((x) => ["label", "label / product name", "product code", "product name"].includes(x))) return "products";
   if (h.some((x) => ["cavities", "mold code", "mould code"].includes(x))) return "molds";
   if (h.some((x) => ["tonnage", "machine code"].includes(x))) return "machines";
@@ -188,7 +202,9 @@ export type Plan = {
   empty: boolean;
 };
 
-const KIND: Record<string, "PRODUCT" | "STICKER" | "MATERIAL"> = {
+type Kind = "PRODUCT" | "STICKER" | "MATERIAL" | "PACKAGING";
+const KIND: Record<string, Kind> = {
+  packaging: "PACKAGING", تغليف: "PACKAGING", ambalaj: "PACKAGING",
   product: "PRODUCT", products: "PRODUCT", منتج: "PRODUCT", ürün: "PRODUCT", urun: "PRODUCT",
   sticker: "STICKER", stickers: "STICKER", label: "STICKER", etiket: "STICKER", ستيكر: "STICKER", اتيكيت: "STICKER",
   material: "MATERIAL", materials: "MATERIAL", مادة: "MATERIAL", مواد: "MATERIAL", malzeme: "MATERIAL", hammadde: "MATERIAL",
@@ -202,7 +218,7 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
 export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, preErrors: ImportError[], save: boolean, tx?: Prisma.TransactionClient): Promise<Plan> {
   const c = tx ?? db;
   const errors = [...preErrors];
-  const counts = { machines: { create: 0, update: 0, same: 0 }, molds: { create: 0, update: 0, same: 0 }, products: { create: 0, update: 0, same: 0 } };
+  const counts = { machines: { create: 0, update: 0, same: 0 }, molds: { create: 0, update: 0, same: 0 }, products: { create: 0, update: 0, same: 0 }, recipes: { create: 0, update: 0, same: 0 } };
   const err = (sheet: SheetKey, row: number, message: string) => { if (errors.length < 500) errors.push({ sheet, row, message }); };
 
   // Machines
@@ -242,12 +258,12 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
   const moldCodes = new Set([...moldByCode.keys(), ...seenMo]);
 
   // Products
-  const products = await c.product.findMany({ select: { id: true, code: true, name: true, name2: true, kind: true, unit: true, moldId: true, material: true, color: true, weightGrams: true, qcRequired: true } });
+  const products = await c.product.findMany({ select: { id: true, code: true, name: true, name2: true, kind: true, unit: true, moldId: true, material: true, color: true, weightGrams: true, qcRequired: true, piecesPerCarton: true, unitWeightKg: true, labelId: true } });
   const productByCode = new Map(products.map((p) => [p.code, p]));
   const moldIdToCode = new Map(molds.map((m) => [m.id, m.code]));
   const productByMoldName = new Map(products.filter((p) => p.moldId).map((p) => [`${moldIdToCode.get(p.moldId!)}|${p.name.toLowerCase()}`, p]));
   const seenP = new Set<string>(), seenPn = new Set<string>();
-  const productRows: { code?: string; mold?: string; data: { name: string; name2?: string; kind?: "PRODUCT" | "STICKER" | "MATERIAL"; unit?: string; material?: string; color?: string; weightGrams?: number; qcRequired?: boolean }; existing?: (typeof products)[number] }[] = [];
+  const productRows: { code?: string; mold?: string; labelCode?: string; data: { name: string; name2?: string; kind?: Kind; unit?: string; piecesPerCarton?: number; unitWeightKg?: number; material?: string; color?: string; weightGrams?: number; qcRequired?: boolean }; existing?: (typeof products)[number] }[] = [];
   for (const { row, v } of sheets.products ?? []) {
     const code = v.code ? v.code.toUpperCase() : undefined;
     const mold = v.mold ? v.mold.toUpperCase() : undefined;
@@ -267,12 +283,41 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
     if ((v.name2 ?? "").length > 160) { err("products", row, "Second name is longer than 160 characters."); continue; }
     const weightGrams = num(v.weightGrams ?? "");
     if (weightGrams !== undefined && (Number.isNaN(weightGrams) || weightGrams < 0)) { err("products", row, "Weight must be a number."); continue; }
+    const piecesPerCarton = num(v.piecesPerCarton ?? "");
+    if (piecesPerCarton !== undefined && (!Number.isInteger(piecesPerCarton) || piecesPerCarton < 1)) { err("products", row, "Pieces per carton must be a whole number."); continue; }
+    const unitWeightKg = num(v.unitWeightKg ?? "");
+    if (unitWeightKg !== undefined && (Number.isNaN(unitWeightKg) || unitWeightKg <= 0)) { err("products", row, "Weight per bag must be a number in kg."); continue; }
+    const labelCode = v.labelCode ? v.labelCode.toUpperCase() : undefined;
     const existing = code ? productByCode.get(code) : productByMoldName.get(mn);
     productRows.push({
-      code, mold, existing,
-      data: { name: v.name, name2: v.name2 || undefined, kind, unit, material: v.material || undefined, color: v.color || undefined, weightGrams, qcRequired: v.qcRequired ? yes(v.qcRequired) : undefined },
+      code, mold, existing, labelCode,
+      data: { name: v.name, name2: v.name2 || undefined, kind, unit, piecesPerCarton, unitWeightKg, material: v.material || undefined, color: v.color || undefined, weightGrams, qcRequired: v.qcRequired ? yes(v.qcRequired) : undefined },
     });
   }
+
+  // Labels must be stickers (already in the system or on this sheet)
+  const kindOf = new Map<string, Kind>(products.map((p) => [p.code, p.kind as Kind]));
+  for (const r of productRows) if (r.code) kindOf.set(r.code, r.data.kind ?? (r.existing?.kind as Kind) ?? "PRODUCT");
+  const rowOf = new Map((sheets.products ?? []).map((x) => [x.v.code?.toUpperCase(), x.row]));
+  for (const r of productRows) {
+    if (r.labelCode && kindOf.get(r.labelCode) !== "STICKER") err("products", (r.code && rowOf.get(r.code)) || 0, `Label ${r.labelCode} isn't a sticker in the system or on this sheet.`);
+  }
+  // Recipe lines
+  const recipeRows: { product: string; item: string; qty: number; per: "PIECE" | "CARTON" }[] = [];
+  const seenR = new Set<string>();
+  for (const { row, v } of sheets.recipes ?? []) {
+    const product = v.product.toUpperCase(), item = v.item.toUpperCase();
+    const qty = num(v.qty ?? ""), per = /^(c|carton|cartons|كارتون|koli)/i.test(v.per) ? "CARTON" : /^(p|piece|pieces|pcs|قطعة|عدد|adet)/i.test(v.per) ? "PIECE" : null;
+    if (kindOf.get(product) !== "PRODUCT") { err("recipes", row, `${product} isn't a product in the system or on the Products sheet.`); continue; }
+    if (!kindOf.has(item)) { err("recipes", row, `Item ${item} doesn't exist.`); continue; }
+    if (item === product) { err("recipes", row, "A product can't be made of itself."); continue; }
+    if (qty === undefined || Number.isNaN(qty) || qty <= 0) { err("recipes", row, "Quantity must be more than 0."); continue; }
+    if (!per) { err("recipes", row, `Per must be piece or carton (not "${v.per}").`); continue; }
+    const k = `${product}|${item}|${per}`;
+    if (seenR.has(k)) { err("recipes", row, `${item} is listed twice for ${product}.`); continue; }
+    seenR.add(k); recipeRows.push({ product, item, qty, per });
+  }
+  counts.recipes.create = recipeRows.length;
 
   const changed = (before: Record<string, unknown>, after: Record<string, unknown>) =>
     Object.entries(after).some(([k, val]) => val !== undefined && String(before[k] ?? "") !== String(val));
@@ -283,9 +328,10 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
   }
   for (const r of productRows) {
     const curMold = r.existing?.moldId ? moldIdToCode.get(r.existing.moldId) : undefined;
-    counts.products[r.existing ? (changed(r.existing, r.data) || (r.mold && r.mold !== curMold) ? "update" : "same") : "create"]++;
+    const curLabel = r.existing?.labelId ? products.find((p) => p.id === r.existing!.labelId)?.code : undefined;
+    counts.products[r.existing ? (changed(r.existing, r.data) || (r.mold && r.mold !== curMold) || (r.labelCode && r.labelCode !== curLabel) ? "update" : "same") : "create"]++;
   }
-  const empty = !machineRows.length && !moldRows.length && !productRows.length;
+  const empty = !machineRows.length && !moldRows.length && !productRows.length && !recipeRows.length;
   if (!save || errors.length || empty) return { counts, errors, empty };
 
   // ── save (inside the caller's transaction)
@@ -317,6 +363,19 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
     else creates.push({ ...data, name: r.data.name, code: r.code ?? nextCode(r.mold!), qcRequired: r.data.qcRequired ?? false });
   }
   for (let i = 0; i < creates.length; i += 500) await t.product.createMany({ data: creates.slice(i, i + 500) });
+  // Links that need the ids of items just created: labels and recipes
+  const needIds = [...new Set([...productRows.flatMap((r) => (r.labelCode ? [r.labelCode, r.code!] : [])), ...recipeRows.flatMap((r) => [r.product, r.item])])];
+  if (needIds.length) {
+    const ids = new Map((await t.product.findMany({ where: { code: { in: needIds } }, select: { id: true, code: true } })).map((p) => [p.code, p.id]));
+    for (const r of productRows) if (r.labelCode && r.code) await t.product.update({ where: { id: ids.get(r.code)! }, data: { labelId: ids.get(r.labelCode)! } });
+    const byProduct = new Map<string, typeof recipeRows>();
+    for (const r of recipeRows) byProduct.set(r.product, [...(byProduct.get(r.product) ?? []), r]);
+    for (const [prod, lines] of byProduct) {
+      const pid = ids.get(prod)!;
+      await t.productComponent.deleteMany({ where: { productId: pid } }); // the sheet replaces that product's whole recipe
+      await t.productComponent.createMany({ data: lines.map((l) => ({ productId: pid, componentId: ids.get(l.item)!, qty: l.qty, per: l.per })) });
+    }
+  }
   return { counts, errors, empty };
 }
 

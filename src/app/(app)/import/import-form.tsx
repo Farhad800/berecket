@@ -9,7 +9,7 @@ import { importMasterDataAction } from "@/app/actions/import";
 import type { Plan, SheetKey } from "@/lib/import";
 
 type Res = Awaited<ReturnType<typeof importMasterDataAction>>;
-const SHEETS: SheetKey[] = ["machines", "molds", "products"];
+const SHEETS: SheetKey[] = ["machines", "molds", "products", "recipes"];
 
 export default function ImportForm() {
   const t = useTranslations();

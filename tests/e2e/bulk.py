@@ -25,7 +25,7 @@ with sync_playwright() as p:
     with a.expect_download() as d: a.get_by_text("Download Excel template").click()
     tpl=O+"template.xlsx"; d.value.save_as(tpl)
     wb=openpyxl.load_workbook(tpl)
-    ck(f"template has How to use, Machines, Molds, Products sheets {wb.sheetnames}", wb.sheetnames==["How to use","Machines","Molds","Products"])
+    ck(f"template has How to use, Machines, Molds, Products, Recipe sheets {wb.sheetnames}", wb.sheetnames==["How to use","Machines","Molds","Products","Recipe"])
 
     # 2. fill the template: 4 machines, 35 molds, 540 labels (example rows left in on purpose — they are ignored)
     wb["Machines"].append(["BKM-01","Toyo Si-180","Toyo","Si-180",180])

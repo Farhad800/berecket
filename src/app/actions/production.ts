@@ -9,6 +9,7 @@ import { audit } from "@/lib/audit";
 import { run, formObject, UserError } from "@/lib/action";
 import { dayValue, todayYmd } from "@/lib/production";
 import { getStock, lockProduct } from "@/lib/stock";
+import { shortages, syncConsumption, type Shortage } from "@/lib/consumption";
 
 /**
  * Daily production: what was made, per day, shift and product (owner's decision, 23 Oct 2026).
@@ -22,7 +23,16 @@ function refresh() {
   for (const p of ["/production", "/production/daily", "/inventory", "/qc", "/dashboard"]) revalidatePath(p);
 }
 
-export type SheetResult = { products: number; pieces: number };
+export type SheetResult = { products: number; pieces: number; shortages: Shortage[] };
+
+/** One warning to the warehouse when production used more labels/materials/packaging than were in stock. */
+async function warnShortages(list: Shortage[], userName: string, userId: string, tx: Parameters<typeof notify>[1]) {
+  if (!list.length) return;
+  await notify({
+    type: "stock.shortage", data: { n: list.length, items: list.slice(0, 5).map((s) => s.code).join(", ") + (list.length > 5 ? "…" : ""), by: userName },
+    link: "/inventory?tab=materials", toPermission: "warehouse:view", exceptUserId: userId,
+  }, tx);
+}
 
 /** Saves the quantities typed on the daily sheet — any number of products in one save. */
 export async function saveDailyEntriesAction(_: unknown, fd: FormData) {
@@ -45,8 +55,9 @@ export async function saveDailyEntriesAction(_: unknown, fd: FormData) {
     if (products.length !== new Set(rows.map((r) => r.productId)).size) throw new UserError("One of the products is archived or doesn't exist. Reload the page.");
     const code = new Map(products.map((p) => [p.id, p.code]));
 
-    await db.$transaction(
+    const short = await db.$transaction(
       async (tx) => {
+        const touched: string[] = [];
         for (const r of rows) {
           // Same product, day and shift again (and QC hasn't looked at it yet): add to that entry.
           const existing = await tx.productionEntry.findFirst({ where: { day: dayValue(day), shift, productId: r.productId, qcStatus: "NOT_INSPECTED" } });
@@ -54,17 +65,21 @@ export async function saveDailyEntriesAction(_: unknown, fd: FormData) {
             ? await tx.productionEntry.update({ where: { id: existing.id }, data: { quantity: { increment: r.qty } } })
             : await tx.productionEntry.create({ data: { day: dayValue(day), shift, productId: r.productId, quantity: r.qty, createdById: me.id } });
           await tx.stockMovement.create({ data: { productId: r.productId, type: "PRODUCTION", qty: r.qty, entryId: entry.id, createdById: me.id } });
+          touched.push(...(await syncConsumption(entry.id, tx, me.id)));
           await audit({ userId: me.id, action: "production.report", entityType: "ProductionEntry", entityId: entry.id, after: { day, shift, product: code.get(r.productId), qty: r.qty, total: entry.quantity } }, tx);
         }
         await notify({
           type: "production.saved", data: { pcs: rows.reduce((s, r) => s + r.qty, 0), products: rows.length, day, shift, by: me.fullName },
           link: `/production?day=${day}`, toPermission: "production:view", exceptUserId: me.id,
         }, tx);
+        const list = await shortages(touched, tx);
+        await warnShortages(list, me.fullName, me.id, tx);
+        return list;
       },
       { timeout: 60_000 },
     );
     refresh();
-    return { products: rows.length, pieces: rows.reduce((s, r) => s + r.qty, 0) };
+    return { products: rows.length, pieces: rows.reduce((s, r) => s + r.qty, 0), shortages: short };
   });
 }
 
@@ -91,6 +106,9 @@ export async function correctEntryAction(_: unknown, fd: FormData) {
         if (stock + delta < 0) throw new UserError(`Only ${stock.toLocaleString("en")} pcs of ${e.product.code} are in stock — the rest has already left the warehouse.`);
       }
       await tx.stockMovement.create({ data: { productId: e.productId, type: "PRODUCTION", qty: delta, entryId: v.quantity === 0 ? null : e.id, reason: `Correction: ${v.reason}`, createdById: me.id } });
+      // Labels, materials and packaging follow the corrected quantity (returned to stock when it goes down).
+      const touched = await syncConsumption(e.id, tx, me.id, v.quantity);
+      await warnShortages(await shortages(touched, tx), me.fullName, me.id, tx);
       if (v.quantity === 0) {
         await tx.stockMovement.updateMany({ where: { entryId: e.id }, data: { entryId: null } });
         await tx.productionEntry.delete({ where: { id: e.id } });

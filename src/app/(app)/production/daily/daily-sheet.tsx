@@ -68,6 +68,9 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
 
       {error && <div className="mb-3"><Alert>{error}</Alert></div>}
       {result && <div className="mb-3"><Alert tone="green">{t("daily.saved", { n: result.products, pcs: nf(result.pieces) })}</Alert></div>}
+      {result && result.shortages.length > 0 && (
+        <div className="mb-3"><Alert tone="amber">{t("daily.shortage", { items: result.shortages.map((x) => `${x.code} (${x.stock.toLocaleString("en", { maximumFractionDigits: 3 })} ${x.unit})`).join(", ") })}</Alert></div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
         <div className="hidden grid-cols-[minmax(0,1fr)_7rem_7rem_7rem_9rem] gap-3 border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-muted md:grid">

@@ -98,7 +98,7 @@ export async function stockSuppliesAction(_: unknown, fd: FormData) {
     const me = await requirePermission("warehouse:create");
     const raw = formObject(fd);
     const mode = z.enum(["RECEIVE", "USE"]).parse(raw.mode);
-    const kind = z.enum(["STICKER", "MATERIAL"]).parse(raw.kind);
+    const kind = z.enum(["STICKER", "MATERIAL", "PACKAGING"]).parse(raw.kind);
     const reference = z.string().trim().max(200).optional().parse(raw.reference);
     const rows: { productId: string; qty: number }[] = [];
     for (const [key, val] of fd.entries()) {
@@ -135,9 +135,9 @@ export async function stockSuppliesAction(_: unknown, fd: FormData) {
         after: { kind, lines: rows.map((r) => `${item(r.productId).code} × ${r.qty} ${item(r.productId).unit}`) },
       }, tx);
       await notify({
-        type: mode === "RECEIVE" ? (kind === "STICKER" ? "stock.stickersIn" : "stock.materialsIn") : (kind === "STICKER" ? "stock.stickersUsed" : "stock.materialsUsed"),
+        type: mode === "RECEIVE" ? (kind === "STICKER" ? "stock.stickersIn" : kind === "PACKAGING" ? "stock.packagingIn" : "stock.materialsIn") : (kind === "STICKER" ? "stock.stickersUsed" : kind === "PACKAGING" ? "stock.packagingUsed" : "stock.materialsUsed"),
         data: { n: rows.length, ref: reference ?? "—", by: me.fullName },
-        link: `/inventory?tab=${kind === "STICKER" ? "stickers" : "materials"}`, toPermission: "warehouse:view", exceptUserId: me.id,
+        link: `/inventory?tab=${kind === "STICKER" ? "stickers" : kind === "PACKAGING" ? "packaging" : "materials"}`, toPermission: "warehouse:view", exceptUserId: me.id,
       }, tx);
       return sumQty;
     }, { timeout: 60_000 });

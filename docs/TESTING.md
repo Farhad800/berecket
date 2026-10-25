@@ -10,6 +10,7 @@
 | Bulk master data | `tests/e2e/bulk.py` | Excel template → 4 machines, 35 molds, 525 labels imported in one go; re-import makes no copies; wrong rows refused with row numbers; CSV; pasting labels onto a mold; mold filters on all sheets; permissions; phone layout |
 | Push notifications | `tests/e2e/push.py` | A fake push service receives what the server sends; the payload is decrypted exactly as a phone does (RFC 8291) and is in the reader's language; actor not notified; dead devices removed; service worker pops the notification up; on/off card; first-visit banner. Start the app with `NODE_EXTRA_CA_CERTS` pointing at the test certificate (see the file header) |
 | Stickers & materials | `tests/e2e/supplies.py` | Loads the factory's accounting list (975 products, 811 stickers, 74 materials) on an empty database; only products appear on order/daily sheets; receive/use stickers; kg with decimals; no negative stock; re-import makes no copies |
+| Made of & packaging | `tests/e2e/recipes.py` | Final accounting list; recipe built on the product page; 2,000 pcs → 2,000 labels, 90 kg granules, 1.8 kg dye, 2 cartons (rounded up), 34 nylon bags = 0.408 kg; merge, shortage warning with minus stock, correction and deletion give stock back; new product named from its label; Recipe sheet import |
 | Stage 1 | `tests/e2e/stage1.py` | Sign-in, roles, languages, install banner. (Older stage 2–9 suites were retired with the 23 Oct 2026 simplification; the acceptance suite covers those flows.) |
 
 ## Latest results (22 Oct 2026)

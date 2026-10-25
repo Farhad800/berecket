@@ -234,7 +234,28 @@
     "labelsSaved": "{n} labels saved as products.",
     "labelsSkipped": "{n} were already there and were skipped.",
     "name2": "Second name (Turkish / English)",
-    "name2Hint": "Shown under the main name."
+    "name2Hint": "Shown under the main name.",
+    "label": "Label",
+    "labelHint": "Choose the product's label — the name comes from the label. Leave empty if the product has no label.",
+    "productNameFromLabel": "Only for products without a label. With a label, the name is taken from the label.",
+    "noLabel": "No label",
+    "recipeLink": "Made of & packaging",
+    "recipe": "Made of / packaging",
+    "recipeLines": "{n} items",
+    "kindLabel": "Kind",
+    "labelUsedBy": "Products with this label",
+    "usedBy": "Used by these products",
+    "notUsedYet": "Not used by any product yet.",
+    "unitWeight": "Weight of one bag / piece",
+    "unitWeightHint": "Needed when products count this item by the bag (e.g. 30 nylon per carton) but it is stocked in kg.",
+    "saved": "Saved.",
+    "save": "Save",
+    "kind": {
+      "PRODUCT": "Product",
+      "STICKER": "Label",
+      "MATERIAL": "Raw material",
+      "PACKAGING": "Packaging"
+    }
   },
   "status": {
     "machine": {
@@ -489,7 +510,8 @@
       "archive": "Product archived",
       "restore": "Product restored",
       "delete": "Product deleted",
-      "bulk_create": "Labels added to a mold"
+      "bulk_create": "Labels added to a mold",
+      "recipe": "Made of / packaging changed"
     },
     "machine": {
       "create": "Machine added",
@@ -913,8 +935,9 @@
     "tab": {
       "stock": "Products",
       "movements": "Movements",
-      "stickers": "Stickers",
-      "materials": "Materials"
+      "stickers": "Labels",
+      "materials": "Raw materials",
+      "packaging": "Packaging"
     },
     "receiveMode": "Received (in)",
     "useMode": "Used (out)",
@@ -932,7 +955,8 @@
     "withStock": "Items in stock",
     "totalKg": "Total in kg",
     "noStickers": "No stickers yet. Add them with Import from Excel.",
-    "noMaterials": "No materials yet. Add them with Import from Excel."
+    "noMaterials": "No materials yet. Add them with Import from Excel.",
+    "noPackaging": "No packaging items yet. Add them with Import from Excel."
   },
   "rep": {
     "intro": "Live figures from the factory's records. Pick a report, set the dates and filters, then export to Excel (CSV) or PDF.",
@@ -1341,7 +1365,8 @@
     "alreadyShift": "Already entered (shift {shift})",
     "produced": "Produced",
     "onlyOrdered": "Only products in open orders",
-    "noOrdered": "No product is in an open order. Untick the box to see all products."
+    "noOrdered": "No product is in an open order. Untick the box to see all products.",
+    "shortage": "Saved — but stock was not enough for: {items}. Stock shows minus; the warehouse has been told."
   },
   "imp": {
     "button": "Import from Excel",
@@ -1370,7 +1395,8 @@
     "sheet": {
       "machines": "Machines",
       "molds": "Molds",
-      "products": "Products / labels"
+      "products": "Products / labels",
+      "recipes": "Recipe lines"
     }
   },
   "push": {
@@ -1483,6 +1509,18 @@
       "materialsUsed": {
         "title": "Materials used: {n} items",
         "body": "{ref} · by {by}"
+      },
+      "shortage": {
+        "title": "Not enough stock for production: {n} items",
+        "body": "{items} now below zero · entered by {by}"
+      },
+      "packagingIn": {
+        "title": "Packaging received: {n} items",
+        "body": "{ref} · by {by}"
+      },
+      "packagingUsed": {
+        "title": "Packaging used: {n} items",
+        "body": "{ref} · by {by}"
       }
     },
     "product": {
@@ -1587,5 +1625,29 @@
         "body": "{work} · by {by}"
       }
     }
+  },
+  "rc": {
+    "label": "Label",
+    "labelHint": "1 label per piece is taken from stock when production is entered.",
+    "madeOf": "Made of (per piece)",
+    "madeOfHint": "Raw material, dye and regrind in grams per piece; handles and other parts in pieces per piece.",
+    "addMaterial": "Add material / part",
+    "packaging": "Packaging (per carton)",
+    "packagingHint": "Cartons are rounded up; nylon counts the bags actually filled and is turned into kg with the bag weight.",
+    "piecesPerCarton": "Pieces in one carton",
+    "addPackaging": "Add carton / nylon / packaging",
+    "chooseItem": "Choose item…",
+    "gPerPiece": "grams per piece",
+    "pcsPerPiece": "pieces per piece",
+    "bagsPerCarton": "bags per carton",
+    "pcsPerCarton": "per carton",
+    "needWeight": "Set the weight of one bag first",
+    "save": "Save made of & packaging",
+    "saved": "Saved. From now on daily production takes these from stock.",
+    "preview": "What production will use",
+    "previewPieces": "pieces",
+    "nothingUsed": "Nothing is taken from stock yet — add a label, materials or packaging.",
+    "inStockOnly": "only {n} in stock",
+    "previewNote": "Unsaved changes are included in the preview."
   }
 }

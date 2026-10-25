@@ -234,7 +234,28 @@
     "labelsSaved": "{n} etiket ürün olarak kaydedildi.",
     "labelsSkipped": "{n} tanesi zaten vardı, atlandı.",
     "name2": "İkinci ad (Türkçe / İngilizce)",
-    "name2Hint": "Ana adın altında gösterilir."
+    "name2Hint": "Ana adın altında gösterilir.",
+    "label": "Etiket",
+    "labelHint": "Ürünün etiketini seçin — ad etiketten gelir. Etiketi yoksa boş bırakın.",
+    "productNameFromLabel": "Yalnızca etiketsiz ürünler için. Etiket seçilirse ad etiketten alınır.",
+    "noLabel": "Etiketsiz",
+    "recipeLink": "İçerik ve ambalaj",
+    "recipe": "İçerik / ambalaj",
+    "recipeLines": "{n} kalem",
+    "kindLabel": "Tür",
+    "labelUsedBy": "Bu etiketli ürünler",
+    "usedBy": "Bu ürünlerde kullanılıyor",
+    "notUsedYet": "Henüz hiçbir üründe kullanılmıyor.",
+    "unitWeight": "Bir torba / parça ağırlığı",
+    "unitWeightHint": "Ürünler bunu torba ile sayıp (örn. koli başına 30 naylon) stok kg ise gerekir.",
+    "saved": "Kaydedildi.",
+    "save": "Kaydet",
+    "kind": {
+      "PRODUCT": "Ürün",
+      "STICKER": "Etiket",
+      "MATERIAL": "Hammadde",
+      "PACKAGING": "Ambalaj"
+    }
   },
   "status": {
     "machine": {
@@ -489,7 +510,8 @@
       "archive": "Ürün arşivlendi",
       "restore": "Ürün geri alındı",
       "delete": "Ürün silindi",
-      "bulk_create": "Kalıba etiketler eklendi"
+      "bulk_create": "Kalıba etiketler eklendi",
+      "recipe": "İçerik / ambalaj değişti"
     },
     "machine": {
       "create": "Makine eklendi",
@@ -914,7 +936,8 @@
       "stock": "Ürünler",
       "movements": "Hareketler",
       "stickers": "Etiketler",
-      "materials": "Malzemeler"
+      "materials": "Hammaddeler",
+      "packaging": "Ambalaj"
     },
     "receiveMode": "Giriş",
     "useMode": "Kullanım (çıkış)",
@@ -932,7 +955,8 @@
     "withStock": "Stoktaki kalemler",
     "totalKg": "Toplam kg",
     "noStickers": "Henüz etiket yok. Excel'den içe aktararak ekleyin.",
-    "noMaterials": "Henüz malzeme yok. Excel'den içe aktararak ekleyin."
+    "noMaterials": "Henüz malzeme yok. Excel'den içe aktararak ekleyin.",
+    "noPackaging": "Henüz ambalaj kalemi yok. Excel'den içe aktararak ekleyin."
   },
   "rep": {
     "intro": "Fabrika kayıtlarından canlı rakamlar. Bir rapor seçin, tarihleri ve filtreleri ayarlayın, sonra Excel (CSV) veya PDF olarak dışa aktarın.",
@@ -1341,7 +1365,8 @@
     "alreadyShift": "Girilmiş (vardiya {shift})",
     "produced": "Üretilen",
     "onlyOrdered": "Yalnızca açık siparişteki ürünler",
-    "noOrdered": "Açık siparişte ürün yok. Tüm ürünler için kutunun işaretini kaldırın."
+    "noOrdered": "Açık siparişte ürün yok. Tüm ürünler için kutunun işaretini kaldırın.",
+    "shortage": "Kaydedildi — ama stok yetmedi: {items}. Stok eksiye düştü; depoya bildirildi."
   },
   "imp": {
     "button": "Excel'den içe aktar",
@@ -1370,7 +1395,8 @@
     "sheet": {
       "machines": "Makineler",
       "molds": "Kalıplar",
-      "products": "Ürünler / etiketler"
+      "products": "Ürünler / etiketler",
+      "recipes": "İçerik satırları"
     }
   },
   "push": {
@@ -1483,6 +1509,18 @@
       "materialsUsed": {
         "title": "Malzeme kullanımı: {n} kalem",
         "body": "{ref} · {by}"
+      },
+      "shortage": {
+        "title": "Üretim için stok yetersiz: {n} kalem",
+        "body": "{items} şimdi sıfırın altında · giren {by}"
+      },
+      "packagingIn": {
+        "title": "Ambalaj girişi: {n} kalem",
+        "body": "{ref} · {by}"
+      },
+      "packagingUsed": {
+        "title": "Ambalaj kullanımı: {n} kalem",
+        "body": "{ref} · {by}"
       }
     },
     "product": {
@@ -1587,5 +1625,29 @@
         "body": "{work} · {by}"
       }
     }
+  },
+  "rc": {
+    "label": "Etiket",
+    "labelHint": "Üretim girildiğinde parça başına 1 etiket stoktan düşülür.",
+    "madeOf": "İçerik (parça başına)",
+    "madeOfHint": "Hammadde, boya ve kırma parça başına gram; saplar ve diğer parçalar parça başına adet.",
+    "addMaterial": "Malzeme / parça ekle",
+    "packaging": "Ambalaj (koli başına)",
+    "packagingHint": "Koliler yukarı yuvarlanır; naylon gerçekten dolan torba sayısıyla hesaplanır ve torba ağırlığıyla kg'ye çevrilir.",
+    "piecesPerCarton": "Bir kolideki adet",
+    "addPackaging": "Koli / naylon / ambalaj ekle",
+    "chooseItem": "Kalem seçin…",
+    "gPerPiece": "parça başına gram",
+    "pcsPerPiece": "parça başına adet",
+    "bagsPerCarton": "koli başına torba",
+    "pcsPerCarton": "koli başına",
+    "needWeight": "Önce bir torbanın ağırlığını girin",
+    "save": "İçerik ve ambalajı kaydet",
+    "saved": "Kaydedildi. Artık günlük üretim bunları stoktan düşer.",
+    "preview": "Üretimin kullanacağı",
+    "previewPieces": "adet",
+    "nothingUsed": "Henüz stoktan bir şey düşülmüyor — etiket, malzeme veya ambalaj ekleyin.",
+    "inStockOnly": "stokta yalnızca {n}",
+    "previewNote": "Kaydedilmemiş değişiklikler önizlemeye dahildir."
   }
 }

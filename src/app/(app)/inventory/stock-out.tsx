@@ -53,7 +53,7 @@ export default function StockOut({ rows, canOut }: { rows: Row[]; canOut: boolea
                 <p className="truncate text-sm font-medium">{r.name}</p>
                 <p className="truncate text-xs text-muted" dir="ltr">{r.name2 ? `${r.name2} · ` : ""}{r.code}</p>
               </div>
-              <span className={cn("text-end text-base font-bold tabular-nums", r.stock === 0 && "font-normal text-muted")}>{nf(r.stock)}</span>
+              <span className={cn("text-end text-base font-bold tabular-nums", r.stock === 0 && "font-normal text-muted", r.stock < 0 && "text-red-600")}>{nf(r.stock)}</span>
               {canOut && (
                 <input
                   name={`out_${r.id}`} type="number" inputMode="numeric" min={0} max={Math.max(r.stock, 0)} step={1} disabled={r.stock <= 0}

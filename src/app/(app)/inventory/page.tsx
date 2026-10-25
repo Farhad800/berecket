@@ -14,7 +14,7 @@ import StockOut from "./stock-out";
 import SuppliesSheet from "./supplies-sheet";
 
 export const metadata = { title: "Warehouse stock" };
-const TABS = ["stock", "stickers", "materials", "movements"] as const;
+const TABS = ["stock", "stickers", "materials", "packaging", "movements"] as const;
 const TYPES: StockMoveType[] = ["PRODUCTION", "QC_REJECT", "OUT", "ADJUST", "RECEIVE", "USE"];
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
 
@@ -38,7 +38,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           </Link>
         ))}
       </div>
-      {tab === "stock" ? <StockTab /> : tab === "movements" ? <MovementsTab /> : <SuppliesTab kind={tab === "stickers" ? "STICKER" : "MATERIAL"} />}
+      {tab === "stock" ? <StockTab /> : tab === "movements" ? <MovementsTab /> : <SuppliesTab kind={tab === "stickers" ? "STICKER" : tab === "packaging" ? "PACKAGING" : "MATERIAL"} />}
     </>
   );
 
@@ -82,7 +82,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     );
   }
 
-  async function SuppliesTab({ kind }: { kind: "STICKER" | "MATERIAL" }) {
+  async function SuppliesTab({ kind }: { kind: "STICKER" | "MATERIAL" | "PACKAGING" }) {
     const where = {
       archivedAt: null, kind,
       ...(q ? { OR: [{ code: { contains: q, mode: "insensitive" as const } }, { name: { contains: q, mode: "insensitive" as const } }, { name2: { contains: q, mode: "insensitive" as const } }] } : {}),
@@ -98,7 +98,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <Card><p className="text-xs text-muted">{t("wh.withStock")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.filter((r) => r.stock > 0).length)}</p></Card>
           {kg.length > 0 && <Card><p className="text-xs text-muted">{t("wh.totalKg")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr">{fmt(kg.reduce((s, r) => s + r.stock, 0))} kg</p></Card>}
         </div>
-        {rows.length === 0 ? <EmptyState>{t(kind === "STICKER" ? "wh.noStickers" : "wh.noMaterials")}</EmptyState> : <SuppliesSheet key={kind} rows={rows} kind={kind} canEdit={can(me, "warehouse:create")} />}
+        {rows.length === 0 ? <EmptyState>{t(kind === "STICKER" ? "wh.noStickers" : kind === "PACKAGING" ? "wh.noPackaging" : "wh.noMaterials")}</EmptyState> : <SuppliesSheet key={kind} rows={rows} kind={kind} canEdit={can(me, "warehouse:create")} />}
         <Adjust items={items} />
       </div>
     );

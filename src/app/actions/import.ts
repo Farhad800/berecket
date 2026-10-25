@@ -31,7 +31,7 @@ export async function importMasterDataAction(_: unknown, fd: FormData) {
     // Permission per sheet: machines/molds need Assets, products need Products.
     const need: Permission[] = [];
     for (const k of present) {
-      const res = k === "products" ? "products" : "assets";
+      const res = k === "products" || k === "recipes" ? "products" : "assets";
       need.push(`${res}:create`, `${res}:edit`);
     }
     const missing = need.filter((p) => !me.permissions.has(p));

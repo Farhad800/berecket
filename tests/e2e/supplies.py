@@ -19,19 +19,19 @@ with sync_playwright() as p:
     # 1. import the prepared list
     A.goto(B+"/import"); A.set_input_files("input[name=file]", F); A.get_by_role("button", name="Check file").click()
     A.wait_for_selector("text=The file is correct", timeout=120000); txt=A.inner_text("main")
-    ck("check: 1,860 new items, no problems", "1,860" in txt)
+    ck("check: 1,868 new items, no problems", "1,868" in txt)
     t0=time.time(); A.get_by_role("button", name=re.compile("^Import ")).click(); A.wait_for_selector("text=Imported", timeout=180000)
     ck(f"imported in {time.time()-t0:.1f}s", True)
     kinds=sql("SELECT string_agg(kind||'='||n, ',' ORDER BY kind) FROM (SELECT kind, count(*) n FROM \\\"Product\\\" GROUP BY kind) x")
-    ck(f"975 products, 811 stickers, 74 materials ({kinds})", set(kinds.split(","))=={"MATERIAL=74","PRODUCT=975","STICKER=811"})
+    ck(f"983 products, 811 stickers, 74 materials ({kinds})", set(kinds.split(","))=={"MATERIAL=74","PRODUCT=983","STICKER=811"})
     ck("Arabic + Turkish names stored", sql("SELECT name||' | '||name2 FROM \\\"Product\\\" WHERE code='P-0001'")!="" and sql("SELECT count(*) FROM \\\"Product\\\" WHERE name2 IS NOT NULL")>="1800")
     ck("kg units kept for materials", sql("SELECT count(*) FROM \\\"Product\\\" WHERE unit='kg'")=="48")
 
     # 2. products page / order sheet / daily sheet show only products
-    A.goto(B+"/products"); ck("products page counts only products", "975 products" in A.inner_text("main"))
-    A.goto(B+"/orders/new"); ck("order sheet lists only the 975 products", A.locator("input[data-q]").count()==975)
+    A.goto(B+"/products"); ck("products page counts only products", "983 products" in A.inner_text("main"))
+    A.goto(B+"/orders/new"); ck("order sheet lists only the 983 products", A.locator("input[data-q]").count()==983)
     A.goto(B+"/production/daily"); A.uncheck("text=Only products in open orders") if A.locator("text=Only products in open orders").count() else None
-    ck("daily sheet lists only products", A.locator("input[data-q]").count()==975)
+    ck("daily sheet lists only products", A.locator("input[data-q]").count()==983)
 
     # 3. stickers tab: receive, use, can't use more than in stock
     A.goto(B+"/inventory?tab=stickers"); txt=A.inner_text("main")
@@ -56,11 +56,11 @@ with sync_playwright() as p:
     ck("pieces items refuse decimals", stock_id(pcs)==0)
     A.goto(B+"/inventory?tab=movements"); ck("movements list shows Received / Used", "Received" in A.inner_text("main") and "Used" in A.inner_text("main"))
     A.goto(B+"/inventory"); ck("products tab doesn't list stickers/materials", "S-0001" not in A.inner_text("main"))
-    A.goto(B+"/search?q=S-0001"); ck("search opens the sticker in the warehouse", "/inventory?tab=stickers" in A.url)
+    A.goto(B+"/search?q=S-0001"); ck("search opens the label", "/products/" in A.url and "اتيكيت" in A.inner_text("main"))
 
     # 5. re-import same file → no copies
     A.goto(B+"/import"); A.set_input_files("input[name=file]", F); A.get_by_role("button", name="Check file").click(); A.wait_for_selector("text=Nothing new to import", timeout=120000)
-    ck("same file again: nothing new", sql("SELECT count(*) FROM \\\"Product\\\"")=="1860")
+    ck("same file again: nothing new", sql("SELECT count(*) FROM \\\"Product\\\"")=="1868")
 
     # 6. phone
     M=br.new_context(**p.devices["iPhone 13"]).new_page(); M.goto(B+"/login"); M.fill("#username","owner"); M.fill("#password","OwnerPass2026!"); M.click("button[type=submit]"); M.wait_for_url("**/dashboard", wait_until="commit")

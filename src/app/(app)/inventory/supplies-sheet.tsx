@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PackageMinus, PackagePlus, Search } from "lucide-react";
@@ -11,7 +12,7 @@ type Row = { id: string; code: string; name: string; name2: string | null; unit:
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
 
 /** Stickers or materials: one sheet to record what came in (received) or went to production (used). */
-export default function SuppliesSheet({ rows, kind, canEdit }: { rows: Row[]; kind: "STICKER" | "MATERIAL"; canEdit: boolean }) {
+export default function SuppliesSheet({ rows, kind, canEdit }: { rows: Row[]; kind: "STICKER" | "MATERIAL" | "PACKAGING"; canEdit: boolean }) {
   const t = useTranslations();
   const [mode, setMode] = useState<"RECEIVE" | "USE">("RECEIVE");
   const [filter, setFilter] = useState("");
@@ -62,10 +63,10 @@ export default function SuppliesSheet({ rows, kind, canEdit }: { rows: Row[]; ki
             return (
               <li key={r.id} className={cn("grid items-center gap-3 px-4 py-2", cols, Number(vals[r.id]) > 0 && "bg-brand-50/60 dark:bg-brand-900/30")}>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{r.name}</p>
+                  <Link href={`/products/${r.id}`} className="block truncate text-sm font-medium hover:underline">{r.name}</Link>
                   <p className="truncate text-xs text-muted">{r.name2 && <span dir="ltr">{r.name2} · </span>}<span dir="ltr">{r.code}</span></p>
                 </div>
-                <span className={cn("text-end text-base font-bold tabular-nums", r.stock === 0 && "font-normal text-muted")} dir="ltr">{fmt(r.stock)} <span className="text-xs font-normal text-muted">{kg ? "kg" : t("md.pcs")}</span></span>
+                <span className={cn("text-end text-base font-bold tabular-nums", r.stock === 0 && "font-normal text-muted", r.stock < 0 && "text-red-600")} dir="ltr">{fmt(r.stock)} <span className="text-xs font-normal text-muted">{kg ? "kg" : t("md.pcs")}</span></span>
                 {canEdit && (
                   <input
                     name={`q_${r.id}`} type="number" inputMode="decimal" min={0} step={kg ? "0.001" : 1} max={mode === "USE" ? Math.max(r.stock, 0) : undefined}
