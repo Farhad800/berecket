@@ -15,6 +15,7 @@
 | Safe | `tests/e2e/safe.py` | Money in/out/exchange per currency (IQD/USD/EUR kept apart); refusals (no source, no category, more than the safe has — UI and server); converter at last rate; EUR purchase unpaid then paid in parts (can't overpay); sale part-received then rest received by the sales manager; still-owed tab; per-role access (sales view only, warehouse none, money report hidden); categories add/hide; report + CSV; search; audit; notifications; phone; Arabic; go-live reset |
 | Receipts | `tests/e2e/receipts.py` | Phone saved on a sale and filled for a known customer; standard receipt without layouts; layout with uploaded banner, header text, extra fields and column order, live preview of the real sale; default rules; English layout (LTR, second names, words); print view hides the toolbar; payment receipt (A5 layout) and purchase receipt; permissions; delete moves the default; phone; Arabic |
 | Review fixes | `tests/e2e/review-fixes.py` | Password change keeps the device in use and signs out the others; a record deleted meanwhile gives a clear message. Prices with 6 decimals are covered in `stock-docs.py` and `tests/unit/money.test.ts` |
+| Same-moment saves & kg | `tests/e2e/concurrency.py` | Fires requests at the same instant from threads straight at the server actions: same submission ×3, 4 people × 3 rounds on one product/shift, 6 multi-product sheets (no deadlock), 3 identical corrections, correction + new production, two inspectors over-rejecting, duplicate inspection, failed inspection rolled back then retried; browser double press and retry after a lost reply. After each step checks: entries = PRODUCTION stock, labels/materials used = recipe, rejected ≤ produced and = QC_REJECT stock, one uninspected entry per product/day/shift. M1: 1.001 / 0.999 kg accepted and stored exactly, 4 decimals refused |
 | Stage 1 | `tests/e2e/stage1.py` | Sign-in, roles, languages, install banner. (Older stage 2–9 suites were retired with the 23 Oct 2026 simplification; the acceptance suite covers those flows.) |
 
 ## Latest results (22 Oct 2026)
@@ -24,6 +25,7 @@
 - Security: **28/28**
 - Simplified workflow (23 Oct 2026): acceptance **56/56**, security **28/28**, unit **6/6**
 - Daily sheet / large orders / deletes: **26/26**
+- M1/M2 (26 Oct 2026): concurrency **29/29** (same suite on the old code: most checks fail — duplicates, stock +1,100, 1,200 of 1,000 rejected), acceptance **57/57**, stock-docs **36/36**, safe **42/42**, receipts **29/29**, review-fixes **6/6**, recipes **21/21**, supplies **21/21**, replace items **7/7**, bulk **28/28**, security **28/28**, push **16/16**, unit **15/15**
 - Code review (26 Oct 2026): review-fixes **6/6**, stock-docs **36/36**, receipts **29/29**, safe **42/42**, acceptance **57/57**, security **28/28**, bulk **28/28**, push **16/16**, supplies **21/21**, recipes **21/21**, replace items **7/7**, unit **14/14**
 - Receipts (25 Oct 2026): receipts **29/29**, safe **42/42**, stock-docs **32/32**, acceptance **57/57**, security **28/28**, bulk **28/28**, push **16/16**, supplies **21/21**, recipes **21/21**, replace items **7/7**, unit **10/10**
 - Safe (25 Oct 2026): safe **42/42**, stock-docs **32/32**, acceptance **57/57**, security **28/28**, bulk **28/28**, push **16/16**, supplies **21/21**, recipes **21/21**, replace items **7/7**, unit **6/6**
@@ -58,3 +60,13 @@ Screenshots from the runs are written to the scratch folder named at the top of 
 - Sign in on a phone (Android Chrome and iPhone Safari), add to home screen, open offline → the offline page appears.
 - Switch to Arabic: layout is right-to-left, numbers and codes stay readable.
 - Print a report (Save as PDF).
+
+## Read-only integrity check
+
+`scripts/check-integrity.ts` lists production / QC records that do not add up (stock from production ≠ entries,
+QC rejected more than produced or not matching stock, a product/day/shift split into several uninspected entries).
+It runs in a READ ONLY transaction and changes nothing:
+
+```bash
+DATABASE_URL=... npx tsx scripts/check-integrity.ts
+```

@@ -61,7 +61,8 @@
     "archive": "Arşivle",
     "archived": "Arşivlenmiş",
     "delete": "Sil",
-    "deleteConfirm": "{name} kalıcı olarak silinsin mi? Yalnızca hiç kullanılmadıysa mümkündür."
+    "deleteConfirm": "{name} kalıcı olarak silinsin mi? Yalnızca hiç kullanılmadıysa mümkündür.",
+    "connectionRetry": "Bağlantı kesildi, bu yüzden kaydedilip kaydedilmediğini bilmiyoruz. Tekrar Kaydet'e basın — iki kez kaydedilmez."
   },
   "auth": {
     "signIn": "Giriş yap",

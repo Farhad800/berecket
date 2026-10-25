@@ -116,7 +116,7 @@ with sync_playwright() as p:
     A.goto(B+"/cash/new?type=OUT"); ck("hidden category no longer offered", A.get_by_label("Spent on").locator("option", has_text="Packing tape").count()==0)
 
     # 9. reports, search, audit, notifications
-    day=sql("SELECT current_date::text")
+    day=sql("SELECT (now() AT TIME ZONE 'Asia/Baghdad')::date::text")   # the factory's calendar day, as the app uses
     A.goto(B+f"/reports/cash?from={day}&to={day}"); rt=A.inner_text("main")
     ck("safe report lists entries with totals per currency", "Salaries" in rt and "Euro Polymers" in rt and "In (EUR)" in rt)
     r=A.request.get(B+f"/api/reports/cash?from={day}&to={day}"); rows=list(csv.reader(io.StringIO(r.body().decode("utf-8").lstrip("﻿"))))

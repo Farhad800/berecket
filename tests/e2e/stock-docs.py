@@ -102,7 +102,7 @@ with sync_playwright() as p:
     S.goto(B+"/stock/new"); ck("…the new-document page is forbidden for them", "/forbidden" in S.url)
 
     # 6. Reports, export, search, audit, notifications
-    day=sql("SELECT current_date::text")
+    day=sql("SELECT (now() AT TIME ZONE 'Asia/Baghdad')::date::text")   # the factory's calendar day, as the app uses
     A.goto(B+f"/reports/trade?from={day}&to={day}"); rt=A.inner_text("main")
     ck("buying & selling report shows the totals per currency", "2,701.25" in rt and "750,000" in rt and "Gulf Polymers" in rt)
     r=A.request.get(B+f"/api/reports/trade?from={day}&to={day}"); rows=list(csv.reader(io.StringIO(r.body().decode("utf-8").lstrip("﻿"))))

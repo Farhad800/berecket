@@ -17,6 +17,7 @@ export default function InspectionForm({
   const [showDefect, setShowDefect] = useState(false);
   const [done, setDone] = useState(false);
   const { onSubmit, pending, error, fieldErrors: fe } = useFormAction(recordInspectionAction, {
+    once: true,
     resetOnSuccess: true,
     onSuccess: () => { setDone(true); setShowDefect(false); setRejected(0); router.refresh(); },
   });

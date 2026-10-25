@@ -10,6 +10,7 @@ import { run, formObject, UserError } from "@/lib/action";
 import { dayValue, todayYmd } from "@/lib/production";
 import { getStock, lockProduct } from "@/lib/stock";
 import { shortages, syncConsumption, type Shortage } from "@/lib/consumption";
+import { lockEntry, lockEntrySlot, once, submissionKey } from "@/lib/submission";
 
 /**
  * Daily production: what was made, per day, shift and product (owner's decision, 23 Oct 2026).
@@ -54,13 +55,25 @@ export async function saveDailyEntriesAction(_: unknown, fd: FormData) {
     const products = await db.product.findMany({ where: { id: { in: rows.map((r) => r.productId) }, archivedAt: null, kind: "PRODUCT" }, select: { id: true, code: true } });
     if (products.length !== new Set(rows.map((r) => r.productId)).size) throw new UserError("One of the products is archived or doesn't exist. Reload the page.");
     const code = new Map(products.map((p) => [p.id, p.code]));
+    // A fixed order, so two sheets saved at the same moment never wait on each other in a circle.
+    rows.sort((a, b) => (a.productId < b.productId ? -1 : a.productId > b.productId ? 1 : 0));
+    const pieces = rows.reduce((s, r) => s + r.qty, 0);
 
-    const short = await db.$transaction(
+    const { result } = await once<SheetResult>(
+      submissionKey(fd.get("submissionId")), me.id, "production.daily",
       async (tx) => {
         const touched: string[] = [];
         for (const r of rows) {
           // Same product, day and shift again (and QC hasn't looked at it yet): add to that entry.
-          const existing = await tx.productionEntry.findFirst({ where: { day: dayValue(day), shift, productId: r.productId, qcStatus: "NOT_INSPECTED" } });
+          // Held for this product/day/shift only, so simultaneous saves of it end up in one entry.
+          await lockEntrySlot(tx, day, shift, r.productId);
+          let existing = await tx.productionEntry.findFirst({ where: { day: dayValue(day), shift, productId: r.productId, qcStatus: "NOT_INSPECTED" }, orderBy: { createdAt: "asc" } });
+          if (existing) {
+            // QC may have inspected it a moment ago: re-read while holding it.
+            await lockEntry(tx, existing.id);
+            const now = await tx.productionEntry.findUnique({ where: { id: existing.id }, select: { qcStatus: true } });
+            if (now?.qcStatus !== "NOT_INSPECTED") existing = null;
+          }
           const entry = existing
             ? await tx.productionEntry.update({ where: { id: existing.id }, data: { quantity: { increment: r.qty } } })
             : await tx.productionEntry.create({ data: { day: dayValue(day), shift, productId: r.productId, quantity: r.qty, createdById: me.id } });
@@ -69,17 +82,17 @@ export async function saveDailyEntriesAction(_: unknown, fd: FormData) {
           await audit({ userId: me.id, action: "production.report", entityType: "ProductionEntry", entityId: entry.id, after: { day, shift, product: code.get(r.productId), qty: r.qty, total: entry.quantity } }, tx);
         }
         await notify({
-          type: "production.saved", data: { pcs: rows.reduce((s, r) => s + r.qty, 0), products: rows.length, day, shift, by: me.fullName },
+          type: "production.saved", data: { pcs: pieces, products: rows.length, day, shift, by: me.fullName },
           link: `/production?day=${day}`, toPermission: "production:view", exceptUserId: me.id,
         }, tx);
         const list = await shortages(touched, tx);
         await warnShortages(list, me.fullName, me.id, tx);
-        return list;
+        return { products: rows.length, pieces, shortages: list };
       },
       { timeout: 60_000 },
     );
     refresh();
-    return { products: rows.length, pieces: rows.reduce((s, r) => s + r.qty, 0), shortages: short };
+    return result;
   });
 }
 
@@ -95,6 +108,9 @@ export async function correctEntryAction(_: unknown, fd: FormData) {
     const me = await requirePermission("production:edit");
     const v = correctSchema.parse(formObject(fd));
     await db.$transaction(async (tx) => {
+      // Hold the entry first and read it afterwards, so two corrections (or a correction and QC)
+      // at the same moment are applied one after the other against the real current quantity.
+      if (!(await lockEntry(tx, v.entryId))) throw new UserError("Entry not found. It may have just been removed — reload the page.");
       const e = await tx.productionEntry.findUnique({ where: { id: v.entryId }, include: { product: { select: { code: true } }, _count: { select: { inspections: true } } } });
       if (!e) throw new UserError("Entry not found.");
       if (e._count.inspections > 0) throw new UserError("QC has already inspected this entry, so it can't be changed. Ask QC.");

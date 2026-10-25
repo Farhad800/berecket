@@ -74,7 +74,8 @@ export async function saveStockDocAction(input: unknown) {
       for (const l of raw.lines) {
         const it = item(l.itemId);
         if (it.unit.toLowerCase() !== "kg" && !Number.isInteger(l.qty)) throw new UserError(`${it.code} is counted in pieces — whole numbers only.`);
-        if (it.unit.toLowerCase() === "kg" && Math.round(l.qty * 1000) !== l.qty * 1000) throw new UserError(`${it.code}: at most 3 decimals.`);
+        // Tolerant check: 1.001 × 1000 is 1000.9999… in floating point, which a strict comparison refused.
+        if (it.unit.toLowerCase() === "kg" && !maxDecimals(l.qty, 3)) throw new UserError(`${it.code}: at most 3 decimals.`);
       }
       if (raw.orderId && !(await tx.order.count({ where: { id: raw.orderId } }))) throw new UserError("That order no longer exists.");
       const number = await nextNumber(NUM[t], tx);

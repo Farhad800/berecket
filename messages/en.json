@@ -61,7 +61,8 @@
     "archive": "Archive",
     "archived": "Archived",
     "delete": "Delete",
-    "deleteConfirm": "Delete {name} permanently? This only works if it has never been used."
+    "deleteConfirm": "Delete {name} permanently? This only works if it has never been used.",
+    "connectionRetry": "The connection was interrupted, so we don't know if this was saved. Press Save again — it will not be saved twice."
   },
   "auth": {
     "signIn": "Sign in",

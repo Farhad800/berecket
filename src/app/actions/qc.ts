@@ -9,6 +9,7 @@ import { run, formObject, UserError } from "@/lib/action";
 import { nextNumber } from "@/lib/numbering";
 import { getStock, lockProduct } from "@/lib/stock";
 import { notify } from "@/lib/notify";
+import { lockEntry, once, submissionKey } from "@/lib/submission";
 
 function refreshQc(entryId?: string, issueId?: string) {
   revalidatePath("/qc");
@@ -81,7 +82,10 @@ export async function recordInspectionAction(_: unknown, fd: FormData) {
     const sample = v.sampleOnly === "on";
     if (v.qtyRejected > v.qtyInspected) throw new UserError("Rejected pieces can't be more than the pieces checked.");
 
-    const result = await db.$transaction(async (tx) => {
+    const { result } = await once(submissionKey(fd.get("submissionId")), me.id, "qc.inspection", async (tx) => {
+      // Hold the entry, then count earlier rejections: two inspectors at the same moment are applied
+      // one after the other, so together they can never reject more pieces than were produced.
+      if (!(await lockEntry(tx, v.entryId))) throw new UserError("This production entry no longer exists. Reload the page.");
       const entry = await tx.productionEntry.findUniqueOrThrow({ where: { id: v.entryId }, include: { product: true, inspections: { select: { qtyRejected: true } } } });
       if (v.qtyInspected > entry.quantity) throw new UserError(`Only ${entry.quantity.toLocaleString("en")} pieces were produced in this entry.`);
       const rejectedBefore = entry.inspections.reduce((s, i) => s + i.qtyRejected, 0);

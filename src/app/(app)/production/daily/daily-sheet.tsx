@@ -21,7 +21,7 @@ export default function DailySheet({ rows, day, today, shift }: { rows: SheetRow
   const [onlyOrdered, setOnlyOrdered] = useState(rows.some((r) => r.ordered > 0));
   const [mold, setMold] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
-  const { onSubmit, pending, error, state } = useFormAction(saveDailyEntriesAction, { onSuccess: () => setVals({}) });
+  const { onSubmit, pending, error, state } = useFormAction(saveDailyEntriesAction, { once: true, onSuccess: () => setVals({}) });
   const result = state?.ok ? (state.data as SheetResult) : null;
 
   // Changing the day or shift reloads the sheet so "already entered" figures match.
