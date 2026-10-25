@@ -28,7 +28,8 @@
     "menu": "Menu",
     "close": "Close",
     "audit": "Audit log",
-    "stock": "Stock Movements"
+    "stock": "Stock Movements",
+    "cash": "Safe"
   },
   "common": {
     "save": "Save",
@@ -150,7 +151,8 @@
       "roles": "Roles",
       "settings": "Settings",
       "audit": "Audit log",
-      "stock": "Stock movements"
+      "stock": "Stock movements",
+      "cash": "Safe (money)"
     },
     "actions": {
       "view": "View",
@@ -163,7 +165,10 @@
       "input": "Input",
       "output": "Output",
       "buy": "Buy",
-      "sell": "Sell"
+      "sell": "Sell",
+      "in": "Money in",
+      "out": "Money out",
+      "exchange": "Exchange"
     }
   },
   "install": {
@@ -548,6 +553,16 @@
     },
     "masterdata": {
       "import": "Imported from Excel"
+    },
+    "cash": {
+      "in": "Money put in the safe",
+      "out": "Expense paid from the safe",
+      "exchange": "Currency exchanged",
+      "receive": "Payment received",
+      "pay": "Payment made",
+      "categoryAdd": "Expense category added",
+      "categoryHide": "Expense category hidden",
+      "categoryRestore": "Expense category shown again"
     }
   },
   "sched": {
@@ -997,7 +1012,8 @@
       "orders": "Orders",
       "service": "Machines & maintenance",
       "quality": "Quality",
-      "warehouse": "Warehouse"
+      "warehouse": "Warehouse",
+      "money": "Money"
     },
     "r": {
       "production": {
@@ -1046,7 +1062,11 @@
       },
       "trade": {
         "title": "Buying and selling",
-        "desc": "Every bought and sold item with supplier/customer, price and total in IQD or USD."
+        "desc": "Every bought and sold item with supplier/customer, price and total in IQD, USD or EUR."
+      },
+      "cash": {
+        "title": "Safe: money in and out",
+        "desc": "Every movement of money with category, person and totals per currency."
       }
     },
     "group": {
@@ -1204,7 +1224,12 @@
       "invoice": "Invoice",
       "unitPrice": "Price",
       "amount": "Amount",
-      "currency": "Currency"
+      "currency": "Currency",
+      "expenseCat": "Spent on",
+      "forDoc": "For document",
+      "note": "Note",
+      "moneyIn": "In",
+      "moneyOut": "Out"
     },
     "kpi": {
       "achievement": "Plan achieved",
@@ -1272,7 +1297,15 @@
       "boughtIqd": "Bought (IQD)",
       "boughtUsd": "Bought (USD)",
       "soldIqd": "Sold (IQD)",
-      "soldUsd": "Sold (USD)"
+      "soldUsd": "Sold (USD)",
+      "inIqd": "In (IQD)",
+      "outIqd": "Out (IQD)",
+      "inUsd": "In (USD)",
+      "outUsd": "Out (USD)",
+      "inEur": "In (EUR)",
+      "outEur": "Out (EUR)",
+      "boughtEur": "Bought (EUR)",
+      "soldEur": "Sold (EUR)"
     },
     "chartMax": "Highest: {v}"
   },
@@ -1295,7 +1328,8 @@
       "serviceReports": "Service reports",
       "shipments": "Shipments",
       "receipts": "Warehouse receipts",
-      "stockDocs": "Stock movements"
+      "stockDocs": "Stock movements",
+      "cashEntries": "Safe"
     }
   },
   "ui": {
@@ -1336,7 +1370,9 @@
       "Attachment": "Attachment",
       "System": "System",
       "ProductionEntry": "Production entry",
-      "StockDoc": "Stock movement"
+      "StockDoc": "Stock movement",
+      "CashEntry": "Safe entry",
+      "ExpenseCategory": "Expense category"
     }
   },
   "sys": {
@@ -1671,6 +1707,28 @@
         "title": "Service report {number}: {machine}",
         "body": "{work} · by {by}"
       }
+    },
+    "cash": {
+      "in": {
+        "title": "Money in {number}: {amount}",
+        "body": "{what} · by {by}"
+      },
+      "out": {
+        "title": "Expense {number}: {amount}",
+        "body": "{what} · by {by}"
+      },
+      "exchange": {
+        "title": "Exchange {number}: {gave} → {got}",
+        "body": "by {by}"
+      },
+      "receive": {
+        "title": "Received {amount} for {doc}",
+        "body": "from {party} · by {by}"
+      },
+      "pay": {
+        "title": "Paid {amount} for {doc}",
+        "body": "to {party} · by {by}"
+      }
     }
   },
   "rc": {
@@ -1756,8 +1814,8 @@
     "help": {
       "INPUT": "Items coming in without money: returns, transfers, count corrections.",
       "OUTPUT": "Items going out without money: damage, samples, transfers, count corrections.",
-      "BUY": "Items bought from a supplier, with the price in IQD or USD.",
-      "SELL": "Items sold to a customer, with the price in IQD or USD. Link it to an order if there is one."
+      "BUY": "Items bought from a supplier, with the price in IQD, USD or EUR.",
+      "SELL": "Items sold to a customer, with the price in IQD, USD or EUR. Link it to an order if there is one."
     },
     "reason": {
       "RETURN": "Return",
@@ -1765,6 +1823,97 @@
       "COUNT": "Count correction",
       "DAMAGE": "Damage / scrap",
       "SAMPLE": "Sample",
+      "OTHER": "Other"
+    },
+    "eur": "Euro"
+  },
+  "cash": {
+    "intro": "Money in the safe per currency. Sales and money put in add to it; purchases and expenses take from it.",
+    "search": "Number, name, note or document…",
+    "allKinds": "All kinds",
+    "allCurrencies": "All currencies",
+    "none": "No money movements yet.",
+    "newTitle": "Safe: new entry",
+    "currency": "Currency",
+    "amount": "Amount",
+    "inSafe": "In the safe",
+    "notEnough": "More than the safe has",
+    "category": "Spent on",
+    "from": "From",
+    "paidTo": "Paid to",
+    "give": "Currency you give",
+    "receiveCur": "Currency you receive",
+    "rate": "Rate: 1 {from} = ? {to}",
+    "rateLabel": "Exchange rate",
+    "youGet": "You receive",
+    "saved": "{number} saved. The safe has been updated.",
+    "moneyIn": "Money in",
+    "moneyOut": "Money out",
+    "forDoc": "For document",
+    "paidNow": "Paid now",
+    "receivedNow": "Received now",
+    "paidHint": "Taken from the safe. Leave the rest to pay later.",
+    "receivedHint": "Goes into the safe. The rest stays as owed by the customer.",
+    "stillOwed": "Still owed",
+    "payAll": "Paid in full",
+    "paidTitle": "Payment to the supplier",
+    "receivedTitle": "Payment from the customer",
+    "paid": "Paid",
+    "received": "Received",
+    "pay": "Pay",
+    "receive": "Receive payment",
+    "convertTitle": "Total value of the safe",
+    "convertHint": "Only a calculation at the rates you type — the money in the safe is not changed. To really change money use Exchange.",
+    "showIn": "Show in",
+    "totalValue": "Total",
+    "owedToUs": "Customers owe us",
+    "weOwe": "We owe suppliers",
+    "nothingOwed": "Nothing owed.",
+    "newCategory": "New category name",
+    "addCategory": "Add",
+    "usedN": "used {n} times",
+    "hide": "Hide",
+    "restore": "Show again",
+    "cur": {
+      "IQD": "Iraqi dinar",
+      "USD": "US dollar",
+      "EUR": "Euro"
+    },
+    "tab": {
+      "movements": "Movements",
+      "owed": "Still owed",
+      "categories": "Expense categories"
+    },
+    "kind": {
+      "DEPOSIT": "Money in",
+      "EXPENSE": "Expense",
+      "SALE": "Sale payment",
+      "PURCHASE": "Purchase payment",
+      "EXCHANGE": "Exchange"
+    },
+    "new": {
+      "IN": "Money in",
+      "OUT": "Money out",
+      "EXCHANGE": "Exchange"
+    },
+    "save": {
+      "IN": "Save money in",
+      "OUT": "Save expense",
+      "EXCHANGE": "Save exchange"
+    },
+    "help": {
+      "IN": "Money put into the safe by hand (not from a sale), e.g. from the owner or a bank.",
+      "OUT": "An expense paid from the safe: salaries, electricity, fuel… You can't take out more than the safe holds.",
+      "EXCHANGE": "Change money from one currency into another at the rate you got."
+    },
+    "cat": {
+      "SALARIES": "Salaries",
+      "ELECTRICITY": "Electricity",
+      "FUEL": "Fuel / generator",
+      "RENT": "Rent",
+      "MAINTENANCE": "Maintenance & spare parts",
+      "TRANSPORT": "Transport",
+      "FOOD": "Food",
       "OTHER": "Other"
     }
   }

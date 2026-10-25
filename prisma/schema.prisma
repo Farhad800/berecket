@@ -474,6 +474,7 @@ enum StockDocType {
 enum Currency {
   IQD
   USD
+  EUR
 }
 
 /// One stock movement document (Input / Output / Buy / Sell) with its lines (StockMovement.docId).
@@ -488,9 +489,11 @@ model StockDoc {
   orderId     String?
   order       Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
   note        String?
+  total       Decimal?        @db.Decimal(16, 2) // Buy / Sell: sum of qty × price
   createdById String
   createdAt   DateTime        @default(now())
   lines       StockMovement[]
+  payments    CashEntry[]
 
   @@index([type, createdAt])
   @@index([orderId])
@@ -605,4 +608,45 @@ model PushSubscription {
   failures   Int      @default(0)
 
   @@index([userId])
+}
+
+enum CashKind {
+  DEPOSIT // money in by hand
+  EXPENSE // money out by hand (with a category)
+  SALE // money received for a Sell document
+  PURCHASE // money paid for a Buy document
+  EXCHANGE // one currency changed into another (two entries, same number)
+}
+
+/// Expense categories for money going out of the safe. Built-in ones have a key (translated); added ones only a name.
+model ExpenseCategory {
+  id         String      @id @default(cuid())
+  key        String?     @unique
+  name       String      @unique
+  archivedAt DateTime?
+  createdAt  DateTime    @default(now())
+  entries    CashEntry[]
+}
+
+/// The safe: every movement of money. Balance per currency = SUM(amount). Positive = in, negative = out.
+model CashEntry {
+  id          String           @id @default(cuid())
+  number      String // CIN-2026-0001, COUT-…, RCV-…, PAY-…, EXC-… (an exchange has two entries with one number)
+  kind        CashKind
+  currency    Currency
+  amount      Decimal          @db.Decimal(16, 2)
+  rate        Decimal?         @db.Decimal(18, 6) // exchange: 1 unit of the currency given = rate units received
+  categoryId  String?
+  category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
+  stockDocId  String?
+  stockDoc    StockDoc?        @relation(fields: [stockDocId], references: [id], onDelete: SetNull)
+  party       String?
+  note        String?
+  createdById String
+  createdAt   DateTime         @default(now())
+
+  @@index([currency])
+  @@index([number])
+  @@index([stockDocId])
+  @@index([createdAt])
 }

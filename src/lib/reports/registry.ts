@@ -573,14 +573,67 @@ export const REPORTS: ReportDef[] = [
           { label: "rep.kpi.boughtUsd", value: tot("BUY", "USD"), type: "int" },
           { label: "rep.kpi.soldIqd", value: tot("SELL", "IQD"), type: "int", tone: "good" },
           { label: "rep.kpi.soldUsd", value: tot("SELL", "USD"), type: "int", tone: "good" },
+          ...(rows.some((r) => r.currency === "EUR") ? [
+            { label: "rep.kpi.boughtEur", value: tot("BUY", "EUR"), type: "int" as const },
+            { label: "rep.kpi.soldEur", value: tot("SELL", "EUR"), type: "int" as const, tone: "good" as const },
+          ] : []),
         ],
+      };
+    },
+  },
+  // ─ The safe: every movement of money (cash:view only)
+  {
+    key: "cash",
+    section: "money",
+    icon: "Vault",
+    perm: "cash:view",
+    filters: ["range", "type"],
+    typeFilter: { ns: "cash.kind", values: ["DEPOSIT", "EXPENSE", "SALE", "PURCHASE", "EXCHANGE"] },
+    async run(q) {
+      const [list, name] = await Promise.all([
+        db.cashEntry.findMany({
+          where: { ...(q.type ? { kind: q.type as never } : {}), createdAt: { gte: q.start, lt: q.end } },
+          orderBy: { createdAt: "asc" }, take: MAX_ROWS,
+          include: { category: true, stockDoc: { select: { id: true, number: true } } },
+        }),
+        userNames(),
+      ]);
+      const rows: Row[] = list.map((e) => {
+        const a = Number(e.amount);
+        return {
+          at: e.createdAt, number: e.number, kind: e.kind, category: e.category ? (e.category.key ?? `=${e.category.name}`) : "", party: e.party ?? "",
+          doc: e.stockDoc?.number ?? "", note: e.note ?? "", in: a > 0 ? a : null, out: a < 0 ? -a : null, currency: e.currency, by: name(e.createdById),
+          _href: { number: `/cash/${e.id}`, ...(e.stockDoc ? { doc: `/stock/${e.stockDoc.id}` } : {}) },
+        };
+      });
+      const tot = (col: "in" | "out", cur: string) => Math.round(sum(rows.filter((r) => r.currency === cur), (r) => num(r[col])) * 100) / 100;
+      const curs = ["IQD", "USD", "EUR"].filter((c) => c === "IQD" || rows.some((r) => r.currency === c));
+      return {
+        columns: [
+          { key: "at", label: "rep.col.when", type: "datetime" },
+          { key: "number", label: "rep.col.document", type: "code" },
+          { key: "kind", label: "rep.col.movement", type: "status", ns: "cash.kind", tones: { DEPOSIT: "green", EXPENSE: "red", SALE: "purple", PURCHASE: "blue", EXCHANGE: "amber" } },
+          { key: "category", label: "rep.col.expenseCat", type: "status", ns: "cash.cat" },
+          { key: "party", label: "rep.col.party" },
+          { key: "doc", label: "rep.col.forDoc", type: "code", wide: true },
+          { key: "note", label: "rep.col.note", wide: true },
+          { key: "in", label: "rep.col.moneyIn", type: "int" },
+          { key: "out", label: "rep.col.moneyOut", type: "int" },
+          { key: "currency", label: "rep.col.currency" },
+          { key: "by", label: "rep.col.by", wide: true },
+        ],
+        rows,
+        kpis: curs.flatMap((c) => [
+          { label: `rep.kpi.in${c[0]}${c.slice(1).toLowerCase()}`, value: tot("in", c), type: "int" as const, tone: "good" as const },
+          { label: `rep.kpi.out${c[0]}${c.slice(1).toLowerCase()}`, value: tot("out", c), type: "int" as const, tone: "bad" as const },
+        ]),
       };
     },
   },
 ];
 
 export const REPORT_BY_KEY = new Map(REPORTS.map((r) => [r.key, r]));
-export const SECTIONS = ["production", "orders", "service", "quality", "warehouse"] as const;
+export const SECTIONS = ["production", "orders", "service", "quality", "warehouse", "money"] as const;
 
 // ─────────────────────────────────────────────────────────── query parsing
 const isDate = (s?: string) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));

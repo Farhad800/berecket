@@ -18,7 +18,7 @@ export function cellText(col: Column, v: Cell | Record<string, string>, t: T, lo
     case "days": return t("rep.unit.d", { n: n(Number(v)) });
     case "date": return formatDate(v as Date, locale);
     case "datetime": return formatDateTime(v as Date, locale);
-    case "status": return col.ns ? t(`${col.ns}.${String(v)}`) : String(v);
+    case "status": return col.ns && !String(v).startsWith("=") ? t(`${col.ns}.${String(v)}`) : String(v).replace(/^=/, "");
     case "yesno": return v === "yes" ? t("common.yes") : t("common.no");
     default: return String(v);
   }
@@ -31,7 +31,7 @@ export function cellCsv(col: Column, v: Cell | Record<string, string>, t: T): st
     case "int": case "signed": case "pct": case "hours": case "days": return Number(v);
     case "date": return toFactoryDateInput(v as Date);
     case "datetime": return toFactoryDateTimeInput(v as Date).replace("T", " ");
-    case "status": return col.ns ? t(`${col.ns}.${String(v)}`) : String(v);
+    case "status": return col.ns && !String(v).startsWith("=") ? t(`${col.ns}.${String(v)}`) : String(v).replace(/^=/, "");
     case "yesno": return v === "yes" ? t("common.yes") : t("common.no");
     default: return String(v);
   }

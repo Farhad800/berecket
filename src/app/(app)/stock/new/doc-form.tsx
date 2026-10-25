@@ -24,7 +24,9 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const [reason, setReason] = useState("");
   const [party, setParty] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
-  const [currency, setCurrency] = useState<"IQD" | "USD">("IQD");
+  const [currency, setCurrency] = useState<"IQD" | "USD" | "EUR">("IQD");
+  // "Paid now" follows the total until the user types their own amount.
+  const [paidText, setPaidText] = useState<string | null>(null);
   const [orderId, setOrderId] = useState(initialOrder);
   const [note, setNote] = useState("");
   // Keys start at 0 on every render tree, so server and browser HTML match (hydration).
@@ -41,6 +43,9 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const set = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
   const total = lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0);
   const filled = lines.filter((l) => l.itemId);
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const paidNow = paidText === null ? round2(total) : Number(paidText) || 0;
+  const owed = round2(total - paidNow);
 
   const fillFromOrder = () => {
     const o = orders.find((x) => x.id === orderId);
@@ -52,7 +57,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
     setError(null);
     const r = await saveStockDocAction({
       type, reason: money ? undefined : reason || undefined, party: party || undefined, invoiceNo: invoiceNo || undefined,
-      currency: money ? currency : undefined, orderId: type === "SELL" && orderId ? orderId : undefined, note: note || undefined,
+      currency: money ? currency : undefined, paid: money ? paidNow : undefined, orderId: type === "SELL" && orderId ? orderId : undefined, note: note || undefined,
       lines: filled.map((l) => ({ itemId: l.itemId, qty: l.qty, unitPrice: money ? (l.price === "" ? undefined : l.price) : undefined })),
     });
     if (!r.ok) { setError(r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error); return; }
@@ -90,9 +95,10 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
                 <Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} className="mt-1" dir="ltr" aria-label={t("sd.invoice")} />
               </label>
               <label className="text-sm font-medium">{t("sd.currency")} *
-                <Select value={currency} onChange={(e) => setCurrency(e.target.value as "IQD" | "USD")} className="mt-1" aria-label={t("sd.currency")}>
+                <Select value={currency} onChange={(e) => setCurrency(e.target.value as "IQD" | "USD" | "EUR")} className="mt-1" aria-label={t("sd.currency")}>
                   <option value="IQD">IQD — {t("sd.iqd")}</option>
                   <option value="USD">USD — {t("sd.usd")}</option>
+                  <option value="EUR">EUR — {t("sd.eur")}</option>
                 </Select>
               </label>
             </>
@@ -155,6 +161,20 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
         </ul>
         <div className="border-t border-line p-3"><Button type="button" size="sm" variant="secondary" onClick={() => setLines((ls) => [...ls, blank()])}><Plus className="size-4" /> {t("sd.addLine")}</Button></div>
       </Card>
+
+      {money && (
+        <Card>
+          <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
+            <label className="text-sm font-medium">{t(type === "SELL" ? "cash.receivedNow" : "cash.paidNow")}
+              <Input type="number" inputMode="decimal" min={0} step="any" value={paidText ?? String(round2(total))} onChange={(e) => setPaidText(e.target.value)} dir="ltr" className="mt-1 text-end" aria-label={t(type === "SELL" ? "cash.receivedNow" : "cash.paidNow")} />
+              <span className="text-xs font-normal text-muted">{t(type === "SELL" ? "cash.receivedHint" : "cash.paidHint")}</span>
+            </label>
+            <p className="text-sm">{t("sd.total")}: <b dir="ltr">{fmtMoney(total)} {currency}</b></p>
+            <p className={cn("text-sm", owed > 0 ? "font-semibold text-amber-600" : "text-muted")}>{t("cash.stillOwed")}: <b dir="ltr">{fmtMoney(Math.max(owed, 0))} {currency}</b></p>
+          </div>
+          {paidText !== null && <button type="button" onClick={() => setPaidText(null)} className="mt-2 text-xs font-semibold text-brand-600 hover:underline">{t("cash.payAll")}</button>}
+        </Card>
+      )}
 
       {error && <Alert>{error}</Alert>}
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 px-3 py-3 backdrop-blur lg:start-64" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>

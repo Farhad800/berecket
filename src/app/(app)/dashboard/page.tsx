@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
-  AlertOctagon, Boxes, CalendarDays, ClipboardList, Factory, PackageMinus, Package, ShieldAlert, ShieldX, SearchCheck, Wrench, ShieldQuestion, type LucideIcon,
+  AlertOctagon, Boxes, CalendarDays, ClipboardList, Factory, PackageMinus, Package, ShieldAlert, ShieldX, SearchCheck, Wrench, ShieldQuestion, Vault, type LucideIcon,
 } from "lucide-react";
-import { pageUser } from "@/lib/auth";
+import { can, pageUser } from "@/lib/auth";
+import { balances } from "@/lib/cash";
 import { getDashboard } from "@/lib/dashboard";
 import { formatDateTime, formatNumber } from "@/lib/time";
 import { Card, PageHeader, cn } from "@/components/ui";
@@ -41,6 +42,7 @@ export default async function DashboardPage() {
   const t = await getTranslations();
   const locale = await getLocale();
   const { cards, activity } = await getDashboard();
+  const safe = can(me, "cash:view") ? await balances() : null;
 
   return (
     <>
@@ -74,6 +76,21 @@ export default async function DashboardPage() {
             </div>
           </section>
         ))}
+
+        {safe && (
+          <section>
+            <h2 className="mb-2 text-sm font-semibold text-muted">{t("nav.cash")}</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {(["IQD", "USD", "EUR"] as const).map((c) => (
+                <Link key={c} href="/cash" className="rounded-2xl border border-line bg-surface p-4 transition hover:border-brand-300 hover:shadow-sm">
+                  <Vault className="size-5 text-brand-500" aria-hidden />
+                  <p className="mt-3 text-2xl font-bold tabular-nums" dir="ltr">{safe[c].toLocaleString("en", { maximumFractionDigits: 2 })}</p>
+                  <p className="mt-0.5 text-xs text-muted">{t(`cash.cur.${c}`)}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <Card>
           <h2 className="mb-3 font-semibold">{t("dashboard.recentActivity")}</h2>

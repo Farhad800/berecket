@@ -61,7 +61,7 @@ export type ReportQuery = {
   type?: string;
 };
 
-export type ReportSection = "production" | "orders" | "service" | "quality" | "warehouse";
+export type ReportSection = "production" | "orders" | "service" | "quality" | "warehouse" | "money";
 
 export type ReportDef = {
   key: string;
@@ -73,5 +73,7 @@ export type ReportDef = {
   /** i18n namespace of the status filter values and the values themselves. */
   statusFilter?: { ns: string; values: string[] };
   typeFilter?: { ns: string; values: string[] };
+  /** Extra permission needed to open this report (e.g. money reports: cash:view). */
+  perm?: import("@/lib/permissions").Permission;
   run: (q: ReportQuery) => Promise<ReportResult>;
 };

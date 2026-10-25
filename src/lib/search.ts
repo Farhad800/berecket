@@ -78,6 +78,9 @@ export async function globalSearch(raw: string, me: CurrentUser): Promise<Search
     ["stockDocs", !may("stock:view") ? skip : db.stockDoc.findMany({
       where: { OR: [{ number: ci(q) }, { party: ci(q) }, { invoiceNo: ci(q) }] }, orderBy: { createdAt: "desc" }, take: TAKE, select: { id: true, number: true, party: true, invoiceNo: true },
     }).then((r) => r.map((d) => ({ title: d.number, sub: [d.party, d.invoiceNo].filter(Boolean).join(" · "), href: `/stock/${d.id}`, exact: same(d.number, q) })))],
+    ["cashEntries", !may("cash:view") ? skip : db.cashEntry.findMany({
+      where: { OR: [{ number: ci(q) }, { party: ci(q) }, { note: ci(q) }] }, orderBy: [{ number: "desc" }, { amount: "asc" }], distinct: ["number"], take: TAKE, // an exchange is two entries with one number select: { id: true, number: true, party: true, note: true, amount: true, currency: true },
+    }).then((r) => r.map((e) => ({ title: e.number, sub: [`${Number(e.amount).toLocaleString("en", { maximumFractionDigits: 2 })} ${e.currency}`, e.party, e.note].filter(Boolean).join(" · "), href: `/cash/${e.id}`, exact: same(e.number, q) })))],
   ];
 
   const results = await Promise.all(tasks.map(([, p]) => p));

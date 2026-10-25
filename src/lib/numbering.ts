@@ -10,6 +10,11 @@ const PREFIX = {
   stockOutput: "OUT",
   stockBuy: "BUY",
   stockSell: "SAL",
+  cashIn: "CIN",
+  cashOut: "COUT",
+  cashReceive: "RCV",
+  cashPay: "PAY",
+  cashExchange: "EXC",
 } as const;
 
 export type DocKind = keyof typeof PREFIX;

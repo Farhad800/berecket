@@ -40,7 +40,7 @@ with sync_playwright() as p:
     # 1. Buy with money
     A.goto(B+"/stock"); txt=A.inner_text("main")
     ck("stock movements page opens with 4 buttons for the owner", all(A.locator(f"a[href='/stock/new?type={t}']").count()==1 for t in ["INPUT","OUTPUT","BUY","SELL"]))
-    out=stock_doc(A, B, "BUY", [("M-100","1000.5","2.5"),("S-100",20000,"0.01")], party="Gulf Polymers", invoice="INV-9", currency="USD")
+    out=stock_doc(A, B, "BUY", [("M-100","1000.5","2.5"),("S-100",20000,"0.01")], party="Gulf Polymers", invoice="INV-9", currency="USD", paid=0)
     yr=sql("SELECT extract(year from now())::int")
     ck("buy saved with its number BUY-YYYY-0001", f"BUY-{yr}-0001" in out and "/stock/" in A.url)
     ck("buy raised stock (1,000.5 kg / 20,000 labels)", abs(stock("M-100")-1000.5)<1e-6 and stock("S-100")==20000)

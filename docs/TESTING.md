@@ -12,6 +12,7 @@
 | Stickers & materials | `tests/e2e/supplies.py` | Loads the factory's accounting list (975 products, 811 stickers, 74 materials) on an empty database; only products appear on order/daily sheets; buy/output stickers through Stock Movements; kg with decimals; warning before going below zero; re-import makes no copies |
 | Made of & packaging | `tests/e2e/recipes.py` | Final accounting list; recipe built on the product page; 2,000 pcs → 2,000 labels, 90 kg granules, 1.8 kg dye, 2 cartons (rounded up), 34 nylon bags = 0.408 kg; merge, shortage warning with minus stock, correction and deletion give stock back; new product named from its label; Recipe sheet import |
 | Stock movements | `tests/e2e/stock-docs.py` | Input/Output/Buy/Sell documents with numbers; prices & IQD/USD totals; refusals (no supplier, no price, no reason); sale filled from an order and shown on it; below-zero warning, saved anyway; read-only warehouse; per-role permissions (warehouse team Input/Output only, sales view only); trade report + CSV; search; audit; notifications; phone; Arabic; go-live reset. Shared form helper: `tests/e2e/stockdoc.py` |
+| Safe | `tests/e2e/safe.py` | Money in/out/exchange per currency (IQD/USD/EUR kept apart); refusals (no source, no category, more than the safe has — UI and server); converter at last rate; EUR purchase unpaid then paid in parts (can't overpay); sale part-received then rest received by the sales manager; still-owed tab; per-role access (sales view only, warehouse none, money report hidden); categories add/hide; report + CSV; search; audit; notifications; phone; Arabic; go-live reset |
 | Stage 1 | `tests/e2e/stage1.py` | Sign-in, roles, languages, install banner. (Older stage 2–9 suites were retired with the 23 Oct 2026 simplification; the acceptance suite covers those flows.) |
 
 ## Latest results (22 Oct 2026)
@@ -21,6 +22,7 @@
 - Security: **28/28**
 - Simplified workflow (23 Oct 2026): acceptance **56/56**, security **28/28**, unit **6/6**
 - Daily sheet / large orders / deletes: **26/26**
+- Safe (25 Oct 2026): safe **42/42**, stock-docs **32/32**, acceptance **57/57**, security **28/28**, bulk **28/28**, push **16/16**, supplies **21/21**, recipes **21/21**, replace items **7/7**, unit **6/6**
 - Stock movements (25 Oct 2026): stock-docs **32/32**, acceptance **57/57**, security **28/28**, bulk **28/28**, push **16/16**, supplies **21/21**, recipes **21/21**, replace items **7/7**, unit **6/6**
 
 ## How to run

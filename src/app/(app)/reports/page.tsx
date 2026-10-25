@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import {
   ArrowDownUp, ArrowLeftRight, Boxes, Bug, ChevronRight, ClipboardCheck, ClipboardPen, Factory, ListChecks,
-  ShieldCheck, Target, Wrench, type LucideIcon,
+  ShieldCheck, Target, Vault, Wrench, type LucideIcon,
 } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
 import { REPORTS, SECTIONS } from "@/lib/reports/registry";
@@ -11,7 +11,7 @@ import { Alert, PageHeader } from "@/components/ui";
 export const metadata = { title: "Reports & Analytics" };
 
 const ICONS: Record<string, LucideIcon> = {
-  Factory, Target, ClipboardCheck, ListChecks, Wrench, ArrowLeftRight, ShieldCheck, Bug, ClipboardPen, Boxes, ArrowDownUp,
+  Factory, Target, ClipboardCheck, ListChecks, Wrench, ArrowLeftRight, ShieldCheck, Bug, ClipboardPen, Boxes, ArrowDownUp, Vault,
 };
 
 export default async function ReportsPage() {
@@ -23,11 +23,11 @@ export default async function ReportsPage() {
       <PageHeader title={t("nav.reports")} subtitle={t("rep.intro")} />
       {!can(me, "reports:export") && <div className="mb-4"><Alert tone="blue">{t("rep.noExport")}</Alert></div>}
       <div className="space-y-6">
-        {SECTIONS.map((sec) => (
+        {SECTIONS.filter((sec) => REPORTS.some((r) => r.section === sec && (!r.perm || can(me, r.perm)))).map((sec) => (
           <section key={sec}>
             <h2 className="mb-2 text-xs font-bold tracking-wide text-muted uppercase">{t(`rep.sec.${sec}`)}</h2>
             <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {REPORTS.filter((r) => r.section === sec).map((r) => {
+              {REPORTS.filter((r) => r.section === sec && (!r.perm || can(me, r.perm))).map((r) => {
                 const Icon = ICONS[r.icon] ?? Factory;
                 return (
                   <li key={r.key}>

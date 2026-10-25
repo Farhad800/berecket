@@ -16,7 +16,7 @@ export default async function PrintReport({ params, searchParams }: { params: Pr
   const me = await pageUser("reports:export");
   const { key } = await params;
   const def = REPORT_BY_KEY.get(key);
-  if (!def) notFound();
+  if (!def || (def.perm && !me.permissions.has(def.perm))) notFound();
   const t = (await getTranslations()) as unknown as T;
   const locale = await getLocale();
   const q = parseQuery(def, await searchParams);

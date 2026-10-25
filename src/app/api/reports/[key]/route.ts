@@ -11,7 +11,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ key: str
   if (!me.permissions.has("reports:export")) return new Response("Forbidden", { status: 403 });
   const { key } = await params;
   const def = REPORT_BY_KEY.get(key);
-  if (!def) return new Response("Not found", { status: 404 });
+  if (!def || (def.perm && !me.permissions.has(def.perm))) return new Response("Not found", { status: 404 });
 
   const sp = Object.fromEntries(new URL(req.url).searchParams);
   const q = parseQuery(def, sp);

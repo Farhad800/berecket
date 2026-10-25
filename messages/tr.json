@@ -28,7 +28,8 @@
     "menu": "Menü",
     "close": "Kapat",
     "audit": "Denetim kaydı",
-    "stock": "Stok Hareketleri"
+    "stock": "Stok Hareketleri",
+    "cash": "Kasa"
   },
   "common": {
     "save": "Kaydet",
@@ -150,7 +151,8 @@
       "roles": "Roller",
       "settings": "Ayarlar",
       "audit": "Denetim kaydı",
-      "stock": "Stok hareketleri"
+      "stock": "Stok hareketleri",
+      "cash": "Kasa (para)"
     },
     "actions": {
       "view": "Görüntüle",
@@ -163,7 +165,10 @@
       "input": "Giriş",
       "output": "Çıkış",
       "buy": "Alış",
-      "sell": "Satış"
+      "sell": "Satış",
+      "in": "Para girişi",
+      "out": "Para çıkışı",
+      "exchange": "Döviz çevir"
     }
   },
   "install": {
@@ -548,6 +553,16 @@
     },
     "masterdata": {
       "import": "Excel'den içe aktarıldı"
+    },
+    "cash": {
+      "in": "Kasaya para girişi",
+      "out": "Kasadan gider",
+      "exchange": "Döviz çevrildi",
+      "receive": "Tahsilat",
+      "pay": "Ödeme",
+      "categoryAdd": "Gider kategorisi eklendi",
+      "categoryHide": "Gider kategorisi gizlendi",
+      "categoryRestore": "Gider kategorisi tekrar gösterildi"
     }
   },
   "sched": {
@@ -997,7 +1012,8 @@
       "orders": "Siparişler",
       "service": "Makineler ve bakım",
       "quality": "Kalite",
-      "warehouse": "Depo"
+      "warehouse": "Depo",
+      "money": "Para"
     },
     "r": {
       "production": {
@@ -1046,7 +1062,11 @@
       },
       "trade": {
         "title": "Alış ve satış",
-        "desc": "Alınan ve satılan her kalem: tedarikçi/müşteri, fiyat ve toplam (IQD veya USD)."
+        "desc": "Alınan ve satılan her kalem: tedarikçi/müşteri, fiyat ve toplam (IQD, USD veya EUR)."
+      },
+      "cash": {
+        "title": "Kasa: giren ve çıkan",
+        "desc": "Kategori, kişi ve para birimine göre toplamlarla her para hareketi."
       }
     },
     "group": {
@@ -1204,7 +1224,12 @@
       "invoice": "Fatura",
       "unitPrice": "Fiyat",
       "amount": "Tutar",
-      "currency": "Para birimi"
+      "currency": "Para birimi",
+      "expenseCat": "Harcama türü",
+      "forDoc": "Belge",
+      "note": "Not",
+      "moneyIn": "Giren",
+      "moneyOut": "Çıkan"
     },
     "kpi": {
       "achievement": "Plan gerçekleşme",
@@ -1272,7 +1297,15 @@
       "boughtIqd": "Alış (IQD)",
       "boughtUsd": "Alış (USD)",
       "soldIqd": "Satış (IQD)",
-      "soldUsd": "Satış (USD)"
+      "soldUsd": "Satış (USD)",
+      "inIqd": "Giren (IQD)",
+      "outIqd": "Çıkan (IQD)",
+      "inUsd": "Giren (USD)",
+      "outUsd": "Çıkan (USD)",
+      "inEur": "Giren (EUR)",
+      "outEur": "Çıkan (EUR)",
+      "boughtEur": "Alış (EUR)",
+      "soldEur": "Satış (EUR)"
     },
     "chartMax": "En yüksek: {v}"
   },
@@ -1295,7 +1328,8 @@
       "serviceReports": "Servis raporları",
       "shipments": "Sevkiyatlar",
       "receipts": "Depo kabulleri",
-      "stockDocs": "Stok hareketleri"
+      "stockDocs": "Stok hareketleri",
+      "cashEntries": "Kasa"
     }
   },
   "ui": {
@@ -1336,7 +1370,9 @@
       "Attachment": "Ek",
       "System": "Sistem",
       "ProductionEntry": "Üretim girişi",
-      "StockDoc": "Stok hareketi"
+      "StockDoc": "Stok hareketi",
+      "CashEntry": "Kasa kaydı",
+      "ExpenseCategory": "Gider kategorisi"
     }
   },
   "sys": {
@@ -1671,6 +1707,28 @@
         "title": "Servis raporu {number}: {machine}",
         "body": "{work} · {by}"
       }
+    },
+    "cash": {
+      "in": {
+        "title": "Para girişi {number}: {amount}",
+        "body": "{what} · {by}"
+      },
+      "out": {
+        "title": "Gider {number}: {amount}",
+        "body": "{what} · {by}"
+      },
+      "exchange": {
+        "title": "Döviz {number}: {gave} → {got}",
+        "body": "{by}"
+      },
+      "receive": {
+        "title": "{doc} için {amount} tahsil edildi",
+        "body": "{party} · {by}"
+      },
+      "pay": {
+        "title": "{doc} için {amount} ödendi",
+        "body": "{party} · {by}"
+      }
     }
   },
   "rc": {
@@ -1756,8 +1814,8 @@
     "help": {
       "INPUT": "Parasız giren kalemler: iadeler, transferler, sayım düzeltmeleri.",
       "OUTPUT": "Parasız çıkan kalemler: hasar, numune, transfer, sayım düzeltmeleri.",
-      "BUY": "Tedarikçiden alınan kalemler, IQD veya USD fiyatla.",
-      "SELL": "Müşteriye satılan kalemler, IQD veya USD fiyatla. Varsa bir siparişe bağlayın."
+      "BUY": "Tedarikçiden alınan kalemler, IQD, USD veya EUR fiyatla.",
+      "SELL": "Müşteriye satılan kalemler, IQD, USD veya EUR fiyatla. Varsa bir siparişe bağlayın."
     },
     "reason": {
       "RETURN": "İade",
@@ -1765,6 +1823,97 @@
       "COUNT": "Sayım düzeltmesi",
       "DAMAGE": "Hasar / hurda",
       "SAMPLE": "Numune",
+      "OTHER": "Diğer"
+    },
+    "eur": "Euro"
+  },
+  "cash": {
+    "intro": "Para birimine göre kasadaki para. Satışlar ve yatırılan para artırır; alışlar ve giderler azaltır.",
+    "search": "Numara, ad, not veya belge…",
+    "allKinds": "Tüm türler",
+    "allCurrencies": "Tüm para birimleri",
+    "none": "Henüz para hareketi yok.",
+    "newTitle": "Kasa: yeni kayıt",
+    "currency": "Para birimi",
+    "amount": "Tutar",
+    "inSafe": "Kasada",
+    "notEnough": "Kasadakinden fazla",
+    "category": "Harcama türü",
+    "from": "Kimden",
+    "paidTo": "Kime ödendi",
+    "give": "Verilen para birimi",
+    "receiveCur": "Alınan para birimi",
+    "rate": "Kur: 1 {from} = ? {to}",
+    "rateLabel": "Döviz kuru",
+    "youGet": "Alacağınız",
+    "saved": "{number} kaydedildi. Kasa güncellendi.",
+    "moneyIn": "Giren para",
+    "moneyOut": "Çıkan para",
+    "forDoc": "Belge",
+    "paidNow": "Şimdi ödenen",
+    "receivedNow": "Şimdi alınan",
+    "paidHint": "Kasadan alınır. Kalanı sonra ödeyin.",
+    "receivedHint": "Kasaya girer. Kalanı müşterinin borcu olarak kalır.",
+    "stillOwed": "Kalan borç",
+    "payAll": "Tamamı ödendi",
+    "paidTitle": "Tedarikçiye ödeme",
+    "receivedTitle": "Müşteriden tahsilat",
+    "paid": "Ödenen",
+    "received": "Alınan",
+    "pay": "Öde",
+    "receive": "Tahsil et",
+    "convertTitle": "Kasanın toplam değeri",
+    "convertHint": "Yalnızca yazdığınız kurlarla bir hesap — kasadaki para değişmez. Gerçekten çevirmek için Döviz çevir'i kullanın.",
+    "showIn": "Göster",
+    "totalValue": "Toplam",
+    "owedToUs": "Müşterilerin borcu",
+    "weOwe": "Tedarikçilere borcumuz",
+    "nothingOwed": "Borç yok.",
+    "newCategory": "Yeni kategori adı",
+    "addCategory": "Ekle",
+    "usedN": "{n} kez kullanıldı",
+    "hide": "Gizle",
+    "restore": "Tekrar göster",
+    "cur": {
+      "IQD": "Irak dinarı",
+      "USD": "ABD doları",
+      "EUR": "Euro"
+    },
+    "tab": {
+      "movements": "Hareketler",
+      "owed": "Borçlar",
+      "categories": "Gider kategorileri"
+    },
+    "kind": {
+      "DEPOSIT": "Para girişi",
+      "EXPENSE": "Gider",
+      "SALE": "Satış tahsilatı",
+      "PURCHASE": "Alış ödemesi",
+      "EXCHANGE": "Döviz çevirme"
+    },
+    "new": {
+      "IN": "Para girişi",
+      "OUT": "Para çıkışı",
+      "EXCHANGE": "Döviz çevir"
+    },
+    "save": {
+      "IN": "Girişi kaydet",
+      "OUT": "Gideri kaydet",
+      "EXCHANGE": "Çevirmeyi kaydet"
+    },
+    "help": {
+      "IN": "Kasaya elle konan para (satıştan değil), ör. sahibinden veya bankadan.",
+      "OUT": "Kasadan ödenen gider: maaş, elektrik, yakıt… Kasadakinden fazla çıkarılamaz.",
+      "EXCHANGE": "Parayı aldığınız kurla bir para biriminden diğerine çevirin."
+    },
+    "cat": {
+      "SALARIES": "Maaşlar",
+      "ELECTRICITY": "Elektrik",
+      "FUEL": "Yakıt / jeneratör",
+      "RENT": "Kira",
+      "MAINTENANCE": "Bakım ve yedek parça",
+      "TRANSPORT": "Nakliye",
+      "FOOD": "Yemek",
       "OTHER": "Diğer"
     }
   }

@@ -47,14 +47,30 @@ Every manual change of stock is one numbered document. Press one of the four but
 |---|---|---|---|
 | **Input** | IN-2026-0001 | no | reason: return, transfer, count correction, other |
 | **Output** | OUT-2026-0001 | no | reason: damage/scrap, sample, transfer, count correction, other |
-| **Buy** | BUY-2026-0001 | yes | supplier name, invoice no. (optional), currency IQD or USD, price per unit |
-| **Sell** | SAL-2026-0001 | yes | customer name, invoice no. (optional), currency, price per unit; optionally the order — the list button fills the lines from the order |
+| **Buy** | BUY-2026-0001 | yes | supplier name, invoice no. (optional), currency IQD, USD or EUR, price per unit, **paid now** (taken from the safe) |
+| **Sell** | SAL-2026-0001 | yes | customer name, invoice no. (optional), currency, price per unit, **received now** (goes into the safe); optionally the order — the list button fills the lines from the order |
 - Under each line you see the stock now and after saving. If it would go below zero you are warned, but you can still save (the warehouse is notified).
 - Kg items can have 3 decimals (25.250); pieces must be whole numbers.
 - Daily production and what it uses (labels, materials, cartons, nylon) still change stock automatically.
 - A sale linked to an order shows on that order (**Sold** column + list of sales).
 - Report **Buying and selling** lists every bought/sold line with totals per currency (CSV / Excel / PDF).
 - **Who can do what** is set per role in Administration → Roles → *Stock movements*: View, Input, Output, Buy, Sell. Warehouse Team has Input and Output; switch Buy/Sell on for the roles that need them.
+
+## Safe (money)
+The safe keeps **IQD, USD and EUR apart** — each has its own balance. Open **Safe** in the menu.
+| What | Number | Effect |
+|---|---|---|
+| **Money in** | CIN-2026-0001 | adds money by hand (owner, bank…); write where it came from |
+| **Money out** | COUT-2026-0001 | an expense; choose what it was spent on (Salaries, Electricity, Fuel/generator, Rent, Maintenance, Transport, Food, Other, or your own) |
+| **Exchange** | EXC-2026-0001 | e.g. 1,000 USD → 1,450,000 IQD at the rate you got: USD goes down, IQD goes up |
+| Sale payment | RCV-2026-0001 | made automatically from the "received now" of a Sell, or later with **Receive payment** on the sale |
+| Purchase payment | PAY-2026-0001 | made automatically from the "paid now" of a Buy, or later with **Pay** on the purchase |
+- Money can never leave the safe if there isn't enough of that currency — the button turns off and the server refuses it.
+- **Still owed** tab: what customers still owe us and what we still owe suppliers, per document.
+- **Total value of the safe**: type 1 USD = … IQD and 1 EUR = … IQD to see everything as one total (starts at the last exchange rate). This is only a calculation; it changes nothing.
+- **Expense categories** tab (needs *Safe: Manage*): add your own, hide ones you don't use.
+- Report **Safe: money in and out** (Reports → Money) with totals per currency; CSV/Excel/PDF.
+- Permissions in Administration → Roles → *Safe (money)*: View, Money in, Money out, Exchange, Manage, Export. Only the Administrator has them at first. A person who may **Sell** can always record what the customer paid; a person who may **Buy** can pay the supplier.
 
 ## Notifications on your phone and computer
 - After signing in, tap **Turn on notifications** (or open the bell → *Notifications on this device*). Allow when the browser asks. Do this once on each phone and computer.

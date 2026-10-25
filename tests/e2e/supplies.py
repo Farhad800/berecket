@@ -37,7 +37,7 @@ with sync_playwright() as p:
     # 3. stickers tab lists stickers; stock comes in/out through Stock Movements
     A.goto(B+"/inventory?tab=stickers"); txt=A.inner_text("main")
     ck("stickers tab lists stickers with both names", "اتيكيت" in txt and "ETIKET" in txt.upper())
-    stock_doc(A, B, "BUY", [("S-0001",5000,25)], party="Label printer", currency="IQD", invoice="Invoice 77")
+    stock_doc(A, B, "BUY", [("S-0001",5000,25)], party="Label printer", currency="IQD", invoice="Invoice 77", paid=0)
     ck("5,000 stickers bought", stock("S-0001")==5000)
     stock_doc(A, B, "OUTPUT", [("S-0001",1200,None)], reason="DAMAGE")
     ck("1,200 out → 3,800 left", stock("S-0001")==3800)

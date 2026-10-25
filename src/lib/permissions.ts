@@ -9,6 +9,7 @@ export const RESOURCES = [
   "qc",
   "warehouse",
   "stock", // stock movement documents: input, output, buy, sell
+  "cash", // the safe: money in, money out (expenses), currency exchange, expense categories
   "products",
   "assets", // machines & molds
   "reports",
@@ -18,7 +19,7 @@ export const RESOURCES = [
   "audit",
 ] as const;
 
-export const ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage", "input", "output", "buy", "sell"] as const;
+export const ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage", "input", "output", "buy", "sell", "in", "out", "exchange"] as const;
 
 export type Resource = (typeof RESOURCES)[number];
 export type Action = (typeof ACTIONS)[number];
@@ -33,6 +34,7 @@ export const RESOURCE_ACTIONS: Record<Resource, Action[]> = {
   qc: ["view", "create", "edit", "approve", "export"],
   warehouse: ["view", "create", "edit", "approve", "export"],
   stock: ["view", "input", "output", "buy", "sell"],
+  cash: ["view", "in", "out", "exchange", "manage", "export"],
   products: ["view", "create", "edit", "archive", "export"],
   assets: ["view", "create", "edit", "archive", "export"],
   reports: ["view", "export"],

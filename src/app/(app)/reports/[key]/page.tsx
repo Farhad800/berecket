@@ -23,7 +23,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const me = await pageUser("reports:view");
   const { key } = await params;
   const def = REPORT_BY_KEY.get(key);
-  if (!def) notFound();
+  if (!def || (def.perm && !can(me, def.perm))) notFound();
   const t = (await getTranslations()) as unknown as T;
   const locale = await getLocale();
   const q = parseQuery(def, await searchParams);

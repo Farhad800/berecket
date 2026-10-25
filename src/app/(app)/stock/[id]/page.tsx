@@ -2,17 +2,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
-import { pageUser } from "@/lib/auth";
+import { can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getStock } from "@/lib/stock";
 import { formatDateTime } from "@/lib/time";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui";
 import { DOC_TONE, fmtMoney, fmtQty } from "../types";
+import PayForm from "./pay-form";
 
 export const metadata = { title: "Stock movement" };
 
 export default async function StockDocPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> }) {
-  await pageUser("stock:view");
+  const me = await pageUser("stock:view");
   const t = await getTranslations();
   const locale = await getLocale();
   const { id } = await params;
@@ -22,12 +23,18 @@ export default async function StockDocPage({ params, searchParams }: { params: P
     include: { order: { select: { id: true, number: true } }, lines: { orderBy: { createdAt: "asc" }, include: { product: { select: { id: true, code: true, name: true, name2: true, unit: true } } } } },
   });
   if (!d) notFound();
-  const [by, stock] = await Promise.all([
+  const [by, stock, payments] = await Promise.all([
     db.user.findUnique({ where: { id: d.createdById }, select: { fullName: true } }),
     getStock(d.lines.map((l) => l.productId)),
+    db.cashEntry.findMany({ where: { stockDocId: d.id }, orderBy: { createdAt: "asc" } }),
   ]);
+  const payers = await db.user.findMany({ where: { id: { in: [...new Set(payments.map((p) => p.createdById))] } }, select: { id: true, fullName: true } });
   const money = !!d.currency;
   const total = d.lines.reduce((s, l) => s + Math.abs(Number(l.qty)) * Number(l.unitPrice ?? 0), 0);
+  const sell = d.type === "SELL";
+  const paid = Math.round(payments.reduce((s, p) => s + Math.abs(Number(p.amount)), 0) * 100) / 100;
+  const owed = Math.round((total - paid) * 100) / 100;
+  const mayPay = sell ? can(me, "stock:sell") || can(me, "cash:in") : can(me, "stock:buy") || can(me, "cash:out");
   const minus = d.lines.filter((l) => (stock.get(l.productId) ?? 0) < 0);
 
   return (
@@ -46,6 +53,27 @@ export default async function StockDocPage({ params, searchParams }: { params: P
         </dl>
         {d.note && <p className="mt-3 rounded-lg bg-surface-2 p-3 text-sm whitespace-pre-wrap">{d.note}</p>}
       </Card>
+      {money && (
+        <Card className="mb-4">
+          <h2 className="font-semibold">{t(sell ? "cash.receivedTitle" : "cash.paidTitle")}</h2>
+          <dl className="mt-2 grid grid-cols-3 gap-3 text-sm">
+            <div><dt className="text-xs text-muted">{t("sd.total")}</dt><dd className="font-semibold" dir="ltr">{fmtMoney(total)} {d.currency}</dd></div>
+            <div><dt className="text-xs text-muted">{t(sell ? "cash.received" : "cash.paid")}</dt><dd className="font-semibold text-green-700 dark:text-green-400" dir="ltr">{fmtMoney(paid)} {d.currency}</dd></div>
+            <div><dt className="text-xs text-muted">{t("cash.stillOwed")}</dt><dd className={`font-bold ${owed > 0 ? "text-amber-600" : ""}`} dir="ltr">{fmtMoney(owed)} {d.currency}</dd></div>
+          </dl>
+          {payments.length > 0 && (
+            <ul className="mt-3 divide-y divide-line text-sm">
+              {payments.map((p) => (
+                <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5">
+                  <span><span className="font-semibold" dir="ltr">{p.number}</span> · {formatDateTime(p.createdAt, locale)} · {payers.find((u) => u.id === p.createdById)?.fullName ?? "—"}{p.note && ` · ${p.note}`}</span>
+                  <span className="font-semibold tabular-nums" dir="ltr">{fmtMoney(Math.abs(Number(p.amount)))} {p.currency}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {owed > 0 && mayPay && <PayForm docId={d.id} owed={owed} currency={d.currency!} sell={sell} />}
+        </Card>
+      )}
       <Card className="p-0 sm:p-0">
         <div className="table-wrap">
           <table className="w-full text-sm">

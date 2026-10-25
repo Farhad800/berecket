@@ -1,6 +1,6 @@
 """Shared helper: fill and save one Stock Movements document (Input / Output / Buy / Sell) through the UI."""
 import re
-def stock_doc(pg, B, typ, lines, reason=None, party=None, currency=None, invoice=None, order=None, save=True):
+def stock_doc(pg, B, typ, lines, reason=None, party=None, currency=None, invoice=None, order=None, paid=None, save=True):
     """lines = [(search text, qty, price or None)]. Returns the page text after saving (or the form text if save=False)."""
     pg.goto(B+f"/stock/new?type={typ}"); pg.wait_for_load_state("networkidle")
     if reason: pg.get_by_label("Reason").select_option(reason)
@@ -17,6 +17,7 @@ def stock_doc(pg, B, typ, lines, reason=None, party=None, currency=None, invoice
         else: pg.keyboard.press("Enter")
         row.locator("input[type=number]").nth(0).fill(str(qty))
         if price is not None: row.locator("input[type=number]").nth(1).fill(str(price))
+    if paid is not None: pg.get_by_label(re.compile("^(Paid now|Received now)$")).fill(str(paid))
     if not save: return pg.inner_text("main")
     pg.get_by_role("button", name=re.compile("^Save (input|output|purchase|sale)")).click()
     try: pg.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$"), timeout=15000)
