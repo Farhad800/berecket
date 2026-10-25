@@ -1,6 +1,7 @@
 """Replace the whole item list: blocked while used, remove all (machines/molds stay), import the accountant file. Run on :3001 with a fresh bereket_accept."""
-import re, subprocess
+import os, re, subprocess
 from playwright.sync_api import sync_playwright
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc
 B="http://localhost:3001"; D="/tmp/claude-0/-home-claude/f2fd9017-1975-5c5d-8632-f9a800ffa010/scratchpad/"
 def sql(q): return subprocess.run(["su","postgres","-c",f"psql -d bereket_accept -tAc \"{q}\""],capture_output=True,text=True).stdout.strip()
 res=[]
@@ -18,7 +19,7 @@ with sync_playwright() as p:
     A.goto(B+"/assets?tab=molds"); A.click("text=New mold"); A.fill("#code","MD-1"); A.fill("#name","Mold one"); A.fill("#cavities","4"); A.get_by_role("button", name="Save").first.click(); A.wait_for_timeout(1500)
     imp(A,"old.xlsx","The file is correct"); ck("first list in (1,860)", sql("SELECT count(*) FROM \\\"Product\\\"")=="1860")
     # an item with stock blocks removal
-    sid=sql("SELECT id FROM \\\"Product\\\" WHERE code='S-0001'"); A.goto(B+"/inventory?tab=stickers"); A.fill(f"input[name='q_{sid}']","10"); A.get_by_role("button", name=re.compile("^Save receipt")).click(); A.wait_for_timeout(1500)
+    stock_doc(A, B, "INPUT", [("S-0001",10,None)], reason="COUNT")
     A.goto(B+"/admin?tab=system"); ck("blocked while an item has stock", "already used by orders, production or stock" in A.inner_text("main") and A.locator("#items-confirm").count()==0)
     A.fill("#confirm","RESET"); A.fill("#reset-password","OwnerPass2026!"); A.get_by_role("button", name="Delete test transactions").click(); A.wait_for_timeout(3000)
     wipe(A); ck("wrong word refused", True)

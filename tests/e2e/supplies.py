@@ -3,6 +3,7 @@
    IMPORT_FILE=<path to bereket-items-import.xlsx> python3 tests/e2e/supplies.py"""
 import os, re, subprocess, time
 from playwright.sync_api import sync_playwright
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc
 B=os.environ.get("BASE","http://localhost:3001"); DB=os.environ.get("PGDB","bereket_accept"); TOKEN=os.environ.get("SETUP_TOKEN","acceptance-setup-token-2026")
 F=os.environ["IMPORT_FILE"]
 res=[]
@@ -33,28 +34,25 @@ with sync_playwright() as p:
     A.goto(B+"/production/daily"); A.uncheck("text=Only products in open orders") if A.locator("text=Only products in open orders").count() else None
     ck("daily sheet lists only products", A.locator("input[data-q]").count()==983)
 
-    # 3. stickers tab: receive, use, can't use more than in stock
+    # 3. stickers tab lists stickers; stock comes in/out through Stock Movements
     A.goto(B+"/inventory?tab=stickers"); txt=A.inner_text("main")
     ck("stickers tab lists stickers with both names", "اتيكيت" in txt and "ETIKET" in txt.upper())
-    sid=sql("SELECT id FROM \\\"Product\\\" WHERE code='S-0001'")
-    A.fill(f"input[name='q_{sid}']","5000"); A.fill("input[name=reference]","Invoice 77"); A.get_by_role("button", name=re.compile("^Save receipt")).click(); A.wait_for_timeout(1500)
-    ck("5,000 stickers received", stock("S-0001")==5000)
-    A.get_by_role("tab", name="Used (out)").click(); A.fill(f"input[name='q_{sid}']","1200"); A.get_by_role("button", name=re.compile("^Save use")).click(); A.wait_for_timeout(1500)
-    ck("1,200 used → 3,800 left", stock("S-0001")==3800)
-    A.get_by_role("tab", name="Used (out)").click(); A.evaluate(f"document.querySelector(\"input[name='q_{sid}']\").removeAttribute('max')")
-    A.fill(f"input[name='q_{sid}']","99999"); A.get_by_role("button", name=re.compile("^Save use")).click(); A.wait_for_timeout(1500)
-    ck("can't use more stickers than in stock", stock("S-0001")==3800 and "only 3,800" in A.inner_text("main"))
+    stock_doc(A, B, "BUY", [("S-0001",5000,25)], party="Label printer", currency="IQD", invoice="Invoice 77")
+    ck("5,000 stickers bought", stock("S-0001")==5000)
+    stock_doc(A, B, "OUTPUT", [("S-0001",1200,None)], reason="DAMAGE")
+    ck("1,200 out → 3,800 left", stock("S-0001")==3800)
+    form=stock_doc(A, B, "OUTPUT", [("S-0001",99999,None)], reason="DAMAGE", save=False)
+    ck("output above stock shows a warning", "stock will go below zero" in form)
 
-    # 4. materials tab: kg with decimals
-    A.goto(B+"/inventory?tab=materials"); mid=sql("SELECT id FROM \\\"Product\\\" WHERE code='M-0002'")
-    A.fill(f"input[name='q_{mid}']","1250.5"); A.get_by_role("button", name=re.compile("^Save receipt")).click(); A.wait_for_timeout(1500)
-    A.get_by_role("tab", name="Used (out)").click(); A.fill(f"input[name='q_{mid}']","25.25"); A.get_by_role("button", name=re.compile("^Save use")).click(); A.wait_for_timeout(1500)
-    ck("kg with decimals: 1,250.5 in − 25.25 used = 1,225.25", abs(stock("M-0002")-1225.25)<1e-6)
+    # 4. materials: kg with decimals
+    stock_doc(A, B, "INPUT", [("M-0002","1250.5",None)], reason="COUNT")
+    stock_doc(A, B, "OUTPUT", [("M-0002","25.25",None)], reason="SAMPLE")
+    ck("kg with decimals: 1,250.5 in − 25.25 out = 1,225.25", abs(stock("M-0002")-1225.25)<1e-6)
     A.goto(B+"/inventory?tab=materials"); ck("materials page shows kg balance", "1,225.25" in A.inner_text("main"))
-    pcs=sql("SELECT id FROM \\\"Product\\\" WHERE kind='MATERIAL' AND unit='pcs' LIMIT 1")
-    A.fill(f"input[name='q_{pcs}']","2.5"); A.get_by_role("button", name=re.compile("^Save receipt")).click(); A.wait_for_timeout(1500)
-    ck("pieces items refuse decimals", stock_id(pcs)==0)
-    A.goto(B+"/inventory?tab=movements"); ck("movements list shows Received / Used", "Received" in A.inner_text("main") and "Used" in A.inner_text("main"))
+    pcs=sql("SELECT code FROM \\\"Product\\\" WHERE kind='MATERIAL' AND unit='pcs' LIMIT 1")
+    txt=stock_doc(A, B, "INPUT", [(pcs,"2.5",None)], reason="COUNT")
+    ck("pieces items refuse decimals", stock(pcs)==0)
+    A.goto(B+"/inventory?tab=movements"); ck("movements list shows Bought / Output", "Bought" in A.inner_text("main") and "Output" in A.inner_text("main"))
     A.goto(B+"/inventory"); ck("products tab doesn't list stickers/materials", "S-0001" not in A.inner_text("main"))
     A.goto(B+"/search?q=S-0001"); ck("search opens the label", "/products/" in A.url and "اتيكيت" in A.inner_text("main"))
 

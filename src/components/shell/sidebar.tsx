@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
+  ArrowLeftRight, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
   LayoutDashboard, Menu, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { cn } from "@/components/ui";
 
 const ICONS: Record<string, LucideIcon> = {
-  BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
+  ArrowLeftRight, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
   LayoutDashboard, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench,
 };
 

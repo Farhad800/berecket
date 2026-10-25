@@ -10,9 +10,9 @@ import type { PrismaClient } from "@prisma/client";
 
 export type ResetScope = "operations" | "everything";
 
-const OPERATIONAL_ENTITIES = ["Order", "ProductionEntry", "MaintenanceRequest", "ServiceReport", "QcInspection", "QualityIssue", "StockMovement"];
+const OPERATIONAL_ENTITIES = ["Order", "ProductionEntry", "MaintenanceRequest", "ServiceReport", "QcInspection", "QualityIssue", "StockMovement", "StockDoc"];
 const MASTER_ENTITIES = ["Product", "Machine", "Mold"];
-const OPERATIONAL_COUNTERS = ["order-", "maintenance-", "service-", "inspection-", "issue-"];
+const OPERATIONAL_COUNTERS = ["order-", "maintenance-", "service-", "inspection-", "issue-", "stock"];
 
 /** How many records a reset would delete (shown before the admin confirms). */
 export async function resetPreview(db: PrismaClient) {
@@ -44,6 +44,7 @@ export async function resetData(db: PrismaClient, scope: ResetScope) {
       await tx.comment.deleteMany({ where: { entityType: { in: entities } } });
       await tx.notification.deleteMany({});
       await tx.stockMovement.deleteMany({});
+      await tx.stockDoc.deleteMany({});
       await tx.correctiveAction.deleteMany({});
       await tx.qualityIssue.deleteMany({});
       await tx.qcInspection.deleteMany({});

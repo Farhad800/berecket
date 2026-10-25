@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Box, Plus, Save, Tag, Trash2 } from "lucide-react";
@@ -13,7 +13,6 @@ export type Item = { id: string; code: string; name: string; name2: string | nul
 type Line = { key: number; componentId: string; qty: string; per: "PIECE" | "CARTON" };
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
 const isKg = (u: string) => u.toLowerCase() === "kg";
-let seq = 0;
 
 /** Label, "made of" (per piece) and packaging (per carton) of one product, with a live preview of what N pieces use. */
 export default function RecipeEditor({ productId, canEdit, labels, madeOf, packaging, initial, molds }: {
@@ -30,14 +29,16 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
   const [qc, setQc] = useState(false);
   const t = useTranslations();
   const [labelId, setLabelId] = useState(initial.labelId ?? "");
-  const [lines, setLines] = useState<Line[]>(initial.lines.map((l) => ({ key: ++seq, componentId: l.componentId, qty: String(l.qty), per: l.per })));
+  // Keys are per editor (not module-wide), so server and browser HTML match.
+  const seq = useRef(initial.lines.length);
+  const [lines, setLines] = useState<Line[]>(() => initial.lines.map((l, i) => ({ key: i, componentId: l.componentId, qty: String(l.qty), per: l.per })));
   const [pieces, setPieces] = useState("1000");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const all = useMemo(() => new Map([...labels, ...madeOf, ...packaging].map((i) => [i.id, i])), [labels, madeOf, packaging]);
 
   const set = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
-  const add = (per: "PIECE" | "CARTON") => setLines((ls) => [...ls, { key: ++seq, componentId: "", qty: "", per }]);
+  const add = (per: "PIECE" | "CARTON") => setLines((ls) => [...ls, { key: ++seq.current, componentId: "", qty: "", per }]);
   const remove = (key: number) => setLines((ls) => ls.filter((l) => l.key !== key));
 
   const preview = useMemo(() => {

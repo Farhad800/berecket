@@ -6,6 +6,10 @@ const PREFIX = {
   service: "SR",
   inspection: "QC",
   issue: "NCR",
+  stockInput: "IN",
+  stockOutput: "OUT",
+  stockBuy: "BUY",
+  stockSell: "SAL",
 } as const;
 
 export type DocKind = keyof typeof PREFIX;

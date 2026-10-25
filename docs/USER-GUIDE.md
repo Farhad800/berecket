@@ -38,15 +38,23 @@ d.
 3. Record corrective actions on the issue; send it to maintenance for a machine if needed; verify and close it when fixed.
 4. QC also verifies completed repairs.
 
-## Warehouse
-The warehouse has five tabs: **Products**, **Labels**, **Raw materials** (granules, dyes, regrind), **Packaging** (nylon, cartons, stretch film, tape, pallets) and **Movements**.
-- **Stickers / Materials:** choose **Received (in)** when a delivery arrives or **Used (out)** when it goes to production, type the quantity next to each item (kg can have decimals, e.g. 25.5), add a reference (supplier, invoice, machine) and save. You can't use more than is in stock.
-1. **Warehouse Stock**: current stock of every product (it rises from production and falls with QC rejects and goods going out — totals can't be typed in).
-2. Goods leaving: type the pieces going out next to each product, add a reference (order number, truck…) and press **Take out**. You can't take out more than is in stock.
-3. Stock corrections (count differences, damage, scrap) need a reason and supervisor permission (*Warehouse: approve*).
-4. **Movements** lists every stock change with who did it.
+## Warehouse (stock on hand — read only)
+The warehouse only **shows** what is in stock. It has five tabs: **Products**, **Labels**, **Raw materials** (granules, dyes, regrind), **Packaging** (nylon, cartons, stretch film, tape, pallets) and **Movements**. Nothing can be typed here; a number below zero is shown in red so it can be counted and corrected.
 
-n.
+## Stock Movements (Input · Output · Buy · Sell)
+Every manual change of stock is one numbered document. Press one of the four buttons, choose the items (any product, label, material or packaging), type the quantities and save.
+| Document | Number | Money | You fill in |
+|---|---|---|---|
+| **Input** | IN-2026-0001 | no | reason: return, transfer, count correction, other |
+| **Output** | OUT-2026-0001 | no | reason: damage/scrap, sample, transfer, count correction, other |
+| **Buy** | BUY-2026-0001 | yes | supplier name, invoice no. (optional), currency IQD or USD, price per unit |
+| **Sell** | SAL-2026-0001 | yes | customer name, invoice no. (optional), currency, price per unit; optionally the order — the list button fills the lines from the order |
+- Under each line you see the stock now and after saving. If it would go below zero you are warned, but you can still save (the warehouse is notified).
+- Kg items can have 3 decimals (25.250); pieces must be whole numbers.
+- Daily production and what it uses (labels, materials, cartons, nylon) still change stock automatically.
+- A sale linked to an order shows on that order (**Sold** column + list of sales).
+- Report **Buying and selling** lists every bought/sold line with totals per currency (CSV / Excel / PDF).
+- **Who can do what** is set per role in Administration → Roles → *Stock movements*: View, Input, Output, Buy, Sell. Warehouse Team has Input and Output; switch Buy/Sell on for the roles that need them.
 
 ## Notifications on your phone and computer
 - After signing in, tap **Turn on notifications** (or open the bell → *Notifications on this device*). Allow when the browser asks. Do this once on each phone and computer.

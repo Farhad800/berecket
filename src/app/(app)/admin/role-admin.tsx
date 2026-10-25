@@ -8,7 +8,7 @@ import { Alert, Badge, Button, Card, Field, Input, cn } from "@/components/ui";
 
 type RoleRow = { id: string; name: string; description: string | null; isSystem: boolean; userCount: number; permissions: string[] };
 type MatrixRow = { resource: string; actions: string[] };
-const ALL_ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage"];
+const ALL_ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage", "input", "output", "buy", "sell"];
 
 export default function RoleAdmin({ roles, matrix }: { roles: RoleRow[]; matrix: MatrixRow[] }) {
   const t = useTranslations();

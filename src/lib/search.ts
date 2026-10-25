@@ -75,6 +75,9 @@ export async function globalSearch(raw: string, me: CurrentUser): Promise<Search
     ["serviceReports", !may("service:view") ? skip : db.serviceReport.findMany({
       where: { number: ci(q) }, orderBy: { createdAt: "desc" }, take: TAKE, select: { id: true, number: true, workPerformed: true, machine: { select: { code: true } } },
     }).then((r) => r.map((s) => ({ title: s.number, sub: `${s.machine.code} · ${s.workPerformed.slice(0, 80)}`, href: `/service/reports/${s.id}`, exact: same(s.number, q) })))],
+    ["stockDocs", !may("stock:view") ? skip : db.stockDoc.findMany({
+      where: { OR: [{ number: ci(q) }, { party: ci(q) }, { invoiceNo: ci(q) }] }, orderBy: { createdAt: "desc" }, take: TAKE, select: { id: true, number: true, party: true, invoiceNo: true },
+    }).then((r) => r.map((d) => ({ title: d.number, sub: [d.party, d.invoiceNo].filter(Boolean).join(" · "), href: `/stock/${d.id}`, exact: same(d.number, q) })))],
   ];
 
   const results = await Promise.all(tasks.map(([, p]) => p));

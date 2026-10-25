@@ -27,7 +27,8 @@
     "administration": "Administration & Permissions",
     "menu": "Menu",
     "close": "Close",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "stock": "Stock Movements"
   },
   "common": {
     "save": "Save",
@@ -148,7 +149,8 @@
       "users": "Employees",
       "roles": "Roles",
       "settings": "Settings",
-      "audit": "Audit log"
+      "audit": "Audit log",
+      "stock": "Stock movements"
     },
     "actions": {
       "view": "View",
@@ -157,7 +159,11 @@
       "approve": "Approve",
       "export": "Export",
       "archive": "Archive",
-      "manage": "Manage"
+      "manage": "Manage",
+      "input": "Input",
+      "output": "Output",
+      "buy": "Buy",
+      "sell": "Sell"
     }
   },
   "install": {
@@ -460,7 +466,11 @@
       "adjust": "Stock adjusted",
       "out": "Stock taken out",
       "receive": "Stickers / materials received",
-      "use": "Stickers / materials used"
+      "use": "Stickers / materials used",
+      "input": "Stock input",
+      "output": "Stock output",
+      "buy": "Purchase",
+      "sell": "Sale"
     },
     "shipment": {
       "create": "Shipment drafted, stock reserved",
@@ -930,7 +940,11 @@
       "OUT": "Out",
       "ADJUST": "Adjustment",
       "RECEIVE": "Received",
-      "USE": "Used"
+      "USE": "Used by production",
+      "INPUT": "Input",
+      "OUTPUT": "Output",
+      "BUY": "Bought",
+      "SELL": "Sold"
     },
     "tab": {
       "stock": "Products",
@@ -956,7 +970,8 @@
     "totalKg": "Total in kg",
     "noStickers": "No stickers yet. Add them with Import from Excel.",
     "noMaterials": "No materials yet. Add them with Import from Excel.",
-    "noPackaging": "No packaging items yet. Add them with Import from Excel."
+    "noPackaging": "No packaging items yet. Add them with Import from Excel.",
+    "readOnlyNote": "Stock on hand. It changes only through Stock Movements (input, output, buy, sell) and daily production."
   },
   "rep": {
     "intro": "Live figures from the factory's records. Pick a report, set the dates and filters, then export to Excel (CSV) or PDF.",
@@ -1028,6 +1043,10 @@
       "stock": {
         "title": "Stock by product",
         "desc": "Pieces in, out and in stock for each product."
+      },
+      "trade": {
+        "title": "Buying and selling",
+        "desc": "Every bought and sold item with supplier/customer, price and total in IQD or USD."
       }
     },
     "group": {
@@ -1179,7 +1198,13 @@
       "products": "Products",
       "qc": "QC",
       "reference": "Reference",
-      "stillToMake": "Still to make"
+      "stillToMake": "Still to make",
+      "document": "Document",
+      "party": "Supplier / customer",
+      "invoice": "Invoice",
+      "unitPrice": "Price",
+      "amount": "Amount",
+      "currency": "Currency"
     },
     "kpi": {
       "achievement": "Plan achieved",
@@ -1243,19 +1268,23 @@
       "notInspected": "Not inspected",
       "outPcs": "Pieces out",
       "productsOrdered": "Products ordered",
-      "stockNow": "Pieces in stock now"
+      "stockNow": "Pieces in stock now",
+      "boughtIqd": "Bought (IQD)",
+      "boughtUsd": "Bought (USD)",
+      "soldIqd": "Sold (IQD)",
+      "soldUsd": "Sold (USD)"
     },
     "chartMax": "Highest: {v}"
   },
   "search": {
     "title": "Search",
-    "hint": "Find any order, customer, product code, batch, machine, mold, quality issue, maintenance request or shipment.",
+    "hint": "Find any order, product, label, material, machine, mold, quality issue, maintenance request or stock movement.",
     "typeMore": "Type at least 2 characters. Typing an exact number (like ORD-2026-0001) opens that record directly.",
     "none": "Nothing found for \"{q}\".",
     "kind": {
-      "orders": "Customer orders",
+      "orders": "Orders",
       "customers": "Customers",
-      "products": "Products",
+      "products": "Products & items",
       "batches": "Batches / lots",
       "jobs": "Production jobs",
       "machines": "Machines",
@@ -1265,7 +1294,8 @@
       "requests": "Maintenance requests",
       "serviceReports": "Service reports",
       "shipments": "Shipments",
-      "receipts": "Warehouse receipts"
+      "receipts": "Warehouse receipts",
+      "stockDocs": "Stock movements"
     }
   },
   "ui": {
@@ -1305,7 +1335,8 @@
       "AuditLog": "Audit log",
       "Attachment": "Attachment",
       "System": "System",
-      "ProductionEntry": "Production entry"
+      "ProductionEntry": "Production entry",
+      "StockDoc": "Stock movement"
     }
   },
   "sys": {
@@ -1521,6 +1552,22 @@
       "packagingUsed": {
         "title": "Packaging used: {n} items",
         "body": "{ref} · by {by}"
+      },
+      "docINPUT": {
+        "title": "Stock input {number}: {n} items",
+        "body": "by {by}"
+      },
+      "docOUTPUT": {
+        "title": "Stock output {number}: {n} items",
+        "body": "by {by}"
+      },
+      "docBUY": {
+        "title": "Bought {number}: {n} items · {total}",
+        "body": "from {party} · by {by}"
+      },
+      "docSELL": {
+        "title": "Sold {number}: {n} items · {total}",
+        "body": "to {party} · by {by}"
       }
     },
     "product": {
@@ -1656,5 +1703,69 @@
     "create": "Create product",
     "newIntro": "Pick the label first — the name comes from it. Then add what one piece is made of and how it is packed.",
     "created": "Product created. Daily production will now take its label, materials and packaging from stock."
+  },
+  "sd": {
+    "intro": "Every manual change of stock: input, output, buy and sell. Production and what it uses still change stock automatically.",
+    "search": "Number, supplier/customer, invoice or item…",
+    "allTypes": "All types",
+    "none": "No stock movements yet.",
+    "linesN": "{n} items",
+    "invoice": "Invoice",
+    "newTitle": "New stock movement",
+    "reasonLabel": "Reason",
+    "supplier": "Supplier",
+    "customer": "Customer",
+    "currency": "Currency",
+    "iqd": "Iraqi dinar",
+    "usd": "US dollar",
+    "order": "Order (optional)",
+    "noOrder": "— not for an order —",
+    "fillFromOrder": "Fill the lines from this order",
+    "fillHint": "The list button fills the lines with the order's products.",
+    "note": "Note",
+    "unitPrice": "Price per unit",
+    "lineTotal": "Total",
+    "total": "Total",
+    "addLine": "Add item",
+    "willGoMinus": "stock will go below zero",
+    "saved": "{number} saved. Stock has been updated.",
+    "minusNow": "Below zero now: {items}. Check the count.",
+    "stockNow": "Stock now",
+    "viewDoc": "View document",
+    "sold": "Sold",
+    "salesForOrder": "Sales for this order",
+    "noSales": "Nothing sold for this order yet.",
+    "type": {
+      "INPUT": "Input",
+      "OUTPUT": "Output",
+      "BUY": "Buy",
+      "SELL": "Sell"
+    },
+    "new": {
+      "INPUT": "Input",
+      "OUTPUT": "Output",
+      "BUY": "Buy",
+      "SELL": "Sell"
+    },
+    "save": {
+      "INPUT": "Save input",
+      "OUTPUT": "Save output",
+      "BUY": "Save purchase",
+      "SELL": "Save sale"
+    },
+    "help": {
+      "INPUT": "Items coming in without money: returns, transfers, count corrections.",
+      "OUTPUT": "Items going out without money: damage, samples, transfers, count corrections.",
+      "BUY": "Items bought from a supplier, with the price in IQD or USD.",
+      "SELL": "Items sold to a customer, with the price in IQD or USD. Link it to an order if there is one."
+    },
+    "reason": {
+      "RETURN": "Return",
+      "TRANSFER": "Transfer",
+      "COUNT": "Count correction",
+      "DAMAGE": "Damage / scrap",
+      "SAMPLE": "Sample",
+      "OTHER": "Other"
+    }
   }
 }

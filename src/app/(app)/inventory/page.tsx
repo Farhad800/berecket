@@ -6,16 +6,14 @@ import { db } from "@/lib/db";
 import { formatDateTime, formatNumber } from "@/lib/time";
 import { getStock } from "@/lib/stock";
 import { MOVE_TONE } from "@/lib/tones";
-import { Alert, Badge, Card, EmptyState, PageHeader, cn } from "@/components/ui";
-import RecordForm from "@/components/record-form";
+import { ArrowLeftRight } from "lucide-react";
+import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
-import { adjustStockAction } from "@/app/actions/warehouse";
-import StockOut from "./stock-out";
-import SuppliesSheet from "./supplies-sheet";
+import StockTable from "./stock-table";
 
 export const metadata = { title: "Warehouse stock" };
 const TABS = ["stock", "stickers", "materials", "packaging", "movements"] as const;
-const TYPES: StockMoveType[] = ["PRODUCTION", "QC_REJECT", "OUT", "ADJUST", "RECEIVE", "USE"];
+const TYPES: StockMoveType[] = ["PRODUCTION", "USE", "QC_REJECT", "INPUT", "OUTPUT", "BUY", "SELL", "OUT", "ADJUST", "RECEIVE"];
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; type?: string; all?: string }> }) {
@@ -29,7 +27,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <PageHeader title={t("nav.inventory")} subtitle={t("wh.ledgerNote")} />
+      <PageHeader title={t("nav.inventory")} subtitle={t("wh.readOnlyNote")} actions={can(me, "stock:view") ? <LinkButton href="/stock"><ArrowLeftRight className="size-4" /> {t("nav.stock")}</LinkButton> : undefined} />
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
         {TABS.map((k) => (
           <Link key={k} href={`/inventory?tab=${k}`} role="tab" aria-selected={tab === k}
@@ -44,10 +42,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
 
   async function StockTab() {
     const [products, stock] = await Promise.all([
-      db.product.findMany({ where: { archivedAt: null, kind: "PRODUCT" }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, code: true, name: true, name2: true, mold: { select: { code: true } } } }),
+      db.product.findMany({ where: { archivedAt: null, kind: "PRODUCT" }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, mold: { select: { code: true } } } }),
       getStock(),
     ]);
-    const rows = products.map((p) => ({ id: p.id, code: p.code, name: p.name, name2: p.name2, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0 }));
+    const rows = products.map((p) => ({ id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0 }));
     const total = rows.reduce((s, r) => s + r.stock, 0);
     return (
       <div className="space-y-4">
@@ -55,30 +53,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <Card><p className="text-xs text-muted">{t("wh.totalPieces")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(total)}</p></Card>
           <Card><p className="text-xs text-muted">{t("wh.productsInStock")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.filter((r) => r.stock > 0).length)}</p></Card>
         </div>
-        <StockOut rows={rows} canOut={can(me, "warehouse:create")} />
-        <Adjust items={products} />
+        <StockTable rows={rows} withMolds />
       </div>
-    );
-  }
-
-  function Adjust({ items }: { items: { id: string; code: string; name: string }[] }) {
-    if (!can(me, "warehouse:approve")) return null;
-    return (
-      <Card>
-        <h2 className="font-semibold">{t("wh.adjustTitle")}</h2>
-        <p className="mb-3 text-xs text-muted">{t("wh.adjustHint")}</p>
-        <RecordForm
-          action={adjustStockAction}
-          submitLabel={t("wh.saveAdjustment")}
-          initial={{ kind: "COUNT" }}
-          fields={[
-            { name: "productId", label: t("wh.item"), type: "combo", required: true, options: items.map((p) => ({ value: p.id, label: p.name, hint: p.code })) },
-            { name: "qty", label: t("wh.adjustQty"), type: "number", step: "any", required: true, ltr: true, hint: t("wh.adjustQtyHint") },
-            { name: "kind", label: t("wh.adjustKind"), type: "select", required: true, options: (["COUNT", "DAMAGE", "SCRAP", "OTHER"] as const).map((k) => ({ value: k, label: t(`wh.kind.${k}`) })) },
-            { name: "reason", label: t("prod.reason"), required: true, wide: true },
-          ]}
-        />
-      </Card>
     );
   }
 
@@ -98,8 +74,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <Card><p className="text-xs text-muted">{t("wh.withStock")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.filter((r) => r.stock > 0).length)}</p></Card>
           {kg.length > 0 && <Card><p className="text-xs text-muted">{t("wh.totalKg")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr">{fmt(kg.reduce((s, r) => s + r.stock, 0))} kg</p></Card>}
         </div>
-        {rows.length === 0 ? <EmptyState>{t(kind === "STICKER" ? "wh.noStickers" : kind === "PACKAGING" ? "wh.noPackaging" : "wh.noMaterials")}</EmptyState> : <SuppliesSheet key={kind} rows={rows} kind={kind} canEdit={can(me, "warehouse:create")} />}
-        <Adjust items={items} />
+        {rows.length === 0 ? <EmptyState>{t(kind === "STICKER" ? "wh.noStickers" : kind === "PACKAGING" ? "wh.noPackaging" : "wh.noMaterials")}</EmptyState> : <StockTable key={kind} rows={rows} />}
       </div>
     );
   }
@@ -134,6 +109,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                       {formatDateTime(m.createdAt, locale)} · {users.find((u) => u.id === m.createdById)?.fullName ?? "—"}
                       {(m.reference || m.reason) && <> · {m.reference ?? m.reason}</>}
                       {m.entryId && <> · <Link href={`/qc/entries/${m.entryId}`} className="text-brand-600">{t("wh.viewEntry")}</Link></>}
+                      {m.docId && <> · <Link href={`/stock/${m.docId}`} className="text-brand-600">{t("sd.viewDoc")}</Link></>}
                     </p>
                   </div>
                   <span className={cn("self-center text-end font-bold tabular-nums", Number(m.qty) < 0 && "text-red-600 dark:text-red-400")} dir="ltr">{Number(m.qty) > 0 ? "+" : "−"}{fmt(Math.abs(Number(m.qty)))}{m.product.unit.toLowerCase() === "kg" && " kg"}</span>

@@ -496,7 +496,7 @@ export const REPORTS: ReportDef[] = [
     section: "warehouse",
     icon: "ArrowDownUp",
     filters: ["range", "product", "type"],
-    typeFilter: { ns: "wh.mv", values: ["PRODUCTION", "QC_REJECT", "OUT", "ADJUST", "RECEIVE", "USE"] },
+    typeFilter: { ns: "wh.mv", values: ["PRODUCTION", "USE", "QC_REJECT", "INPUT", "OUTPUT", "BUY", "SELL", "OUT", "ADJUST", "RECEIVE"] },
     async run(q) {
       const name = await userNames();
       const list = await db.stockMovement.findMany({
@@ -507,7 +507,7 @@ export const REPORTS: ReportDef[] = [
       });
       const rows: Row[] = list.map((m) => ({
         at: m.createdAt, type: m.type, product: m.product.code, qty: Number(m.qty), reference: m.reference ?? m.reason, by: name(m.createdById),
-        ...(m.entryId ? { _href: { product: `/qc/entries/${m.entryId}` } } : {}),
+        ...(m.docId || m.entryId ? { _href: (m.docId ? { reference: `/stock/${m.docId}` } : { product: `/qc/entries/${m.entryId}` }) as Record<string, string> } : {}),
       }));
       const typed = (t: string) => sum(list.filter((m) => m.type === t), (m) => Number(m.qty));
       return {
@@ -526,6 +526,53 @@ export const REPORTS: ReportDef[] = [
           { label: "rep.kpi.producedPcs", value: typed("PRODUCTION"), type: "int" },
           { label: "rep.kpi.outPcs", value: -typed("OUT"), type: "int" },
           { label: "rep.kpi.rejectedPcs", value: -typed("QC_REJECT"), type: "int" },
+        ],
+      };
+    },
+  },
+
+  // ─ Buying and selling (Stock movements: Buy / Sell), per line with prices
+  {
+    key: "trade",
+    section: "warehouse",
+    icon: "ArrowLeftRight",
+    filters: ["range", "product", "type"],
+    typeFilter: { ns: "sd.type", values: ["BUY", "SELL"] },
+    async run(q) {
+      const list = await db.stockMovement.findMany({
+        where: { type: q.type ? (q.type as never) : { in: ["BUY", "SELL"] }, createdAt: { gte: q.start, lt: q.end }, ...(q.product ? { productId: q.product } : {}) },
+        orderBy: { createdAt: "asc" },
+        take: MAX_ROWS,
+        include: { product: { select: { code: true, name: true } }, doc: { select: { id: true, number: true, party: true, invoiceNo: true, currency: true } } },
+      });
+      const rows: Row[] = list.map((m) => {
+        const qty = Math.abs(Number(m.qty)), price = Number(m.unitPrice ?? 0);
+        return {
+          at: m.createdAt, doc: m.doc?.number ?? m.reference, type: m.type, party: m.doc?.party ?? "", invoice: m.doc?.invoiceNo ?? "",
+          product: `${m.product.code} · ${m.product.name}`, qty, price, total: Math.round(qty * price * 100) / 100, currency: m.doc?.currency ?? "",
+          ...(m.doc ? { _href: { doc: `/stock/${m.doc.id}` } } : {}),
+        };
+      });
+      const tot = (type: string, cur: string) => Math.round(sum(rows.filter((r) => r.type === type && r.currency === cur), (r) => num(r.total)) * 100) / 100;
+      return {
+        columns: [
+          { key: "at", label: "rep.col.when", type: "datetime" },
+          { key: "doc", label: "rep.col.document", type: "code" },
+          { key: "type", label: "rep.col.movement", type: "status", ns: "sd.type", tones: MOVE_TONE },
+          { key: "party", label: "rep.col.party" },
+          { key: "invoice", label: "rep.col.invoice", wide: true },
+          { key: "product", label: "rep.col.product" },
+          { key: "qty", label: "rep.col.qty", type: "int" },
+          { key: "price", label: "rep.col.unitPrice", type: "int", wide: true },
+          { key: "total", label: "rep.col.amount", type: "int" },
+          { key: "currency", label: "rep.col.currency" },
+        ],
+        rows,
+        kpis: [
+          { label: "rep.kpi.boughtIqd", value: tot("BUY", "IQD"), type: "int" },
+          { label: "rep.kpi.boughtUsd", value: tot("BUY", "USD"), type: "int" },
+          { label: "rep.kpi.soldIqd", value: tot("SELL", "IQD"), type: "int", tone: "good" },
+          { label: "rep.kpi.soldUsd", value: tot("SELL", "USD"), type: "int", tone: "good" },
         ],
       };
     },

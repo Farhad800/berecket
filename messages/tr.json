@@ -27,7 +27,8 @@
     "administration": "Yönetim ve Yetkiler",
     "menu": "Menü",
     "close": "Kapat",
-    "audit": "Denetim kaydı"
+    "audit": "Denetim kaydı",
+    "stock": "Stok Hareketleri"
   },
   "common": {
     "save": "Kaydet",
@@ -148,7 +149,8 @@
       "users": "Çalışanlar",
       "roles": "Roller",
       "settings": "Ayarlar",
-      "audit": "Denetim kaydı"
+      "audit": "Denetim kaydı",
+      "stock": "Stok hareketleri"
     },
     "actions": {
       "view": "Görüntüle",
@@ -157,7 +159,11 @@
       "approve": "Onayla",
       "export": "Dışa aktar",
       "archive": "Arşivle",
-      "manage": "Yönet"
+      "manage": "Yönet",
+      "input": "Giriş",
+      "output": "Çıkış",
+      "buy": "Alış",
+      "sell": "Satış"
     }
   },
   "install": {
@@ -460,7 +466,11 @@
       "adjust": "Stok düzeltildi",
       "out": "Stoktan çıkış",
       "receive": "Etiket / malzeme girişi",
-      "use": "Etiket / malzeme kullanımı"
+      "use": "Etiket / malzeme kullanımı",
+      "input": "Stok girişi",
+      "output": "Stok çıkışı",
+      "buy": "Alış",
+      "sell": "Satış"
     },
     "shipment": {
       "create": "Sevkiyat taslağı, stok ayrıldı",
@@ -930,7 +940,11 @@
       "OUT": "Çıkış",
       "ADJUST": "Düzeltme",
       "RECEIVE": "Giriş",
-      "USE": "Kullanım"
+      "USE": "Üretimde kullanıldı",
+      "INPUT": "Giriş",
+      "OUTPUT": "Çıkış",
+      "BUY": "Alış",
+      "SELL": "Satış"
     },
     "tab": {
       "stock": "Ürünler",
@@ -956,7 +970,8 @@
     "totalKg": "Toplam kg",
     "noStickers": "Henüz etiket yok. Excel'den içe aktararak ekleyin.",
     "noMaterials": "Henüz malzeme yok. Excel'den içe aktararak ekleyin.",
-    "noPackaging": "Henüz ambalaj kalemi yok. Excel'den içe aktararak ekleyin."
+    "noPackaging": "Henüz ambalaj kalemi yok. Excel'den içe aktararak ekleyin.",
+    "readOnlyNote": "Eldeki stok. Yalnızca Stok Hareketleri (giriş, çıkış, alış, satış) ve günlük üretimle değişir."
   },
   "rep": {
     "intro": "Fabrika kayıtlarından canlı rakamlar. Bir rapor seçin, tarihleri ve filtreleri ayarlayın, sonra Excel (CSV) veya PDF olarak dışa aktarın.",
@@ -1028,6 +1043,10 @@
       "stock": {
         "title": "Ürüne göre stok",
         "desc": "Her ürün için giren, çıkan ve stoktaki adet."
+      },
+      "trade": {
+        "title": "Alış ve satış",
+        "desc": "Alınan ve satılan her kalem: tedarikçi/müşteri, fiyat ve toplam (IQD veya USD)."
       }
     },
     "group": {
@@ -1179,7 +1198,13 @@
       "products": "Ürünler",
       "qc": "KK",
       "reference": "Referans",
-      "stillToMake": "Yapılacak"
+      "stillToMake": "Yapılacak",
+      "document": "Belge",
+      "party": "Tedarikçi / müşteri",
+      "invoice": "Fatura",
+      "unitPrice": "Fiyat",
+      "amount": "Tutar",
+      "currency": "Para birimi"
     },
     "kpi": {
       "achievement": "Plan gerçekleşme",
@@ -1243,19 +1268,23 @@
       "notInspected": "Muayene edilmedi",
       "outPcs": "Çıkan adet",
       "productsOrdered": "Sipariş edilen ürünler",
-      "stockNow": "Şu an stoktaki adet"
+      "stockNow": "Şu an stoktaki adet",
+      "boughtIqd": "Alış (IQD)",
+      "boughtUsd": "Alış (USD)",
+      "soldIqd": "Satış (IQD)",
+      "soldUsd": "Satış (USD)"
     },
     "chartMax": "En yüksek: {v}"
   },
   "search": {
     "title": "Ara",
-    "hint": "Herhangi bir sipariş, müşteri, ürün kodu, parti, makine, kalıp, kalite sorunu, bakım talebi veya sevkiyatı bulun.",
+    "hint": "Herhangi bir sipariş, ürün, etiket, malzeme, makine, kalıp, kalite sorunu, bakım talebi veya stok hareketi bulun.",
     "typeMore": "En az 2 karakter yazın. Tam bir numara (ör. ORD-2026-0001) yazmak kaydı doğrudan açar.",
     "none": "\"{q}\" için sonuç bulunamadı.",
     "kind": {
-      "orders": "Müşteri siparişleri",
+      "orders": "Siparişler",
       "customers": "Müşteriler",
-      "products": "Ürünler",
+      "products": "Ürünler ve kalemler",
       "batches": "Partiler",
       "jobs": "Üretim işleri",
       "machines": "Makineler",
@@ -1265,7 +1294,8 @@
       "requests": "Bakım talepleri",
       "serviceReports": "Servis raporları",
       "shipments": "Sevkiyatlar",
-      "receipts": "Depo kabulleri"
+      "receipts": "Depo kabulleri",
+      "stockDocs": "Stok hareketleri"
     }
   },
   "ui": {
@@ -1305,7 +1335,8 @@
       "AuditLog": "Denetim kaydı",
       "Attachment": "Ek",
       "System": "Sistem",
-      "ProductionEntry": "Üretim girişi"
+      "ProductionEntry": "Üretim girişi",
+      "StockDoc": "Stok hareketi"
     }
   },
   "sys": {
@@ -1521,6 +1552,22 @@
       "packagingUsed": {
         "title": "Ambalaj kullanımı: {n} kalem",
         "body": "{ref} · {by}"
+      },
+      "docINPUT": {
+        "title": "Stok girişi {number}: {n} kalem",
+        "body": "{by}"
+      },
+      "docOUTPUT": {
+        "title": "Stok çıkışı {number}: {n} kalem",
+        "body": "{by}"
+      },
+      "docBUY": {
+        "title": "Alış {number}: {n} kalem · {total}",
+        "body": "{party} firmasından · {by}"
+      },
+      "docSELL": {
+        "title": "Satış {number}: {n} kalem · {total}",
+        "body": "{party} müşterisine · {by}"
       }
     },
     "product": {
@@ -1656,5 +1703,69 @@
     "create": "Ürünü oluştur",
     "newIntro": "Önce etiketi seçin — ad ondan gelir. Sonra bir parçanın içeriğini ve ambalajını ekleyin.",
     "created": "Ürün oluşturuldu. Günlük üretim artık etiketini, malzemelerini ve ambalajını stoktan düşecek."
+  },
+  "sd": {
+    "intro": "Stoktaki her elle değişiklik: giriş, çıkış, alış ve satış. Üretim ve kullandıkları stoğu yine otomatik değiştirir.",
+    "search": "Numara, tedarikçi/müşteri, fatura veya kalem…",
+    "allTypes": "Tüm türler",
+    "none": "Henüz stok hareketi yok.",
+    "linesN": "{n} kalem",
+    "invoice": "Fatura",
+    "newTitle": "Yeni stok hareketi",
+    "reasonLabel": "Neden",
+    "supplier": "Tedarikçi",
+    "customer": "Müşteri",
+    "currency": "Para birimi",
+    "iqd": "Irak dinarı",
+    "usd": "ABD doları",
+    "order": "Sipariş (isteğe bağlı)",
+    "noOrder": "— siparişe bağlı değil —",
+    "fillFromOrder": "Satırları bu siparişten doldur",
+    "fillHint": "Liste düğmesi satırları siparişin ürünleriyle doldurur.",
+    "note": "Not",
+    "unitPrice": "Birim fiyat",
+    "lineTotal": "Toplam",
+    "total": "Toplam",
+    "addLine": "Kalem ekle",
+    "willGoMinus": "stok sıfırın altına düşecek",
+    "saved": "{number} kaydedildi. Stok güncellendi.",
+    "minusNow": "Şu an sıfırın altında: {items}. Sayımı kontrol edin.",
+    "stockNow": "Şu anki stok",
+    "viewDoc": "Belgeyi gör",
+    "sold": "Satılan",
+    "salesForOrder": "Bu siparişin satışları",
+    "noSales": "Bu sipariş için henüz satış yok.",
+    "type": {
+      "INPUT": "Giriş",
+      "OUTPUT": "Çıkış",
+      "BUY": "Alış",
+      "SELL": "Satış"
+    },
+    "new": {
+      "INPUT": "Giriş",
+      "OUTPUT": "Çıkış",
+      "BUY": "Alış",
+      "SELL": "Satış"
+    },
+    "save": {
+      "INPUT": "Girişi kaydet",
+      "OUTPUT": "Çıkışı kaydet",
+      "BUY": "Alışı kaydet",
+      "SELL": "Satışı kaydet"
+    },
+    "help": {
+      "INPUT": "Parasız giren kalemler: iadeler, transferler, sayım düzeltmeleri.",
+      "OUTPUT": "Parasız çıkan kalemler: hasar, numune, transfer, sayım düzeltmeleri.",
+      "BUY": "Tedarikçiden alınan kalemler, IQD veya USD fiyatla.",
+      "SELL": "Müşteriye satılan kalemler, IQD veya USD fiyatla. Varsa bir siparişe bağlayın."
+    },
+    "reason": {
+      "RETURN": "İade",
+      "TRANSFER": "Transfer",
+      "COUNT": "Sayım düzeltmesi",
+      "DAMAGE": "Hasar / hurda",
+      "SAMPLE": "Numune",
+      "OTHER": "Diğer"
+    }
   }
 }

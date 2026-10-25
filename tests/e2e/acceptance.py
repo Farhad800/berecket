@@ -8,6 +8,7 @@ Setup (see docs/TESTING.md):
 """
 import os, re, csv, io, json, subprocess
 from playwright.sync_api import sync_playwright
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc
 B=os.environ.get("BASE","http://localhost:3001"); DB=os.environ.get("PGDB","bereket_accept"); TOKEN=os.environ.get("SETUP_TOKEN","acceptance-setup-token-2026")
 O="/tmp/claude-0/-home-claude/f2fd9017-1975-5c5d-8632-f9a800ffa010/scratchpad/accept/"; os.makedirs(O, exist_ok=True)
 ROOT=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -139,18 +140,17 @@ with sync_playwright() as p:
     ck("7. a quality issue was opened for the rejection", sql(f"SELECT count(*) FROM {T('\"QualityIssue\"')} WHERE {T('\"entryId\"')}='{eA_pf}'")=="1")
     P.goto(B+"/production"); ck("7. inspected entries can't be corrected any more", P.locator("li", has=P.locator(f"a[href='/qc/entries/{eA_pf}']")).get_by_role("button", name="Correct").count()==0)
 
-    # ── 8/9/10. Warehouse: stock only — goods go out, can't go below zero
+    # ── 8/9/10. Warehouse shows stock only; stock changes through Stock Movements documents
     W=ctx(); login(W,"walid"); W.goto(B+"/inventory")
     ck("9. warehouse sees stock per product", "10,000" in main_text(W) and "6,200" in main_text(W))
-    W.fill(f"input[name='out_{pid['CAP-28']}']","4000"); W.fill(f"input[name='out_{pid['PF-500']}']","3000"); W.fill("input[name=reference]",onum)
-    W.get_by_role("button", name=re.compile("^Take out")).click(); W.wait_for_load_state("networkidle"); W.wait_for_timeout(1000)
-    ck("10. goods taken out → stock reduced (6,000 / 3,200)", stock("CAP-28")==6000 and stock("PF-500")==3200)
-    W.goto(B+"/inventory"); W.fill(f"input[name='out_{pid['PF-500']}']","3200"); W.evaluate(f"document.querySelector(\"input[name='out_{pid['PF-500']}']\").removeAttribute('max')")
-    W.fill(f"input[name='out_{pid['PF-500']}']","9999"); W.get_by_role("button", name=re.compile("^Take out")).click(); W.wait_for_load_state("networkidle"); W.wait_for_timeout(1000)
-    ck("8. can't take out more than is in stock", stock("PF-500")==3200)
+    ck("9. warehouse page is read-only (no inputs)", W.locator("main input[type=number]").count()==0)
+    stock_doc(W, B, "OUTPUT", [("CAP-28",4000,None),("PF-500",3000,None)], reason="TRANSFER")
+    ck("10. output document → stock reduced (6,000 / 3,200)", stock("CAP-28")==6000 and stock("PF-500")==3200)
+    form=stock_doc(W, B, "OUTPUT", [("PF-500",9999,None)], reason="DAMAGE", save=False)
+    ck("8. taking out more than in stock warns before saving", "stock will go below zero" in form)
     ck("8. no shipments or customers pages", W.request.get(B+"/shipments").status==404)
-    A.goto(B+"/inventory"); combo(A,"productId","PF-500"); A.fill("#qty","-200"); A.select_option("#kind","SCRAP"); A.fill("#reason","Scrapped rejected preforms"); btn(A,"Save adjustment")
-    ck("8. supervisor adjustment logged", stock("PF-500")==3000)
+    stock_doc(A, B, "OUTPUT", [("PF-500",200,None)], reason="DAMAGE")
+    ck("8. damaged pieces taken out with a reason", stock("PF-500")==3000)
 
     # ── 11. Stock always equals the ledger
     neg=sql(f"SELECT count(*) FROM (SELECT {T('\"productId\"')} FROM {T('\"StockMovement\"')} GROUP BY 1 HAVING SUM(qty)<0) x")
@@ -196,9 +196,9 @@ with sync_playwright() as p:
 
     # ── 15. Critical actions are in the audit log
     acts=set(sql(f"SELECT DISTINCT action FROM {T('\"AuditLog\"')}").split("\n"))
-    need=["setup.first_admin","user.create","order.create","order.update","order.complete","order.delete","production.report","production.correct","maintenance.create","maintenance.verify","qc.approve","qc.reject","stock.out","stock.adjust","report.export"]
+    need=["setup.first_admin","user.create","order.create","order.update","order.complete","order.delete","production.report","production.correct","maintenance.create","maintenance.verify","qc.approve","qc.reject","stock.output","report.export"]
     ck(f"15. audit log has every critical action (missing: {[a for a in need if a not in acts]})", all(a in acts for a in need))
-    who=sql(f"SELECT u.username FROM {T('\"AuditLog\"')} a JOIN {T('\"User\"')} u ON u.id=a.{T('\"userId\"')} WHERE a.action='stock.out' LIMIT 1")
+    who=sql(f"SELECT u.username FROM {T('\"AuditLog\"')} a JOIN {T('\"User\"')} u ON u.id=a.{T('\"userId\"')} WHERE a.action='stock.output' ORDER BY a.{T('\"createdAt\"')} LIMIT 1")
     ck("15. audit log records who took the stock out", who=="walid")
 
     # ── 16. Backup and recovery are documented

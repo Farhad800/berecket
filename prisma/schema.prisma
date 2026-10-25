@@ -235,6 +235,7 @@ model Order {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   lines       OrderLine[]
+  stockDocs   StockDoc[]
 
   @@index([status])
 }
@@ -455,8 +456,44 @@ enum StockMoveType {
   QC_REJECT // automatic, pieces rejected by QC
   OUT // goods leaving the warehouse
   ADJUST // count correction, damage, scrap
-  RECEIVE // stickers / materials received (bought, delivered)
-  USE // stickers / materials taken to production
+  RECEIVE // (older) stickers / materials received
+  USE // labels / materials / packaging used by production (automatic), or (older) taken to production
+  INPUT // stock document: in without money (return, transfer, count correction…)
+  OUTPUT // stock document: out without money
+  BUY // stock document: bought, with price
+  SELL // stock document: sold, with price
+}
+
+enum StockDocType {
+  INPUT
+  OUTPUT
+  BUY
+  SELL
+}
+
+enum Currency {
+  IQD
+  USD
+}
+
+/// One stock movement document (Input / Output / Buy / Sell) with its lines (StockMovement.docId).
+model StockDoc {
+  id          String          @id @default(cuid())
+  number      String          @unique // IN-2026-0001, OUT-…, BUY-…, SAL-…
+  type        StockDocType
+  reason      String? // Input/Output: RETURN, TRANSFER, COUNT, DAMAGE, SAMPLE, OTHER
+  party       String? // Buy: supplier · Sell: customer (typed)
+  invoiceNo   String?
+  currency    Currency?
+  orderId     String?
+  order       Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  note        String?
+  createdById String
+  createdAt   DateTime        @default(now())
+  lines       StockMovement[]
+
+  @@index([type, createdAt])
+  @@index([orderId])
 }
 
 /// What a stock item is. Only PRODUCT is made on machines, ordered and inspected by QC.
@@ -498,6 +535,9 @@ model StockMovement {
   qty         Decimal          @db.Decimal(14, 3) // + in, − out (pieces, or kg for materials)
   entryId     String?
   entry       ProductionEntry? @relation(fields: [entryId], references: [id])
+  docId       String?
+  doc         StockDoc?        @relation(fields: [docId], references: [id])
+  unitPrice   Decimal?         @db.Decimal(14, 2) // Buy / Sell only, in the document's currency
   reference   String? // e.g. who/where the goods went
   reason      String?
   createdById String
@@ -505,6 +545,7 @@ model StockMovement {
 
   @@index([productId])
   @@index([createdAt])
+  @@index([docId])
 }
 
 // ───────────────────────────── Collaboration ─────────────────────────────

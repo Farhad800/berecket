@@ -44,3 +44,4 @@ next-env.d.ts
 
 # local file uploads (dev only)
 /.uploads
+__pycache__/

@@ -95,8 +95,8 @@ with sync_playwright() as p:
     ck("order across two molds saved", "2 products" in a.inner_text("main") or "2,000" in a.inner_text("main"))
     a.goto(B+"/production/daily?shift=A"); a.uncheck("text=Only products in open orders"); a.locator("select[aria-label='Mold']").select_option("BK-MD07")
     ck("daily sheet mold filter", a.locator("input[data-q]").count()==15)
-    a.goto(B+"/inventory"); a.check("text=Show products with no stock"); a.locator("select[aria-label='Mold']").select_option("BK-MD07")
-    ck("stock sheet mold filter", a.locator("input[name^='out_']").count()==15)
+    a.goto(B+"/inventory"); a.locator("select[aria-label='Mold']").select_option("BK-MD07")
+    ck("stock list mold filter", a.locator("main li a[href^='/products/']").count()==15)
 
     # 9. permissions: production can't import
     pr=br.new_context().new_page(); login(pr,"demo.production","Demo12345!"); pr.goto(B+"/import")

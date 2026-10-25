@@ -2,6 +2,7 @@
    Fresh bereket_accept on :3001;  IMPORT_FILE=<bereket-items-FINAL.xlsx> python3 tests/e2e/recipes.py"""
 import os, re, subprocess, openpyxl
 from playwright.sync_api import sync_playwright
+import sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc
 B=os.environ.get("BASE","http://localhost:3001"); DB=os.environ.get("PGDB","bereket_accept"); F=os.environ["IMPORT_FILE"]
 O="/tmp/claude-0/-home-claude/f2fd9017-1975-5c5d-8632-f9a800ffa010/scratchpad/recipes/"; os.makedirs(O, exist_ok=True)
 res=[]
@@ -21,11 +22,8 @@ with sync_playwright() as p:
     A.goto(B+"/inventory?tab=packaging"); ck("Packaging tab lists nylon and cartons", "نايلون كاسات" in A.inner_text("main") and "كارتون كاسة 700" in A.inner_text("main"))
     A.goto(B+"/inventory?tab=materials"); ck("Raw materials tab has granules and dyes, not nylon", "حبيبات" in A.inner_text("main") and "صبغ" in A.inner_text("main") and "نايلون" not in A.inner_text("main"))
     # receive opening stock
-    def receive(tab, vals):
-        A.goto(B+f"/inventory?tab={tab}")
-        for code,q in vals.items(): A.fill(f"input[name='q_{pid(code)}']", str(q))
-        A.get_by_role("button", name=re.compile("^Save receipt")).click(); A.wait_for_timeout(1500)
-    receive("stickers",{LABEL:5000}); receive("materials",{RAW:100,DYE:5}); receive("packaging",{CART:10,NYL:2})
+    stock_doc(A, B, "INPUT", [(LABEL,5000,None),(RAW,100,None),(DYE,5,None),(CART,10,None),(NYL,2,None)], reason="COUNT")
+    ck("opening stock entered with one Input document", stock(LABEL)==5000 and stock(RAW)==100 and stock(DYE)==5 and stock(CART)==10 and stock(NYL)==2)
     # nylon bag weight
     A.goto(B+f"/products/{pid(NYL)}"); A.fill("input[aria-label='Weight of one bag / piece']","0.012"); A.get_by_role("button", name="Save").click(); A.wait_for_timeout(1200)
     ck("nylon bag weight saved", sql(f"SELECT \\\"unitWeightKg\\\" FROM \\\"Product\\\" WHERE code='{NYL}'").startswith("0.012"))

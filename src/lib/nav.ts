@@ -17,6 +17,7 @@ export const NAV: NavGroup[] = [
     { href: "/history", key: "history", icon: "History", perm: "maintenance:view" },
     { href: "/qc", key: "qc", icon: "ShieldCheck", perm: "qc:view" },
     { href: "/inventory", key: "inventory", icon: "Warehouse", perm: "warehouse:view" },
+    { href: "/stock", key: "stock", icon: "ArrowLeftRight", perm: "stock:view" },
   ]},
   { key: "masterData", items: [
     { href: "/products", key: "products", icon: "Package", perm: "products:view" },
