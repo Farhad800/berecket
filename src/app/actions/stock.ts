@@ -31,6 +31,7 @@ const schema = z.object({
   reason: z.enum(REASONS).optional(),
   party: z.string().trim().max(160).optional(),
   invoiceNo: z.string().trim().max(80).optional(),
+  phone: z.string().trim().max(40).regex(/^[0-9+()\-\s]*$/, "The phone number can only have digits, spaces, + and -").optional(),
   currency: z.enum(["IQD", "USD", "EUR"]).optional(),
   /** Buy / Sell: paid now, goes into (sale) or out of (purchase) the safe. Empty = nothing paid yet. */
   paid: z.coerce.number().min(0, "Paid can't be negative").max(100_000_000_000).optional(),
@@ -77,7 +78,7 @@ export async function saveStockDocAction(input: unknown) {
       const number = await nextNumber(NUM[t], tx);
       const doc = await tx.stockDoc.create({
         data: {
-          number, type: t, reason: money(t) ? null : raw.reason!, party: raw.party || null, invoiceNo: raw.invoiceNo || null,
+          number, type: t, reason: money(t) ? null : raw.reason!, party: raw.party || null, phone: money(t) ? raw.phone || null : null, invoiceNo: raw.invoiceNo || null,
           currency: money(t) ? raw.currency! : null, orderId: raw.orderId || null, note: raw.note || null, total, createdById: me.id,
         },
       });

@@ -484,6 +484,7 @@ model StockDoc {
   type        StockDocType
   reason      String? // Input/Output: RETURN, TRANSFER, COUNT, DAMAGE, SAMPLE, OTHER
   party       String? // Buy: supplier · Sell: customer (typed)
+  phone       String? // customer / supplier phone, printed on the receipt
   invoiceNo   String?
   currency    Currency?
   orderId     String?
@@ -649,4 +650,26 @@ model CashEntry {
   @@index([number])
   @@index([stockDocId])
   @@index([createdAt])
+}
+
+enum ReceiptFor {
+  SELL
+  BUY
+  PAYMENT // money received later for a sale (RCV)
+}
+
+/// A saved receipt layout (accountant, 25 Oct 2026): banner, paper, fields, columns, language.
+model ReceiptLayout {
+  id          String     @id @default(cuid())
+  name        String
+  docType     ReceiptFor
+  language    String // ar | en | tr | ar-en
+  isDefault   Boolean    @default(false)
+  banner      String?    @db.Text // image as a data: URL (kept in the database so it works on every server)
+  settings    Json
+  createdById String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([docType])
 }

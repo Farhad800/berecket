@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/time";
-import { Alert, Badge, Card, PageHeader } from "@/components/ui";
+import { Alert, Badge, Card, LinkButton, PageHeader } from "@/components/ui";
 import { KIND_TONE, catName, fmtMoney } from "../types";
 
 export const metadata = { title: "Safe" };
@@ -27,7 +27,7 @@ export default async function CashEntryPage({ params, searchParams }: { params: 
   return (
     <>
       <Link href="/cash" className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.cash")}</Link>
-      <PageHeader title={e.number} subtitle={<span className="flex flex-wrap items-center gap-2"><Badge tone={KIND_TONE[e.kind]}>{t(`cash.kind.${e.kind}`)}</Badge>{formatDateTime(e.createdAt, locale)} · {by?.fullName ?? "—"}</span>} />
+      <PageHeader title={e.number} actions={e.kind === "SALE" && e.stockDoc ? <LinkButton href={`/print/receipt/payment/${e.id}`} target="_blank"><Printer className="size-4" /> {t("rc2.printReceipt")}</LinkButton> : undefined} subtitle={<span className="flex flex-wrap items-center gap-2"><Badge tone={KIND_TONE[e.kind]}>{t(`cash.kind.${e.kind}`)}</Badge>{formatDateTime(e.createdAt, locale)} · {by?.fullName ?? "—"}</span>} />
       {saved && <div className="mb-3"><Alert tone="green">{t("cash.saved", { number: e.number })}</Alert></div>}
       <Card>
         <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">

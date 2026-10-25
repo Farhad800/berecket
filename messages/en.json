@@ -29,7 +29,8 @@
     "close": "Close",
     "audit": "Audit log",
     "stock": "Stock Movements",
-    "cash": "Safe"
+    "cash": "Safe",
+    "receipts": "Receipts"
   },
   "common": {
     "save": "Save",
@@ -152,7 +153,8 @@
       "settings": "Settings",
       "audit": "Audit log",
       "stock": "Stock movements",
-      "cash": "Safe (money)"
+      "cash": "Safe (money)",
+      "receipts": "Receipts (print layouts)"
     },
     "actions": {
       "view": "View",
@@ -563,6 +565,12 @@
       "categoryAdd": "Expense category added",
       "categoryHide": "Expense category hidden",
       "categoryRestore": "Expense category shown again"
+    },
+    "receipt": {
+      "layoutCreate": "Receipt layout created",
+      "layoutEdit": "Receipt layout changed",
+      "layoutDelete": "Receipt layout deleted",
+      "print": "Receipt printed"
     }
   },
   "sched": {
@@ -1372,7 +1380,8 @@
       "ProductionEntry": "Production entry",
       "StockDoc": "Stock movement",
       "CashEntry": "Safe entry",
-      "ExpenseCategory": "Expense category"
+      "ExpenseCategory": "Expense category",
+      "ReceiptLayout": "Receipt layout"
     }
   },
   "sys": {
@@ -1825,7 +1834,8 @@
       "SAMPLE": "Sample",
       "OTHER": "Other"
     },
-    "eur": "Euro"
+    "eur": "Euro",
+    "phone": "Phone"
   },
   "cash": {
     "intro": "Money in the safe per currency. Sales and money put in add to it; purchases and expenses take from it.",
@@ -1915,6 +1925,88 @@
       "TRANSPORT": "Transport",
       "FOOD": "Food",
       "OTHER": "Other"
+    }
+  },
+  "rc2": {
+    "intro": "Saved layouts for printing sales, purchases and payment receipts. Print from a sale or purchase with the Print receipt button.",
+    "new": "New layout",
+    "none": "No layouts yet. Receipts print in the standard layout.",
+    "noneManage": "No layouts yet. Press New layout to make the first one.",
+    "saved": "Layout saved.",
+    "isDefault": "Default",
+    "howToPrint": "To print: open a sale or purchase (Stock Movements) and press Print receipt, then choose the layout and press Print.",
+    "name": "Layout name",
+    "for": "Used for",
+    "language": "Receipt language",
+    "paper": "Paper",
+    "fontSize": "Text size (pt)",
+    "margin": "Page margin (mm)",
+    "color": "Colour",
+    "default": "Use this layout first for this kind of receipt",
+    "banner": "Banner on top",
+    "bannerHint": "Upload the banner picture (PNG or JPG) exactly as it should appear across the top of the receipt.",
+    "uploadBanner": "Upload banner",
+    "changeBanner": "Change banner",
+    "removeBanner": "Remove",
+    "bannerHeight": "Banner height",
+    "bannerTooBig": "The picture is too large. Use one under 1 MB.",
+    "bannerBad": "This file isn't a picture the browser can read.",
+    "showLogo": "Show the Bereket logo when there is no banner",
+    "title": "Title",
+    "titleHint": "Empty = Sales invoice / Purchase invoice / Payment receipt",
+    "header": "Text under the banner (address, phones…)",
+    "footer": "Text at the bottom",
+    "fields": "What to show",
+    "columns": "Item table columns",
+    "columnsHint": "Tick the columns to print and use the arrows to change their order.",
+    "up": "up",
+    "down": "down",
+    "sign1": "First signature box",
+    "sign2": "Second signature box",
+    "save": "Save layout",
+    "delete": "Delete layout",
+    "previewReal": "Preview with your latest document {number}",
+    "previewSample": "Preview with sample data",
+    "layout": "Layout",
+    "standard": "Standard layout",
+    "print": "Print / Save as PDF",
+    "printReceipt": "Print receipt",
+    "printShort": "Print",
+    "type": {
+      "SELL": "Sales",
+      "BUY": "Purchases",
+      "PAYMENT": "Payment received (later)"
+    },
+    "lang": {
+      "ar": "Arabic",
+      "en": "English",
+      "tr": "Turkish",
+      "ar-en": "Arabic + English"
+    },
+    "f": {
+      "date": "Date",
+      "time": "Time",
+      "number": "Document number",
+      "invoice": "Invoice number",
+      "order": "Order number",
+      "customer": "Customer / supplier name",
+      "phone": "Phone number",
+      "by": "Accountant's name",
+      "note": "Note",
+      "paid": "Paid",
+      "owed": "Remaining",
+      "words": "Total in words",
+      "signatures": "Signature / stamp boxes"
+    },
+    "c": {
+      "no": "Line no.",
+      "code": "Code",
+      "name": "Item name",
+      "name2": "Second name",
+      "qty": "Quantity",
+      "unit": "Unit",
+      "price": "Price",
+      "total": "Total price"
     }
   }
 }

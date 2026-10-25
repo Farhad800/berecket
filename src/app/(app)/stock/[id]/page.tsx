@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getStock } from "@/lib/stock";
 import { formatDateTime } from "@/lib/time";
-import { Alert, Badge, Card, PageHeader } from "@/components/ui";
+import { Alert, Badge, Card, LinkButton, PageHeader } from "@/components/ui";
 import { DOC_TONE, fmtMoney, fmtQty } from "../types";
 import PayForm from "./pay-form";
 
@@ -40,13 +40,14 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   return (
     <>
       <Link href="/stock" className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.stock")}</Link>
-      <PageHeader title={d.number} subtitle={<span className="flex flex-wrap items-center gap-2"><Badge tone={DOC_TONE[d.type]}>{t(`sd.type.${d.type}`)}</Badge>{formatDateTime(d.createdAt, locale)} · {by?.fullName ?? "—"}</span>} />
+      <PageHeader title={d.number} actions={money ? <LinkButton href={`/print/receipt/doc/${d.id}`} target="_blank"><Printer className="size-4" /> {t("rc2.printReceipt")}</LinkButton> : undefined} subtitle={<span className="flex flex-wrap items-center gap-2"><Badge tone={DOC_TONE[d.type]}>{t(`sd.type.${d.type}`)}</Badge>{formatDateTime(d.createdAt, locale)} · {by?.fullName ?? "—"}</span>} />
       {saved && <div className="mb-3"><Alert tone="green">{t("sd.saved", { number: d.number })}</Alert></div>}
       {minus.length > 0 && <div className="mb-3"><Alert tone="amber">{t("sd.minusNow", { items: minus.map((l) => `${l.product.code} (${fmtQty(stock.get(l.productId) ?? 0)} ${l.product.unit})`).join(", ") })}</Alert></div>}
       <Card className="mb-4">
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           {d.reason && <div><dt className="text-xs text-muted">{t("sd.reasonLabel")}</dt><dd>{t(`sd.reason.${d.reason}`)}</dd></div>}
           {d.party && <div><dt className="text-xs text-muted">{t(d.type === "BUY" ? "sd.supplier" : "sd.customer")}</dt><dd className="font-semibold">{d.party}</dd></div>}
+          {d.phone && <div><dt className="text-xs text-muted">{t("sd.phone")}</dt><dd dir="ltr">{d.phone}</dd></div>}
           {d.invoiceNo && <div><dt className="text-xs text-muted">{t("sd.invoice")}</dt><dd dir="ltr">{d.invoiceNo}</dd></div>}
           {d.order && <div><dt className="text-xs text-muted">{t("sd.order")}</dt><dd><Link href={`/orders/${d.order.id}`} className="text-brand-600 hover:underline" dir="ltr">{d.order.number}</Link></dd></div>}
           {money && <div><dt className="text-xs text-muted">{t("sd.total")}</dt><dd className="text-lg font-bold" dir="ltr">{fmtMoney(total)} {d.currency}</dd></div>}
@@ -66,7 +67,10 @@ export default async function StockDocPage({ params, searchParams }: { params: P
               {payments.map((p) => (
                 <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-1.5">
                   <span><span className="font-semibold" dir="ltr">{p.number}</span> · {formatDateTime(p.createdAt, locale)} · {payers.find((u) => u.id === p.createdById)?.fullName ?? "—"}{p.note && ` · ${p.note}`}</span>
-                  <span className="font-semibold tabular-nums" dir="ltr">{fmtMoney(Math.abs(Number(p.amount)))} {p.currency}</span>
+                  <span className="flex items-center gap-3">
+                    {sell && <Link href={`/print/receipt/payment/${p.id}`} target="_blank" className="text-xs font-semibold text-brand-600 hover:underline">{t("rc2.printShort")}</Link>}
+                    <span className="font-semibold tabular-nums" dir="ltr">{fmtMoney(Math.abs(Number(p.amount)))} {p.currency}</span>
+                  </span>
                 </li>
               ))}
             </ul>

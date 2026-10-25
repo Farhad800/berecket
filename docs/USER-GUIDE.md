@@ -72,6 +72,12 @@ The safe keeps **IQD, USD and EUR apart** — each has its own balance. Open **S
 - Report **Safe: money in and out** (Reports → Money) with totals per currency; CSV/Excel/PDF.
 - Permissions in Administration → Roles → *Safe (money)*: View, Money in, Money out, Exchange, Manage, Export. Only the Administrator has them at first. A person who may **Sell** can always record what the customer paid; a person who may **Buy** can pay the supplier.
 
+## Receipts (printing sales, purchases and payments)
+- **Receipts** in the menu (needs *Receipts: Manage*) lists the saved layouts. **New layout**: name, used for (Sales / Purchases / Payment received later), language (Arabic, English, Turkish or Arabic + English), paper (A4 / A5), text size, margin, colour, **banner picture on top**, title, text under the banner, text at the bottom, what to show (date, time, numbers, customer, phone, accountant, note, paid, remaining, total in words, signature boxes) and the item columns (tick and move up/down). The preview on the right shows your latest real sale as it will print.
+- Tick **Use this layout first** for the layout to open by default; the first layout of each kind is the default automatically.
+- To print: open the sale or purchase in Stock Movements → **Print receipt** → choose a layout at the top → **Print / Save as PDF**. Later payments have their own **Print** link (and Print receipt on the payment page).
+- The Buy / Sell form now has **Phone**. Typing a customer you used before fills in their phone.
+
 ## Notifications on your phone and computer
 - After signing in, tap **Turn on notifications** (or open the bell → *Notifications on this device*). Allow when the browser asks. Do this once on each phone and computer.
 - New and removed orders, daily production, QC results, goods out, stock adjustments, machine breakdowns, repairs and new or deleted products/molds/machines then pop up **even when the app or browser is closed**. You never get a notification for something you did yourself.

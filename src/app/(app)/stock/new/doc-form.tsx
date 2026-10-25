@@ -15,8 +15,9 @@ type Line = { key: number; itemId: string; qty: string; price: string };
 const REASONS = ["RETURN", "TRANSFER", "COUNT", "DAMAGE", "SAMPLE", "OTHER"] as const;
 
 /** One Input / Output / Buy / Sell document with any number of lines. */
-export default function DocForm({ allowed, initialType, initialOrder, items, orders }: {
+export default function DocForm({ allowed, initialType, initialOrder, items, orders, parties = [] }: {
   allowed: DocType[]; initialType: DocType; initialOrder: string; items: Item[]; orders: Order[];
+  parties?: { type: "BUY" | "SELL"; name: string; phone: string | null }[];
 }) {
   const t = useTranslations();
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const [reason, setReason] = useState("");
   const [party, setParty] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
+  const [phone, setPhone] = useState("");
   const [currency, setCurrency] = useState<"IQD" | "USD" | "EUR">("IQD");
   // "Paid now" follows the total until the user types their own amount.
   const [paidText, setPaidText] = useState<string | null>(null);
@@ -56,7 +58,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const save = () => start(async () => {
     setError(null);
     const r = await saveStockDocAction({
-      type, reason: money ? undefined : reason || undefined, party: party || undefined, invoiceNo: invoiceNo || undefined,
+      type, reason: money ? undefined : reason || undefined, party: party || undefined, phone: money ? phone || undefined : undefined, invoiceNo: invoiceNo || undefined,
       currency: money ? currency : undefined, paid: money ? paidNow : undefined, orderId: type === "SELL" && orderId ? orderId : undefined, note: note || undefined,
       lines: filled.map((l) => ({ itemId: l.itemId, qty: l.qty, unitPrice: money ? (l.price === "" ? undefined : l.price) : undefined })),
     });
@@ -89,7 +91,15 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
           {money && (
             <>
               <label className="text-sm font-medium">{t(type === "BUY" ? "sd.supplier" : "sd.customer")} *
-                <Input value={party} onChange={(e) => setParty(e.target.value)} className="mt-1" aria-label={t(type === "BUY" ? "sd.supplier" : "sd.customer")} />
+                <Input value={party} list="party-list" autoComplete="off" onChange={(e) => {
+                  const v = e.target.value; setParty(v);
+                  const known = parties.find((p) => p.type === type && p.name.toLowerCase() === v.trim().toLowerCase());
+                  if (known?.phone && !phone) setPhone(known.phone);
+                }} className="mt-1" aria-label={t(type === "BUY" ? "sd.supplier" : "sd.customer")} />
+                <datalist id="party-list">{parties.filter((p) => p.type === type).map((p) => <option key={p.name} value={p.name} />)}</datalist>
+              </label>
+              <label className="text-sm font-medium">{t("sd.phone")}
+                <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" dir="ltr" aria-label={t("sd.phone")} />
               </label>
               <label className="text-sm font-medium">{t("sd.invoice")}
                 <Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} className="mt-1" dir="ltr" aria-label={t("sd.invoice")} />

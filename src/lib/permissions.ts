@@ -9,6 +9,7 @@ export const RESOURCES = [
   "qc",
   "warehouse",
   "stock", // stock movement documents: input, output, buy, sell
+  "receipts", // printed receipts: saved layouts
   "cash", // the safe: money in, money out (expenses), currency exchange, expense categories
   "products",
   "assets", // machines & molds
@@ -35,6 +36,7 @@ export const RESOURCE_ACTIONS: Record<Resource, Action[]> = {
   warehouse: ["view", "create", "edit", "approve", "export"],
   stock: ["view", "input", "output", "buy", "sell"],
   cash: ["view", "in", "out", "exchange", "manage", "export"],
+  receipts: ["manage"],
   products: ["view", "create", "edit", "archive", "export"],
   assets: ["view", "create", "edit", "archive", "export"],
   reports: ["view", "export"],

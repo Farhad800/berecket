@@ -29,7 +29,8 @@
     "close": "Kapat",
     "audit": "Denetim kaydı",
     "stock": "Stok Hareketleri",
-    "cash": "Kasa"
+    "cash": "Kasa",
+    "receipts": "Makbuzlar"
   },
   "common": {
     "save": "Kaydet",
@@ -152,7 +153,8 @@
       "settings": "Ayarlar",
       "audit": "Denetim kaydı",
       "stock": "Stok hareketleri",
-      "cash": "Kasa (para)"
+      "cash": "Kasa (para)",
+      "receipts": "Makbuzlar (baskı düzenleri)"
     },
     "actions": {
       "view": "Görüntüle",
@@ -563,6 +565,12 @@
       "categoryAdd": "Gider kategorisi eklendi",
       "categoryHide": "Gider kategorisi gizlendi",
       "categoryRestore": "Gider kategorisi tekrar gösterildi"
+    },
+    "receipt": {
+      "layoutCreate": "Makbuz düzeni oluşturuldu",
+      "layoutEdit": "Makbuz düzeni değiştirildi",
+      "layoutDelete": "Makbuz düzeni silindi",
+      "print": "Makbuz yazdırıldı"
     }
   },
   "sched": {
@@ -1372,7 +1380,8 @@
       "ProductionEntry": "Üretim girişi",
       "StockDoc": "Stok hareketi",
       "CashEntry": "Kasa kaydı",
-      "ExpenseCategory": "Gider kategorisi"
+      "ExpenseCategory": "Gider kategorisi",
+      "ReceiptLayout": "Makbuz düzeni"
     }
   },
   "sys": {
@@ -1825,7 +1834,8 @@
       "SAMPLE": "Numune",
       "OTHER": "Diğer"
     },
-    "eur": "Euro"
+    "eur": "Euro",
+    "phone": "Telefon"
   },
   "cash": {
     "intro": "Para birimine göre kasadaki para. Satışlar ve yatırılan para artırır; alışlar ve giderler azaltır.",
@@ -1915,6 +1925,88 @@
       "TRANSPORT": "Nakliye",
       "FOOD": "Yemek",
       "OTHER": "Diğer"
+    }
+  },
+  "rc2": {
+    "intro": "Satış, alış ve tahsilat makbuzları için kayıtlı düzenler. Satış veya alıştan Makbuz yazdır düğmesiyle yazdırın.",
+    "new": "Yeni düzen",
+    "none": "Henüz düzen yok. Makbuzlar standart düzende yazdırılır.",
+    "noneManage": "Henüz düzen yok. İlkini yapmak için Yeni düzen'e basın.",
+    "saved": "Düzen kaydedildi.",
+    "isDefault": "Varsayılan",
+    "howToPrint": "Yazdırmak için: bir satış veya alışı açın (Stok Hareketleri), Makbuz yazdır'a basın, düzeni seçip Yazdır'a basın.",
+    "name": "Düzen adı",
+    "for": "Kullanım",
+    "language": "Makbuz dili",
+    "paper": "Kağıt",
+    "fontSize": "Yazı boyutu (pt)",
+    "margin": "Sayfa kenarı (mm)",
+    "color": "Renk",
+    "default": "Bu tür makbuz için önce bu düzeni kullan",
+    "banner": "Üst afiş",
+    "bannerHint": "Afiş resmini (PNG veya JPG) makbuzun üstünde görünmesi gerektiği gibi yükleyin.",
+    "uploadBanner": "Afiş yükle",
+    "changeBanner": "Afişi değiştir",
+    "removeBanner": "Kaldır",
+    "bannerHeight": "Afiş yüksekliği",
+    "bannerTooBig": "Resim çok büyük. 1 MB'den küçük bir resim kullanın.",
+    "bannerBad": "Bu dosya okunabilen bir resim değil.",
+    "showLogo": "Afiş yoksa Bereket logosunu göster",
+    "title": "Başlık",
+    "titleHint": "Boş = Satış faturası / Alış faturası / Tahsilat makbuzu",
+    "header": "Afişin altındaki yazı (adres, telefonlar…)",
+    "footer": "Alttaki yazı",
+    "fields": "Gösterilecekler",
+    "columns": "Ürün tablosu sütunları",
+    "columnsHint": "Yazdırılacak sütunları işaretleyin, sırayı oklarla değiştirin.",
+    "up": "yukarı",
+    "down": "aşağı",
+    "sign1": "Birinci imza kutusu",
+    "sign2": "İkinci imza kutusu",
+    "save": "Düzeni kaydet",
+    "delete": "Düzeni sil",
+    "previewReal": "Son belgenizle önizleme {number}",
+    "previewSample": "Örnek verilerle önizleme",
+    "layout": "Düzen",
+    "standard": "Standart düzen",
+    "print": "Yazdır / PDF kaydet",
+    "printReceipt": "Makbuz yazdır",
+    "printShort": "Yazdır",
+    "type": {
+      "SELL": "Satışlar",
+      "BUY": "Alışlar",
+      "PAYMENT": "Tahsilat (sonradan)"
+    },
+    "lang": {
+      "ar": "Arapça",
+      "en": "İngilizce",
+      "tr": "Türkçe",
+      "ar-en": "Arapça + İngilizce"
+    },
+    "f": {
+      "date": "Tarih",
+      "time": "Saat",
+      "number": "Belge no",
+      "invoice": "Fatura no",
+      "order": "Sipariş no",
+      "customer": "Müşteri / tedarikçi",
+      "phone": "Telefon",
+      "by": "Muhasebeci adı",
+      "note": "Not",
+      "paid": "Ödenen",
+      "owed": "Kalan",
+      "words": "Yazıyla tutar",
+      "signatures": "İmza / kaşe kutuları"
+    },
+    "c": {
+      "no": "Sıra no",
+      "code": "Kod",
+      "name": "Ürün adı",
+      "name2": "İkinci ad",
+      "qty": "Miktar",
+      "unit": "Birim",
+      "price": "Fiyat",
+      "total": "Toplam fiyat"
     }
   }
 }

@@ -23,6 +23,15 @@ export default async function NewStockDocPage({ searchParams }: { searchParams: 
     db.order.findMany({ where: { status: "OPEN" }, orderBy: { createdAt: "desc" }, take: 200, select: { id: true, number: true, lines: { select: { productId: true, quantity: true } } } }),
   ]);
   const stock = await getStock();
+  // Names used before (newest first) with their last phone, so typing a known customer fills the phone.
+  const past = await db.stockDoc.findMany({ where: { type: { in: ["BUY", "SELL"] }, party: { not: null } }, orderBy: { createdAt: "desc" }, take: 2000, select: { type: true, party: true, phone: true } });
+  const parties: { type: "BUY" | "SELL"; name: string; phone: string | null }[] = [];
+  for (const p of past) {
+    const k = p.party!.trim();
+    const have = parties.find((x) => x.type === p.type && x.name.toLowerCase() === k.toLowerCase());
+    if (!have) parties.push({ type: p.type as "BUY" | "SELL", name: k, phone: p.phone });
+    else if (!have.phone && p.phone) have.phone = p.phone;
+  }
   return (
     <>
       <Link href="/stock" className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.stock")}</Link>
@@ -33,6 +42,7 @@ export default async function NewStockDocPage({ searchParams }: { searchParams: 
         initialOrder={orders.some((o) => o.id === sp.order) ? sp.order! : ""}
         items={items.map((i) => ({ ...i, stock: stock.get(i.id) ?? 0 }))}
         orders={orders.map((o) => ({ id: o.id, number: o.number, lines: o.lines }))}
+        parties={parties}
       />
     </>
   );
