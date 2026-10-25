@@ -3,6 +3,7 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth";
 import { notify } from "@/lib/notify";
@@ -276,43 +277,96 @@ export async function addLabelsAction(_: unknown, fd: FormData) {
 }
 
 // ───────── Recipe ("made of") and packaging of one product ─────────
-const recipeSchema = z.object({
-  productId: z.string().min(1).max(40),
-  labelId: z.string().max(40).optional(),
-  piecesPerCarton: z.coerce.number().int().min(1, "At least 1").max(10_000_000).optional(),
-  lines: z.array(z.object({ componentId: z.string().min(1).max(40), qty: z.coerce.number().positive("More than 0").max(1_000_000), per: z.enum(["PIECE", "CARTON"]) })).max(60),
-});
+// PIECE lines: amount per piece (grams for kg items, pieces for counted items).
+// CARTON lines (packaging): how many products go into ONE of that item (one carton holds 1,800, one nylon bag holds 60).
+const linesSchema = z.array(z.object({
+  componentId: z.string().min(1, "Choose the item").max(40),
+  qty: z.coerce.number().positive("More than 0").max(10_000_000),
+  per: z.enum(["PIECE", "CARTON"]),
+})).max(60);
+type Lines = z.infer<typeof linesSchema>;
 
+function checkLines(lines: Lines, productId?: string) {
+  const seen = new Set<string>();
+  for (const l of lines) {
+    const k = `${l.componentId}|${l.per}`;
+    if (seen.has(k)) throw new UserError("The same item is listed twice. Put it on one line.");
+    seen.add(k);
+    if (productId && l.componentId === productId) throw new UserError("A product can't be made of itself.");
+  }
+}
+
+async function writeRecipe(tx: Prisma.TransactionClient, productId: string, labelId: string | null, lines: Lines, userId: string) {
+  if (labelId && !(await tx.product.count({ where: { id: labelId, kind: "STICKER" } }))) throw new UserError("That label doesn't exist any more.");
+  const comps = await tx.product.findMany({ where: { id: { in: lines.map((l) => l.componentId) } }, select: { id: true, code: true, kind: true } });
+  if (comps.length !== new Set(lines.map((l) => l.componentId)).size) throw new UserError("One of the items no longer exists. Reload the page.");
+  for (const l of lines) {
+    const k = comps.find((c) => c.id === l.componentId)!.kind;
+    if (l.per === "CARTON" && k !== "PACKAGING") throw new UserError("Only packaging items (cartons, nylon…) go under Packaging.");
+    if (l.per === "PIECE" && (k === "PACKAGING" || k === "STICKER")) throw new UserError("Labels and packaging don't go under Made of.");
+  }
+  await tx.product.update({ where: { id: productId }, data: { labelId } });
+  await tx.productComponent.deleteMany({ where: { productId } });
+  if (lines.length) await tx.productComponent.createMany({ data: lines.map((l) => ({ productId, componentId: l.componentId, qty: l.qty, per: l.per })) });
+  const code = (id: string) => comps.find((c) => c.id === id)?.code ?? id;
+  await audit({
+    userId, action: "product.recipe", entityType: "Product", entityId: productId,
+    after: { label: labelId, lines: lines.map((l) => (l.per === "PIECE" ? `${code(l.componentId)} ${l.qty} per piece` : `${code(l.componentId)} holds ${l.qty} pcs`)) },
+  }, tx);
+}
+
+/** Changes the label, made-of and packaging of an existing product. */
 export async function saveRecipeAction(input: unknown) {
   return run(async () => {
     const me = await requirePermission("products:edit");
-    const v = recipeSchema.parse(input);
-    if (v.lines.some((l) => l.per === "CARTON") && !v.piecesPerCarton) throw new UserError("Enter how many pieces go in one carton.");
-    const seen = new Set<string>();
-    for (const l of v.lines) {
-      const k = `${l.componentId}|${l.per}`;
-      if (seen.has(k)) throw new UserError("The same item is listed twice. Put it on one line.");
-      seen.add(k);
-      if (l.componentId === v.productId) throw new UserError("A product can't be made of itself.");
-    }
+    const v = z.object({ productId: z.string().min(1).max(40), labelId: z.string().max(40).optional(), lines: linesSchema }).parse(input);
+    checkLines(v.lines, v.productId);
     await db.$transaction(async (tx) => {
-      const p = await tx.product.findUniqueOrThrow({ where: { id: v.productId }, select: { code: true, kind: true } });
+      const p = await tx.product.findUniqueOrThrow({ where: { id: v.productId }, select: { kind: true, labelId: true } });
       if (p.kind !== "PRODUCT") throw new UserError("Only products have a recipe.");
-      if (v.labelId && !(await tx.product.count({ where: { id: v.labelId, kind: "STICKER" } }))) throw new UserError("That label doesn't exist any more.");
-      const comps = await tx.product.findMany({ where: { id: { in: v.lines.map((l) => l.componentId) } }, select: { id: true, code: true, kind: true } });
-      if (comps.length !== new Set(v.lines.map((l) => l.componentId)).size) throw new UserError("One of the items no longer exists. Reload the page.");
-      await tx.product.update({ where: { id: v.productId }, data: { labelId: v.labelId ?? null, piecesPerCarton: v.piecesPerCarton ?? null } });
-      await tx.productComponent.deleteMany({ where: { productId: v.productId } });
-      if (v.lines.length) await tx.productComponent.createMany({ data: v.lines.map((l) => ({ productId: v.productId, componentId: l.componentId, qty: l.qty, per: l.per })) });
-      const code = (id: string) => comps.find((c) => c.id === id)?.code ?? id;
-      await audit({
-        userId: me.id, action: "product.recipe", entityType: "Product", entityId: v.productId,
-        after: { label: v.labelId ?? null, piecesPerCarton: v.piecesPerCarton ?? null, lines: v.lines.map((l) => `${code(l.componentId)} ${l.qty}/${l.per === "PIECE" ? "piece" : "carton"}`) },
-      }, tx);
+      // A newly chosen label renames the product, as when it was created.
+      if (v.labelId && v.labelId !== p.labelId) {
+        const label = await tx.product.findFirst({ where: { id: v.labelId, kind: "STICKER" }, select: { name: true, name2: true } });
+        if (label) await tx.product.update({ where: { id: v.productId }, data: nameFromLabel(label) });
+      }
+      await writeRecipe(tx, v.productId, v.labelId ?? null, v.lines, me.id);
     });
     revalidatePath(`/products/${v.productId}`);
     revalidatePath("/products");
   });
+}
+
+/** New product in one go: label (or typed name), code, mold, and what it is made of and packed in. */
+export async function createProductAction(input: unknown) {
+  const res = await run(async () => {
+    const me = await requirePermission("products:create");
+    const v = z.object({
+      code, labelId: z.string().max(40).optional(),
+      name: z.string().trim().max(160).optional(), name2: z.string().trim().max(160).optional(),
+      moldId: z.string().max(40).optional(), qcRequired: z.boolean().default(false), lines: linesSchema,
+    }).parse(input);
+    checkLines(v.lines);
+    let names: { name: string; name2?: string | null };
+    if (v.labelId) {
+      const label = await db.product.findFirst({ where: { id: v.labelId, kind: "STICKER" }, select: { name: true, name2: true } });
+      if (!label) throw new UserError("That label doesn't exist any more.");
+      names = nameFromLabel(label);
+    } else {
+      if (!v.name || v.name.length < 2) throw new UserError("Choose the product's label, or type a name if it has no label.");
+      names = { name: v.name, name2: v.name2 || null };
+    }
+    const p = await db.$transaction(async (tx) => {
+      const created = await tx.product.create({ data: { code: v.code.toUpperCase(), kind: "PRODUCT", name: names.name, name2: names.name2 ?? null, moldId: v.moldId || null, qcRequired: v.qcRequired } });
+      await audit({ userId: me.id, action: "product.create", entityType: "Product", entityId: created.id, after: { code: created.code, name: created.name } }, tx);
+      await writeRecipe(tx, created.id, v.labelId ?? null, v.lines, me.id);
+      await notify({ type: "product.added", data: { name: created.name, code: created.code, by: me.fullName }, link: `/products/${created.id}`, toPermission: "products:view", exceptUserId: me.id }, tx);
+      return created;
+    });
+    revalidatePath("/products");
+    return p.id;
+  });
+  if (res.ok) redirect(`/products/${res.data}?created=1`);
+  return res;
 }
 
 /** Weight of one bag/piece for items stocked in kg but used by count (e.g. nylon bags). */

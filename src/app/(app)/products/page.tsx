@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
-import { FileSpreadsheet, Tags } from "lucide-react";
+import { FileSpreadsheet, Plus, Tags } from "lucide-react";
 import { pageUser, can } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Alert, LinkButton, PageHeader } from "@/components/ui";
@@ -63,6 +63,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         actions={canCreate ? (
           <>
             {mold && mold !== "none" && <LinkButton href={`/assets/molds/${mold.id}/labels`}><Tags className="size-4" /> {t("md.addLabels")}</LinkButton>}
+            <LinkButton href="/products/new"><Plus className="size-4" /> {t("md.newProduct")}</LinkButton>
             <LinkButton href="/import" variant="secondary"><FileSpreadsheet className="size-4" /> {t("imp.button")}</LinkButton>
           </>
         ) : undefined}
@@ -80,7 +81,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         newLabel={t("md.newProduct")}
         fields={fields}
         action={saveProductAction}
-        canCreate={canCreate}
+        canCreate={false}
         canEdit={can(me, "products:edit")}
         canArchive={can(me, "products:archive")}
         rows={products.map((p) => ({

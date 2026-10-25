@@ -3,7 +3,7 @@ export type Need = { componentId: string; code: string; name: string; unit: stri
 
 export type Recipe = {
   labelId: string | null;
-  piecesPerCarton: number | null;
+  piecesPerCarton?: number | null;
   label: { id: string; code: string; name: string; unit: string } | null;
   components: { qty: unknown; per: "PIECE" | "CARTON"; component: { id: string; code: string; name: string; unit: string; unitWeightKg: unknown } }[];
 };
@@ -27,9 +27,9 @@ export function needsFor(p: Recipe, pieces: number): Need[] {
     if (line.per === "PIECE") {
       add(c, kg(c.unit) ? (q * pieces) / 1000 : Math.ceil(q * pieces - 1e-9));
     } else {
-      const ppc = p.piecesPerCarton ?? 0;
-      if (!(ppc > 0)) continue; // packaging needs "pieces per carton"
-      const n = Math.ceil((pieces * q) / ppc - 1e-9);
+      // Packaging: q = how many products go into ONE of this item (one carton holds 1,800; one nylon bag holds 60).
+      // Always rounded up — a started carton or bag is used.
+      const n = Math.ceil(pieces / q - 1e-9);
       if (kg(c.unit)) {
         const w = Number(c.unitWeightKg ?? 0);
         if (w > 0) add(c, n * w); else add(c, 0, true);

@@ -48,7 +48,6 @@ export const SHEETS: Record<SheetKey, { title: string; cols: Col[] }> = {
       { key: "kind", title: "Kind (product/sticker/material)", aliases: ["kind (product/sticker/material)", "kind", "item type", "type"], example: ["product", "product"] },
       { key: "unit", title: "Unit (pcs/kg)", aliases: ["unit (pcs/kg)", "unit"], example: ["pcs", "pcs"] },
       { key: "labelCode", title: "Label code", aliases: ["label code", "sticker code", "etiket code"], example: ["", ""] },
-      { key: "piecesPerCarton", title: "Pieces per carton", aliases: ["pieces per carton", "pcs per carton", "per carton"], example: ["", 1800] },
       { key: "unitWeightKg", title: "Weight per bag (kg)", aliases: ["weight per bag (kg)", "weight per bag", "bag weight", "weight per piece (kg)"], example: ["", ""] },
     ],
   },
@@ -57,8 +56,8 @@ export const SHEETS: Record<SheetKey, { title: string; cols: Col[] }> = {
     cols: [
       { key: "product", title: "Product code", aliases: ["product code", "product"], required: true, example: ["CAP28-ZAKHO", "CAP28-ZAKHO"] },
       { key: "item", title: "Item code", aliases: ["item code", "component code", "material code", "item"], required: true, example: ["RAW-PP", "CARTON-CAP"] },
-      { key: "qty", title: "Quantity", aliases: ["quantity", "qty", "amount"], required: true, example: [2.1, 1] },
-      { key: "per", title: "Per (piece/carton)", aliases: ["per (piece/carton)", "per", "basis"], required: true, example: ["piece", "carton"] },
+      { key: "qty", title: "Quantity", aliases: ["quantity", "qty", "amount"], required: true, example: [2.1, 1800] },
+      { key: "per", title: "Per (piece / pack)", aliases: ["per (piece / pack)", "per (piece/carton)", "per", "basis"], required: true, example: ["piece", "pack"] },
     ],
   },
 };
@@ -79,7 +78,8 @@ export async function buildTemplate() {
     "2. Every printed label is its own product. Put one row per label on the Products sheet, with the code of the mold it is made on.",
     "3. Product code can be left empty — the system then gives it MOLDCODE-001, -002 … automatically.",
     "4. Columns marked * are required. A code that already exists is updated; empty cells never delete existing information.",
-    "5. In the system: Products → Import from Excel → choose this file → Check file → Import.",
+    "5. Recipe sheet (optional): one row per item a product uses. Per = piece → amount for one piece (grams for kg items, pieces for others). Per = pack → how many products go into ONE carton / nylon bag.",
+    "6. In the system: Products → Import from Excel → choose this file → Check file → Import.",
     "",
     "١. املأ الأوراق Machines و Molds و Products. احذف صفوف المثال الرمادية. أبقِ العناوين في الصف الأول.",
     "٢. كل ملصق مطبوع هو منتج مستقل. ضع صفاً لكل ملصق في ورقة Products مع رمز القالب.",
@@ -263,7 +263,7 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
   const moldIdToCode = new Map(molds.map((m) => [m.id, m.code]));
   const productByMoldName = new Map(products.filter((p) => p.moldId).map((p) => [`${moldIdToCode.get(p.moldId!)}|${p.name.toLowerCase()}`, p]));
   const seenP = new Set<string>(), seenPn = new Set<string>();
-  const productRows: { code?: string; mold?: string; labelCode?: string; data: { name: string; name2?: string; kind?: Kind; unit?: string; piecesPerCarton?: number; unitWeightKg?: number; material?: string; color?: string; weightGrams?: number; qcRequired?: boolean }; existing?: (typeof products)[number] }[] = [];
+  const productRows: { code?: string; mold?: string; labelCode?: string; data: { name: string; name2?: string; kind?: Kind; unit?: string; unitWeightKg?: number; material?: string; color?: string; weightGrams?: number; qcRequired?: boolean }; existing?: (typeof products)[number] }[] = [];
   for (const { row, v } of sheets.products ?? []) {
     const code = v.code ? v.code.toUpperCase() : undefined;
     const mold = v.mold ? v.mold.toUpperCase() : undefined;
@@ -283,15 +283,13 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
     if ((v.name2 ?? "").length > 160) { err("products", row, "Second name is longer than 160 characters."); continue; }
     const weightGrams = num(v.weightGrams ?? "");
     if (weightGrams !== undefined && (Number.isNaN(weightGrams) || weightGrams < 0)) { err("products", row, "Weight must be a number."); continue; }
-    const piecesPerCarton = num(v.piecesPerCarton ?? "");
-    if (piecesPerCarton !== undefined && (!Number.isInteger(piecesPerCarton) || piecesPerCarton < 1)) { err("products", row, "Pieces per carton must be a whole number."); continue; }
     const unitWeightKg = num(v.unitWeightKg ?? "");
     if (unitWeightKg !== undefined && (Number.isNaN(unitWeightKg) || unitWeightKg <= 0)) { err("products", row, "Weight per bag must be a number in kg."); continue; }
     const labelCode = v.labelCode ? v.labelCode.toUpperCase() : undefined;
     const existing = code ? productByCode.get(code) : productByMoldName.get(mn);
     productRows.push({
       code, mold, existing, labelCode,
-      data: { name: v.name, name2: v.name2 || undefined, kind, unit, piecesPerCarton, unitWeightKg, material: v.material || undefined, color: v.color || undefined, weightGrams, qcRequired: v.qcRequired ? yes(v.qcRequired) : undefined },
+      data: { name: v.name, name2: v.name2 || undefined, kind, unit, unitWeightKg, material: v.material || undefined, color: v.color || undefined, weightGrams, qcRequired: v.qcRequired ? yes(v.qcRequired) : undefined },
     });
   }
 
@@ -307,12 +305,13 @@ export async function planImport(sheets: Partial<Record<SheetKey, RawRow[]>>, pr
   const seenR = new Set<string>();
   for (const { row, v } of sheets.recipes ?? []) {
     const product = v.product.toUpperCase(), item = v.item.toUpperCase();
-    const qty = num(v.qty ?? ""), per = /^(c|carton|cartons|كارتون|koli)/i.test(v.per) ? "CARTON" : /^(p|piece|pieces|pcs|قطعة|عدد|adet)/i.test(v.per) ? "PIECE" : null;
+    const qty = num(v.qty ?? ""), per = /^(pack|c|carton|cartons|nylon|bag|كارتون|نايلون|koli|naylon|torba)/i.test(v.per) ? "CARTON" : /^(p|piece|pieces|pcs|قطعة|عدد|adet)/i.test(v.per) ? "PIECE" : null;
     if (kindOf.get(product) !== "PRODUCT") { err("recipes", row, `${product} isn't a product in the system or on the Products sheet.`); continue; }
     if (!kindOf.has(item)) { err("recipes", row, `Item ${item} doesn't exist.`); continue; }
     if (item === product) { err("recipes", row, "A product can't be made of itself."); continue; }
     if (qty === undefined || Number.isNaN(qty) || qty <= 0) { err("recipes", row, "Quantity must be more than 0."); continue; }
-    if (!per) { err("recipes", row, `Per must be piece or carton (not "${v.per}").`); continue; }
+    if (!per) { err("recipes", row, `Per must be piece or pack (not "${v.per}").`); continue; }
+    if (per === "CARTON" && kindOf.get(item) !== "PACKAGING") { err("recipes", row, `${item} isn't a packaging item; use "piece" for materials.`); continue; }
     const k = `${product}|${item}|${per}`;
     if (seenR.has(k)) { err("recipes", row, `${item} is listed twice for ${product}.`); continue; }
     seenR.add(k); recipeRows.push({ product, item, qty, per });

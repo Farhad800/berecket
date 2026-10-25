@@ -69,9 +69,9 @@ with sync_playwright() as p:
     # master data (admin) — no customers any more
     ck("customers page is gone", A.request.get(B+"/customers").status==404)
     for code,name,qc in [("CAP-28","28 mm bottle cap",False),("PF-500","500 ml PET preform",True),("JAR-1L","1 L food jar",False)]:
-        A.goto(B+"/products"); A.click("text=New product"); A.fill("#code",code); A.fill("#name",name); A.fill("#cycleTimeSec","8")
-        if qc: A.check("input[name=qcRequired]")
-        btn(A,"Save")
+        A.goto(B+"/products/new"); A.get_by_label("Product name").fill(name); A.get_by_label("Product code *").fill(code)
+        if qc: A.get_by_label("Inspection required before release").check()
+        A.get_by_role("button", name="Create product").click(); A.wait_for_url(re.compile(r".*/products/c[a-z0-9]+\?created=1"), wait_until="commit")
     for code in ["TOYO-01","TOYO-02"]:
         A.goto(B+"/assets"); A.click("text=New machine"); A.fill("#code",code); A.fill("#name","Toyo Si-180"); A.select_option("#status","AVAILABLE"); btn(A,"Save")
     A.goto(B+"/assets?tab=molds"); A.click("text=New mold"); A.fill("#code","MD-CAP28"); A.fill("#name","Cap mold 24-cav"); A.fill("#cavities","24"); btn(A,"Save")

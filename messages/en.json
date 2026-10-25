@@ -1630,12 +1630,12 @@
     "label": "Label",
     "labelHint": "1 label per piece is taken from stock when production is entered.",
     "madeOf": "Made of (per piece)",
-    "madeOfHint": "Raw material, dye and regrind in grams per piece; handles and other parts in pieces per piece.",
-    "addMaterial": "Add material / part",
-    "packaging": "Packaging (per carton)",
-    "packagingHint": "Cartons are rounded up; nylon counts the bags actually filled and is turned into kg with the bag weight.",
+    "madeOfHint": "Raw materials and colours in grams per piece; handles and other parts in pieces per piece.",
+    "addMaterial": "Add material / colour / part",
+    "packaging": "Packaging",
+    "packagingHint": "For each carton or nylon: how many products go into one. Started cartons and bags count as used. Nylon kept in kg is turned into kg with its bag weight.",
     "piecesPerCarton": "Pieces in one carton",
-    "addPackaging": "Add carton / nylon / packaging",
+    "addPackaging": "Add carton / nylon",
     "chooseItem": "Choose item…",
     "gPerPiece": "grams per piece",
     "pcsPerPiece": "pieces per piece",
@@ -1648,6 +1648,13 @@
     "previewPieces": "pieces",
     "nothingUsed": "Nothing is taken from stock yet — add a label, materials or packaging.",
     "inStockOnly": "only {n} in stock",
-    "previewNote": "Unsaved changes are included in the preview."
+    "previewNote": "Unsaved changes are included in the preview.",
+    "productsInOne": "products in one",
+    "packExample": "One holds {n} products",
+    "nameNoLabel": "Only when the product has no label.",
+    "nameWillBe": "Product name (from the label):",
+    "create": "Create product",
+    "newIntro": "Pick the label first — the name comes from it. Then add what one piece is made of and how it is packed.",
+    "created": "Product created. Daily production will now take its label, materials and packaging from stock."
   }
 }

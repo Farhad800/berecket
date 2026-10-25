@@ -5,12 +5,15 @@ Sign in at **https://bereket-fms.vercel.app** with your own username. Your first
 - **All labels of one mold — paste:** Machines & Molds → Molds → **Add labels** on the mold → paste the label names, one per line (a whole column copied from Excel works) → *Save*. Labels already on that mold are skipped.
 - Every printed label is its own product, linked to the mold it is made on. Products, the order sheet, the daily production sheet and the stock sheet all have a **mold** filter so 500+ labels stay easy to find.
 
-## Made of & packaging (each product)
-- Open a product (Products → **Made of & packaging**). Choose its **label** (1 label per piece), add what it is **made of** in grams per piece (granules, dye, regrind) or pieces per piece (handles), and its **packaging**: pieces per carton, the carton (per carton) and the nylon (bags per carton). The panel on the right shows what any number of pieces will use.
+## Products: label, made of & packaging
+- **New product** (Products → New product): pick its **label** first — the name and second name come from the label (only products without a label get a typed name). Enter the code, mold and QC flag, then in the same form add:
+  - **Made of** (per piece): raw materials and colours in grams per piece, handles and other parts in pieces per piece.
+  - **Packaging**: each carton or nylon with **how many products go into one** (e.g. carton 1,800 · nylon 60).
+  - The panel on the right shows what any number of pieces will use.
+- Existing products: open a product (Products → **Made of & packaging**) to change the same things.
 - Nylon is stocked in kg: open the nylon item once and enter the **weight of one bag**.
-- When daily production is saved, all of this is taken from stock automatically. Cartons are rounded up; nylon counts the bags actually filled. Corrections give back or take the difference. If something isn't in stock, production is still saved, stock shows minus (red) and the warehouse gets a notification.
-- **New product:** pick its label first — the name and second name come from the label. Only products without a label get a typed name.
-- Excel import: Products sheet columns *Label code*, *Pieces per carton*, *Weight per bag (kg)*; a **Recipe** sheet (Product code, Item code, Quantity, Per piece/carton) sets many recipes at once.
+- When daily production is saved, the label (1 per piece), materials, cartons and nylon are taken from stock automatically. Started cartons and bags count as used. Corrections give back or take the difference. If something isn't in stock, production is still saved, stock shows minus (red) and the warehouse gets a notification.
+- Excel: Products sheet *Label code* and *Weight per bag (kg)* columns; a **Recipe** sheet (Product code, Item code, Quantity, Per = piece or pack) sets many products at once.
 
 ## Sales
 1. **Orders → New order**: the whole product list is shown as one sheet. Type the amount next to each product you need and leave the rest empty (Enter jumps to the next box; *Show only chosen* hides the empty ones). Press **Save order**. Up to 500 products per order. No customer or date is needed.

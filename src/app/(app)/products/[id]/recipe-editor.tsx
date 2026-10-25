@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Box, Plus, Save, Tag, Trash2 } from "lucide-react";
 import Combobox from "@/components/combobox";
 import { Alert, Button, Card, Input, cn } from "@/components/ui";
-import { saveRecipeAction } from "@/app/actions/masterdata";
+import { createProductAction, saveRecipeAction } from "@/app/actions/masterdata";
 import { needsFor } from "@/lib/recipe-math";
 
 export type Item = { id: string; code: string; name: string; name2: string | null; unit: string; kind: string; unitWeightKg: number | null; stock: number };
@@ -16,15 +16,22 @@ const isKg = (u: string) => u.toLowerCase() === "kg";
 let seq = 0;
 
 /** Label, "made of" (per piece) and packaging (per carton) of one product, with a live preview of what N pieces use. */
-export default function RecipeEditor({ productId, canEdit, labels, madeOf, packaging, initial }: {
-  productId: string; canEdit: boolean; labels: Item[]; madeOf: Item[]; packaging: Item[];
-  initial: { labelId: string | null; piecesPerCarton: number | null; lines: { componentId: string; qty: number; per: "PIECE" | "CARTON" }[] };
+export default function RecipeEditor({ productId, canEdit, labels, madeOf, packaging, initial, molds }: {
+  productId?: string; canEdit: boolean; labels: Item[]; madeOf: Item[]; packaging: Item[];
+  initial: { labelId: string | null; lines: { componentId: string; qty: number; per: "PIECE" | "CARTON" }[] };
+  /** Given = "new product" mode: code, name (when no label), mold and QC are asked here too. */
+  molds?: { id: string; code: string; name: string }[];
 }) {
+  const creating = !productId;
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+  const [name2, setName2] = useState("");
+  const [moldId, setMoldId] = useState("");
+  const [qc, setQc] = useState(false);
   const t = useTranslations();
   const [labelId, setLabelId] = useState(initial.labelId ?? "");
-  const [ppc, setPpc] = useState(initial.piecesPerCarton?.toString() ?? "");
   const [lines, setLines] = useState<Line[]>(initial.lines.map((l) => ({ key: ++seq, componentId: l.componentId, qty: String(l.qty), per: l.per })));
-  const [pieces, setPieces] = useState(initial.piecesPerCarton?.toString() ?? "1000");
+  const [pieces, setPieces] = useState("1000");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const all = useMemo(() => new Map([...labels, ...madeOf, ...packaging].map((i) => [i.id, i])), [labels, madeOf, packaging]);
@@ -39,22 +46,22 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
     const label = labelId ? all.get(labelId) : undefined;
     return needsFor({
       labelId: labelId || null,
-      piecesPerCarton: Number(ppc) > 0 ? Number(ppc) : null,
       label: label ? { id: label.id, code: label.code, name: label.name, unit: label.unit } : null,
       components: lines.filter((l) => l.componentId && Number(l.qty) > 0 && all.get(l.componentId)).map((l) => {
         const c = all.get(l.componentId)!;
         return { qty: Number(l.qty), per: l.per, component: { id: c.id, code: c.code, name: c.name, unit: c.unit, unitWeightKg: c.unitWeightKg } };
       }),
     }, n);
-  }, [pieces, labelId, ppc, lines, all]);
+  }, [pieces, labelId, lines, all]);
 
   const save = () => start(async () => {
     setMsg(null);
-    const r = await saveRecipeAction({
-      productId, labelId: labelId || undefined, piecesPerCarton: ppc ? Number(ppc) : undefined,
-      lines: lines.filter((l) => l.componentId || l.qty).map((l) => ({ componentId: l.componentId, qty: l.qty, per: l.per })),
-    });
-    setMsg(r.ok ? { ok: true, text: t("rc.saved") } : { ok: false, text: r.error });
+    const payloadLines = lines.filter((l) => l.componentId || l.qty).map((l) => ({ componentId: l.componentId, qty: l.qty, per: l.per }));
+    const r = creating
+      ? await createProductAction({ code, labelId: labelId || undefined, name: name || undefined, name2: name2 || undefined, moldId: moldId || undefined, qcRequired: qc, lines: payloadLines })
+      : await saveRecipeAction({ productId, labelId: labelId || undefined, lines: payloadLines });
+    if (r && !r.ok) setMsg({ ok: false, text: r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error });
+    else setMsg({ ok: true, text: t("rc.saved") });
   });
 
   const opt = (list: Item[]) => list.map((i) => ({ value: i.id, label: i.name, hint: [i.code, i.name2].filter(Boolean).join(" · ") }));
@@ -62,7 +69,7 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
     const c = all.get(l.componentId);
     if (!c) return "";
     if (l.per === "PIECE") return isKg(c.unit) ? t("rc.gPerPiece") : t("rc.pcsPerPiece");
-    return isKg(c.unit) ? t("rc.bagsPerCarton") : t("rc.pcsPerCarton");
+    return t("rc.productsInOne");
   };
   const rows = (per: "PIECE" | "CARTON", list: Item[]) => lines.filter((l) => l.per === per).map((l) => {
     const c = all.get(l.componentId);
@@ -71,6 +78,7 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
         <div>
           {canEdit ? <Combobox name={`c_${l.key}`} options={opt(list)} defaultValue={l.componentId} onChange={(v) => set(l.key, { componentId: v })} placeholder={t("rc.chooseItem")} /> : <p className="text-sm">{c?.name}</p>}
           {c && <p className="mt-0.5 text-xs text-muted" dir="ltr">{c.code} · {t("order.inStock")}: {fmt(c.stock)} {c.unit}</p>}
+          {c && per === "CARTON" && <p className="mt-0.5 text-xs text-muted">{t("rc.packExample", { n: Number(l.qty) > 0 ? fmt(Number(l.qty)) : "…" })}</p>}
           {c && per === "CARTON" && isKg(c.unit) && !c.unitWeightKg && <p className="mt-0.5 text-xs font-semibold text-amber-600"><Link href={`/products/${c.id}`} className="underline">{t("rc.needWeight")}</Link></p>}
         </div>
         <label className="text-xs text-muted">
@@ -87,11 +95,25 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
       <div className="space-y-4">
         <Card>
           <h2 className="mb-1 flex items-center gap-2 font-semibold"><Tag className="size-4" /> {t("rc.label")}</h2>
-          <p className="mb-2 text-xs text-muted">{t("rc.labelHint")}</p>
+          <p className="mb-2 text-xs text-muted">{creating ? t("md.labelHint") : t("rc.labelHint")}</p>
           {canEdit ? (
             <Combobox name="labelId" options={[{ value: "", label: t("md.noLabel") }, ...opt(labels)]} defaultValue={labelId} onChange={setLabelId} placeholder={t("md.noLabel")} />
           ) : <p className="text-sm">{all.get(labelId)?.name ?? t("md.noLabel")}</p>}
           {labelId && all.get(labelId) && <p className="mt-1 text-xs text-muted" dir="ltr">{all.get(labelId)!.code} · {t("order.inStock")}: {fmt(all.get(labelId)!.stock)}</p>}
+          {creating && (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {!labelId && (
+                <>
+                  <label className="text-sm font-medium">{t("md.productName")}<Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" /><span className="text-xs font-normal text-muted">{t("rc.nameNoLabel")}</span></label>
+                  <label className="text-sm font-medium">{t("md.name2")}<Input value={name2} onChange={(e) => setName2(e.target.value)} className="mt-1" dir="ltr" /></label>
+                </>
+              )}
+              {labelId && all.get(labelId) && <p className="text-sm sm:col-span-2">{t("rc.nameWillBe")} <b>{all.get(labelId)!.name.replace(/اتيكيت|إتيكيت/g, " ").replace(/\s+/g, " ").trim()}</b></p>}
+              <label className="text-sm font-medium">{t("md.productCode")} *<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" required /></label>
+              <div className="text-sm font-medium">{t("md.mold")}<div className="mt-1"><Combobox name="moldId" options={[{ value: "", label: "—" }, ...(molds ?? []).map((m) => ({ value: m.id, label: m.code, hint: m.name }))]} defaultValue="" onChange={setMoldId} /></div></div>
+              <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={qc} onChange={(e) => setQc(e.target.checked)} className="size-5 accent-brand-600" /> {t("md.qcRequired")}</label>
+            </div>
+          )}
         </Card>
 
         <Card>
@@ -104,15 +126,12 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
         <Card>
           <h2 className="mb-1 flex items-center gap-2 font-semibold"><Box className="size-4" /> {t("rc.packaging")}</h2>
           <p className="mb-2 text-xs text-muted">{t("rc.packagingHint")}</p>
-          <label className="block max-w-xs text-sm font-medium">{t("rc.piecesPerCarton")}
-            <Input type="number" min={1} step={1} value={ppc} onChange={(e) => setPpc(e.target.value)} disabled={!canEdit} dir="ltr" className="mt-1" />
-          </label>
           <ul className="divide-y divide-line">{rows("CARTON", packaging)}</ul>
           {canEdit && <Button type="button" size="sm" variant="secondary" onClick={() => add("CARTON")} className="mt-2"><Plus className="size-4" /> {t("rc.addPackaging")}</Button>}
         </Card>
 
         {msg && <Alert tone={msg.ok ? "green" : "red"}>{msg.text}</Alert>}
-        {canEdit && <Button onClick={save} disabled={pending}><Save className="size-4" /> {pending ? t("common.saving") : t("rc.save")}</Button>}
+        {canEdit && <Button onClick={save} disabled={pending}><Save className="size-4" /> {pending ? t("common.saving") : creating ? t("rc.create") : t("rc.save")}</Button>}
       </div>
 
       <Card className="h-fit lg:sticky lg:top-20">

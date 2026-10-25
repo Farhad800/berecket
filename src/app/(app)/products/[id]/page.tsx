@@ -5,17 +5,18 @@ import { ArrowLeft } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getStock } from "@/lib/stock";
-import { Badge, Card, PageHeader } from "@/components/ui";
+import { Alert, Badge, Card, PageHeader } from "@/components/ui";
 import RecipeEditor, { type Item } from "./recipe-editor";
 import UnitWeight from "./unit-weight";
 
 export const metadata = { title: "Product" };
 
 /** One item: for products, its label, what it is made of and how it is packed. */
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProductPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string }> }) {
   const me = await pageUser("products:view");
   const t = await getTranslations();
   const { id } = await params;
+  const created = (await searchParams).created === "1";
   const p = await db.product.findUnique({
     where: { id },
     include: {
@@ -71,6 +72,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     <>
       <Link href={back} className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.products")}</Link>
       <PageHeader title={p.name} subtitle={<span dir="ltr">{[p.name2, p.code, p.mold && `${t("md.mold")}: ${p.mold.code}`].filter(Boolean).join(" · ")}</span>} />
+      {created && <div className="mb-4"><Alert tone="green">{t("rc.created")}</Alert></div>}
       <RecipeEditor
         productId={p.id}
         canEdit={can(me, "products:edit")}
@@ -79,7 +81,6 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         packaging={packs.map(item)}
         initial={{
           labelId: p.labelId,
-          piecesPerCarton: p.piecesPerCarton,
           lines: p.components.map((c) => ({ componentId: c.componentId, qty: Number(c.qty), per: c.per })),
         }}
       />

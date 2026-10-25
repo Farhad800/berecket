@@ -12,8 +12,8 @@ export type { Need } from "./recipe-math";
  * Rules (owner, 25 Oct 2026):
  *  - label: 1 per piece
  *  - PIECE lines: kg items in grams per piece; piece items (e.g. handles) per piece
- *  - CARTON lines use pieces-per-carton and always round UP to what was actually used:
- *      cartons = ⌈pieces ÷ per carton⌉, nylon bags = ⌈pieces × bags-per-carton ÷ per carton⌉
+ *  - packaging lines ("CARTON" basis) say how many products go into one carton / one nylon bag;
+ *      used = ⌈pieces ÷ that number⌉ (rounded up: a started carton or bag is used);
  *      bags of an item stocked in kg are turned into kg with that item's weight per bag
  *  - not enough stock never blocks production: stock may go below zero and the warehouse is warned
  * Each entry keeps a running balance: corrections only post the difference.

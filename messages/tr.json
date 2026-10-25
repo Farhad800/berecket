@@ -1630,12 +1630,12 @@
     "label": "Etiket",
     "labelHint": "Üretim girildiğinde parça başına 1 etiket stoktan düşülür.",
     "madeOf": "İçerik (parça başına)",
-    "madeOfHint": "Hammadde, boya ve kırma parça başına gram; saplar ve diğer parçalar parça başına adet.",
-    "addMaterial": "Malzeme / parça ekle",
-    "packaging": "Ambalaj (koli başına)",
-    "packagingHint": "Koliler yukarı yuvarlanır; naylon gerçekten dolan torba sayısıyla hesaplanır ve torba ağırlığıyla kg'ye çevrilir.",
+    "madeOfHint": "Hammadde ve boyalar parça başına gram; saplar ve diğer parçalar parça başına adet.",
+    "addMaterial": "Malzeme / boya / parça ekle",
+    "packaging": "Ambalaj",
+    "packagingHint": "Her koli veya naylon için: birine kaç ürün girer. Başlanan koli ve torba kullanılmış sayılır. Kg tutulan naylon torba ağırlığıyla kg'ye çevrilir.",
     "piecesPerCarton": "Bir kolideki adet",
-    "addPackaging": "Koli / naylon / ambalaj ekle",
+    "addPackaging": "Koli / naylon ekle",
     "chooseItem": "Kalem seçin…",
     "gPerPiece": "parça başına gram",
     "pcsPerPiece": "parça başına adet",
@@ -1648,6 +1648,13 @@
     "previewPieces": "adet",
     "nothingUsed": "Henüz stoktan bir şey düşülmüyor — etiket, malzeme veya ambalaj ekleyin.",
     "inStockOnly": "stokta yalnızca {n}",
-    "previewNote": "Kaydedilmemiş değişiklikler önizlemeye dahildir."
+    "previewNote": "Kaydedilmemiş değişiklikler önizlemeye dahildir.",
+    "productsInOne": "bir tanesine ürün",
+    "packExample": "Bir tanesi {n} ürün alır",
+    "nameNoLabel": "Yalnızca ürünün etiketi yoksa.",
+    "nameWillBe": "Ürün adı (etiketten):",
+    "create": "Ürünü oluştur",
+    "newIntro": "Önce etiketi seçin — ad ondan gelir. Sonra bir parçanın içeriğini ve ambalajını ekleyin.",
+    "created": "Ürün oluşturuldu. Günlük üretim artık etiketini, malzemelerini ve ambalajını stoktan düşecek."
   }
 }
