@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { getCurrentUser } from "@/lib/auth";
+import { apiUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { toFactoryDateTimeInput } from "@/lib/time";
@@ -8,8 +8,8 @@ import { toCsv } from "@/lib/reports/format";
 
 /** CSV of the audit log with the same filters as the page (max 20,000 rows). */
 export async function GET(req: Request) {
-  const me = await getCurrentUser();
-  if (!me) return new Response("Unauthorized", { status: 401 });
+  const me = await apiUser();
+  if (me instanceof Response) return me;
   if (!me.permissions.has("audit:export")) return new Response("Forbidden", { status: 403 });
   const sp = Object.fromEntries(new URL(req.url).searchParams);
   const t = await getTranslations();

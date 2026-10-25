@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { requirePermission } from "@/lib/auth";
+import { MONEY_PERMS, requirePermission } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 import { audit } from "@/lib/audit";
 import { nextNumber } from "@/lib/numbering";
@@ -103,10 +103,25 @@ export async function saveStockDocAction(input: unknown) {
         after: { number, party: raw.party ?? null, invoice: raw.invoiceNo ?? null, currency: raw.currency ?? null, total, paid: money(t) ? paid : null, reason: raw.reason ?? null, lines: raw.lines.map((l) => `${item(l.itemId).code} × ${l.qty}${l.unitPrice !== undefined && money(t) ? ` @ ${l.unitPrice}` : ""}`) },
       }, tx);
       const short = isIn(t) ? [] : await shortages(ids, tx);
-      await notify({
-        type: `stock.doc${t}`, data: { number, n: raw.lines.length, party: raw.party ?? "—", total: total === null ? "" : `${total.toLocaleString("en", { maximumFractionDigits: 2 })} ${raw.currency}`, by: me.fullName },
-        link: `/stock/${doc.id}`, toPermission: "stock:view", exceptUserId: me.id,
-      }, tx);
+      if (money(t)) {
+        // Totals and the supplier/customer go only to people who buy, sell or see the safe (M3);
+        // everyone else who follows stock gets the same news without the money.
+        const moneyIds = (await tx.user.findMany({ where: { active: true, role: { permissions: { some: { permission: { in: MONEY_PERMS } } } } }, select: { id: true } })).map((u) => u.id);
+        const viewers = (await tx.user.findMany({ where: { active: true, role: { permissions: { some: { permission: "stock:view" } } } }, select: { id: true } })).map((u) => u.id);
+        await notify({
+          type: `stock.doc${t}`, data: { number, n: raw.lines.length, party: raw.party ?? "—", total: `${total!.toLocaleString("en", { maximumFractionDigits: 2 })} ${raw.currency}`, by: me.fullName },
+          link: `/stock/${doc.id}`, toUserIds: viewers.filter((id) => moneyIds.includes(id)), exceptUserId: me.id,
+        }, tx);
+        await notify({
+          type: `stock.doc${t}Plain`, data: { number, n: raw.lines.length, by: me.fullName },
+          link: `/stock/${doc.id}`, toUserIds: viewers.filter((id) => !moneyIds.includes(id)), exceptUserId: me.id,
+        }, tx);
+      } else {
+        await notify({
+          type: `stock.doc${t}`, data: { number, n: raw.lines.length, party: raw.party ?? "—", total: "", by: me.fullName },
+          link: `/stock/${doc.id}`, toPermission: "stock:view", exceptUserId: me.id,
+        }, tx);
+      }
       if (short.length) {
         await notify({
           type: "stock.shortage", data: { n: short.length, items: short.slice(0, 5).map((s) => s.code).join(", ") + (short.length > 5 ? "…" : ""), by: me.fullName },

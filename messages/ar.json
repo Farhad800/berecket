@@ -1614,6 +1614,14 @@
       "docSELL": {
         "title": "بيع {number}: {n} مادة · {total}",
         "body": "إلى {party} · بواسطة {by}"
+      },
+      "docBUYPlain": {
+        "title": "شراء {number}: {n} مادة",
+        "body": "بواسطة {by}"
+      },
+      "docSELLPlain": {
+        "title": "بيع {number}: {n} مادة",
+        "body": "بواسطة {by}"
       }
     },
     "product": {

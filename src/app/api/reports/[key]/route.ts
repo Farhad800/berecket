@@ -1,17 +1,17 @@
 import { getTranslations } from "next-intl/server";
-import { getCurrentUser } from "@/lib/auth";
+import { apiUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { REPORT_BY_KEY, parseQuery, queryParams } from "@/lib/reports/registry";
+import { REPORT_BY_KEY, parseQuery, queryParams, reportAllowed } from "@/lib/reports/registry";
 import { cellCsv, toCsv, totalsRow, type T } from "@/lib/reports/format";
 
 /** CSV download of a report, with exactly the filters shown on screen. */
 export async function GET(req: Request, { params }: { params: Promise<{ key: string }> }) {
-  const me = await getCurrentUser();
-  if (!me) return new Response("Unauthorized", { status: 401 });
+  const me = await apiUser();
+  if (me instanceof Response) return me;
   if (!me.permissions.has("reports:export")) return new Response("Forbidden", { status: 403 });
   const { key } = await params;
   const def = REPORT_BY_KEY.get(key);
-  if (!def || (def.perm && !me.permissions.has(def.perm))) return new Response("Not found", { status: 404 });
+  if (!def || !reportAllowed(def, me.permissions)) return new Response("Not found", { status: 404 });
 
   const sp = Object.fromEntries(new URL(req.url).searchParams);
   const q = parseQuery(def, sp);

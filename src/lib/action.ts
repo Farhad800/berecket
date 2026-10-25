@@ -20,7 +20,12 @@ export async function run<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
     return { ok: true, data } as ActionResult<T>;
   } catch (e) {
     if (e instanceof AuthError) {
-      return { ok: false, error: e.code === "UNAUTHENTICATED" ? "Your session has ended. Please sign in again." : "You don't have permission to do this." };
+      return {
+        ok: false,
+        error: e.code === "UNAUTHENTICATED" ? "Your session has ended. Please sign in again."
+          : e.code === "PASSWORD_CHANGE" ? "Change your temporary password first (open the Change password page)."
+          : "You don't have permission to do this.",
+      };
     }
     if (e instanceof ZodError) {
       const fieldErrors: Record<string, string> = {};

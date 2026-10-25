@@ -24,7 +24,9 @@ export default async function NewStockDocPage({ searchParams }: { searchParams: 
   ]);
   const stock = await getStock();
   // Names used before (newest first) with their last phone, so typing a known customer fills the phone.
-  const past = await db.stockDoc.findMany({ where: { type: { in: ["BUY", "SELL"] }, party: { not: null } }, orderBy: { createdAt: "desc" }, take: 2000, select: { type: true, party: true, phone: true } });
+  // Only to people who may buy or sell (the list holds customer/supplier names and phones — M3).
+  const partyTypes = (["BUY", "SELL"] as const).filter((d) => allowed.includes(d));
+  const past = partyTypes.length ? await db.stockDoc.findMany({ where: { type: { in: [...partyTypes] }, party: { not: null } }, orderBy: { createdAt: "desc" }, take: 2000, select: { type: true, party: true, phone: true } }) : [];
   const parties: { type: "BUY" | "SELL"; name: string; phone: string | null }[] = [];
   for (const p of past) {
     const k = p.party!.trim();

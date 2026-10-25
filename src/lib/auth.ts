@@ -14,7 +14,7 @@ const LOCK_MINUTES = 15;
 let DUMMY_HASH: string | undefined;
 
 export class AuthError extends Error {
-  constructor(public code: "UNAUTHENTICATED" | "FORBIDDEN", message?: string) {
+  constructor(public code: "UNAUTHENTICATED" | "FORBIDDEN" | "PASSWORD_CHANGE", message?: string) {
     super(message ?? code);
   }
 }
@@ -132,10 +132,31 @@ export function can(user: CurrentUser | null, perm: Permission) {
   return !!user && user.permissions.has(perm);
 }
 
-/** For server actions / route handlers: throws instead of redirecting. */
-export async function requireUser(): Promise<CurrentUser> {
+/** Permissions that let someone see money: prices, totals, payments, what is owed (code review M3). */
+export const MONEY_PERMS: Permission[] = ["stock:buy", "stock:sell", "cash:view"];
+
+/** True for people who buy, sell or look after the safe. Everyone else sees quantities only. */
+export function canSeeMoney(user: { permissions: Set<string> } | null) {
+  return !!user && MONEY_PERMS.some((p) => user.permissions.has(p));
+}
+
+/**
+ * For server actions: throws instead of redirecting.
+ * Someone still on a temporary password can do nothing until they choose their own (code review M4) —
+ * only the password change itself and the language switch pass `allowPasswordChange`.
+ */
+export async function requireUser(opts: { allowPasswordChange?: boolean } = {}): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) throw new AuthError("UNAUTHENTICATED");
+  if (user.mustChangePassword && !opts.allowPasswordChange) throw new AuthError("PASSWORD_CHANGE");
+  return user;
+}
+
+/** For API route handlers (downloads, files): the user, or the response to send instead. */
+export async function apiUser(): Promise<CurrentUser | Response> {
+  const user = await getCurrentUser();
+  if (!user) return new Response("Unauthorized", { status: 401 });
+  if (user.mustChangePassword) return new Response("Change your temporary password first", { status: 403 });
   return user;
 }
 

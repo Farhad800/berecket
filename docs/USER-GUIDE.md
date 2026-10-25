@@ -78,6 +78,12 @@ The safe keeps **IQD, USD and EUR apart** — each has its own balance. Open **S
 - To print: open the sale or purchase in Stock Movements → **Print receipt** → choose a layout at the top → **Print / Save as PDF**. Later payments have their own **Print** link (and Print receipt on the payment page).
 - The Buy / Sell form now has **Phone**. Typing a customer you used before fills in their phone.
 
+## Who sees money
+Prices, totals, payments, what is still owed, customer/supplier phones, printed receipts and the **Buying and selling** report are shown only to people whose role can **Buy**, **Sell** or **view the Safe**. Everyone else who follows stock (for example the Warehouse Team) still sees every document and quantity, and gets "Purchase BUY-…: n items" / "Sale SAL-…: n items" notices without amounts. To let someone see money, give their role Stock movements → Buy or Sell, or Safe → View (Administration → Roles).
+
+## Temporary passwords
+A new employee or someone whose password was reset can do nothing until they choose their own password — not even through a saved link or a download. Only the Change password page and the language switch work.
+
 ## Notifications on your phone and computer
 - After signing in, tap **Turn on notifications** (or open the bell → *Notifications on this device*). Allow when the browser asks. Do this once on each phone and computer.
 - New and removed orders, daily production, QC results, goods out, stock adjustments, machine breakdowns, repairs and new or deleted products/molds/machines then pop up **even when the app or browser is closed**. You never get a notification for something you did yourself.

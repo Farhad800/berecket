@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft, Printer } from "lucide-react";
-import { can, pageUser } from "@/lib/auth";
+import { can, canSeeMoney, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getStock } from "@/lib/stock";
 import { formatDateTime } from "@/lib/time";
@@ -27,10 +27,11 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   const [by, stock, payments] = await Promise.all([
     db.user.findUnique({ where: { id: d.createdById }, select: { fullName: true } }),
     getStock(d.lines.map((l) => l.productId)),
-    db.cashEntry.findMany({ where: { stockDocId: d.id }, orderBy: { createdAt: "asc" } }),
+    canSeeMoney(me) ? db.cashEntry.findMany({ where: { stockDocId: d.id }, orderBy: { createdAt: "asc" } }) : Promise.resolve([]),
   ]);
   const payers = await db.user.findMany({ where: { id: { in: [...new Set(payments.map((p) => p.createdById))] } }, select: { id: true, fullName: true } });
-  const money = !!d.currency;
+  // Prices, totals, payments and the receipt only for people who buy, sell or see the safe (M3).
+  const money = !!d.currency && canSeeMoney(me);
   // The stored total is what payments are checked against; older documents fall back to the lines.
   const total = d.total !== null ? Number(d.total) : docTotal(d.lines.map((l) => ({ qty: Math.abs(Number(l.qty)), price: Number(l.unitPrice ?? 0) })));
   const sell = d.type === "SELL";
@@ -49,7 +50,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           {d.reason && <div><dt className="text-xs text-muted">{t("sd.reasonLabel")}</dt><dd>{t(`sd.reason.${d.reason}`)}</dd></div>}
           {d.party && <div><dt className="text-xs text-muted">{t(d.type === "BUY" ? "sd.supplier" : "sd.customer")}</dt><dd className="font-semibold">{d.party}</dd></div>}
-          {d.phone && <div><dt className="text-xs text-muted">{t("sd.phone")}</dt><dd dir="ltr">{d.phone}</dd></div>}
+          {money && d.phone && <div><dt className="text-xs text-muted">{t("sd.phone")}</dt><dd dir="ltr">{d.phone}</dd></div>}
           {d.invoiceNo && <div><dt className="text-xs text-muted">{t("sd.invoice")}</dt><dd dir="ltr">{d.invoiceNo}</dd></div>}
           {d.order && <div><dt className="text-xs text-muted">{t("sd.order")}</dt><dd><Link href={`/orders/${d.order.id}`} className="text-brand-600 hover:underline" dir="ltr">{d.order.number}</Link></dd></div>}
           {money && <div><dt className="text-xs text-muted">{t("sd.total")}</dt><dd className="text-lg font-bold" dir="ltr">{fmtMoney(total)} {d.currency}</dd></div>}

@@ -1,10 +1,10 @@
-import { getCurrentUser } from "@/lib/auth";
+import { apiUser } from "@/lib/auth";
 import { buildTemplate } from "@/lib/import";
 
 /** The empty Excel template for importing machines, molds and products. */
 export async function GET() {
-  const me = await getCurrentUser();
-  if (!me) return new Response("Unauthorized", { status: 401 });
+  const me = await apiUser();
+  if (me instanceof Response) return me;
   if (!me.permissions.has("products:create") && !me.permissions.has("assets:create")) return new Response("Forbidden", { status: 403 });
   const buf = await buildTemplate();
   return new Response(new Uint8Array(buf), {

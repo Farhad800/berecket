@@ -75,5 +75,7 @@ export type ReportDef = {
   typeFilter?: { ns: string; values: string[] };
   /** Extra permission needed to open this report (e.g. money reports: cash:view). */
   perm?: import("@/lib/permissions").Permission;
+  /** Money reports: only for people who buy, sell or see the safe (code review M3). */
+  money?: boolean;
   run: (q: ReportQuery) => Promise<ReportResult>;
 };

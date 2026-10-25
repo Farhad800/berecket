@@ -1614,6 +1614,14 @@
       "docSELL": {
         "title": "Satış {number}: {n} kalem · {total}",
         "body": "{party} müşterisine · {by}"
+      },
+      "docBUYPlain": {
+        "title": "Alış {number}: {n} kalem",
+        "body": "{by}"
+      },
+      "docSELLPlain": {
+        "title": "Satış {number}: {n} kalem",
+        "body": "{by}"
       }
     },
     "product": {

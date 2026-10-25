@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowDownToLine, ArrowUpFromLine, ShoppingCart, BadgeDollarSign } from "lucide-react";
-import { can, pageUser } from "@/lib/auth";
+import { can, canSeeMoney, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/time";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
@@ -30,10 +30,11 @@ export default async function StockDocsPage({ searchParams }: { searchParams: Pr
   };
   const docs = await db.stockDoc.findMany({
     where, orderBy: { createdAt: "desc" }, take: 200,
-    include: { lines: { select: { qty: true, unitPrice: true } }, order: { select: { number: true } } },
+    include: { lines: { select: { qty: true, unitPrice: canSeeMoney(me) } }, order: { select: { number: true } } },
   });
   const users = await db.user.findMany({ where: { id: { in: [...new Set(docs.map((d) => d.createdById))] } }, select: { id: true, fullName: true } });
   const allowed = DOC_TYPES.filter((d) => can(me, DOC_PERM[d]));
+  const seeMoney = canSeeMoney(me);
 
   return (
     <>
@@ -51,7 +52,7 @@ export default async function StockDocsPage({ searchParams }: { searchParams: Pr
         <Card className="p-0 sm:p-0">
           <ul className="divide-y divide-line">
             {docs.map((d) => {
-              const total = d.total !== null ? Number(d.total) : docTotal(d.lines.map((l) => ({ qty: Math.abs(Number(l.qty)), price: Number(l.unitPrice ?? 0) })));
+              const total = !seeMoney ? 0 : d.total !== null ? Number(d.total) : docTotal(d.lines.map((l) => ({ qty: Math.abs(Number(l.qty)), price: Number(l.unitPrice ?? 0) })));
               return (
                 <li key={d.id}>
                   <Link href={`/stock/${d.id}`} className="grid grid-cols-[1fr_auto] gap-x-3 px-4 py-3 hover:bg-surface-2">
@@ -63,7 +64,7 @@ export default async function StockDocsPage({ searchParams }: { searchParams: Pr
                         {d.reason && ` · ${t(`sd.reason.${d.reason}`)}`}{d.invoiceNo && ` · ${t("sd.invoice")} ${d.invoiceNo}`}
                       </p>
                     </div>
-                    {d.currency && <span className="self-center text-end font-bold tabular-nums" dir="ltr">{fmtMoney(total)} {d.currency}</span>}
+                    {seeMoney && d.currency && <span className="self-center text-end font-bold tabular-nums" dir="ltr">{fmtMoney(total)} {d.currency}</span>}
                   </Link>
                 </li>
               );

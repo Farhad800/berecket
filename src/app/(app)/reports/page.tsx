@@ -5,7 +5,7 @@ import {
   ShieldCheck, Target, Vault, Wrench, type LucideIcon,
 } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
-import { REPORTS, SECTIONS } from "@/lib/reports/registry";
+import { REPORTS, SECTIONS, reportAllowed } from "@/lib/reports/registry";
 import { Alert, PageHeader } from "@/components/ui";
 
 export const metadata = { title: "Reports & Analytics" };
@@ -23,11 +23,11 @@ export default async function ReportsPage() {
       <PageHeader title={t("nav.reports")} subtitle={t("rep.intro")} />
       {!can(me, "reports:export") && <div className="mb-4"><Alert tone="blue">{t("rep.noExport")}</Alert></div>}
       <div className="space-y-6">
-        {SECTIONS.filter((sec) => REPORTS.some((r) => r.section === sec && (!r.perm || can(me, r.perm)))).map((sec) => (
+        {SECTIONS.filter((sec) => REPORTS.some((r) => r.section === sec && reportAllowed(r, me.permissions))).map((sec) => (
           <section key={sec}>
             <h2 className="mb-2 text-xs font-bold tracking-wide text-muted uppercase">{t(`rep.sec.${sec}`)}</h2>
             <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {REPORTS.filter((r) => r.section === sec && (!r.perm || can(me, r.perm))).map((r) => {
+              {REPORTS.filter((r) => r.section === sec && reportAllowed(r, me.permissions)).map((r) => {
                 const Icon = ICONS[r.icon] ?? Factory;
                 return (
                   <li key={r.key}>

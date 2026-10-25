@@ -110,8 +110,8 @@ with sync_playwright() as p:
     A.goto(B+f"/search?q=BUY-{yr}-0001"); ck("search opens the document", "/stock/" in A.url and "Gulf Polymers" in A.inner_text("main"))
     acts=set(sql(f"SELECT DISTINCT action FROM {Q('\"AuditLog\"')}").split("\n"))
     ck("audit log has stock.buy/sell/input/output", {"stock.buy","stock.sell","stock.input","stock.output"}<=acts)
-    ck("warehouse team was notified of the purchase", sql(f"SELECT count(*) FROM {Q('\"Notification\"')} n JOIN {Q('\"User\"')} u ON u.id=n.{Q('\"userId\"')} WHERE u.username='walid' AND n.type='stock.docBUY'")!="0")
-    W.goto(B+"/notifications"); ck("notification text is readable", "Bought" in W.inner_text("main"))
+    ck("warehouse team was notified of the purchase (without money — M3)", sql(f"SELECT count(*) FROM {Q('\"Notification\"')} n JOIN {Q('\"User\"')} u ON u.id=n.{Q('\"userId\"')} WHERE u.username='walid' AND n.type='stock.docBUYPlain'")!="0")
+    W.goto(B+"/notifications"); ck("notification text is readable, with no money in it", "Purchase BUY-" in W.inner_text("main") and "USD" not in W.inner_text("main"))
 
     # 7. Phone + Arabic
     M=ctx(**p.devices["iPhone 13"]); login(M,"owner",PW); over=[]

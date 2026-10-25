@@ -3,7 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { pageUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { formatDateTime } from "@/lib/time";
-import { REPORT_BY_KEY, parseQuery, queryParams } from "@/lib/reports/registry";
+import { REPORT_BY_KEY, parseQuery, queryParams, reportAllowed } from "@/lib/reports/registry";
 import { describeFilters, filterSelects } from "@/lib/reports/context";
 import type { T } from "@/lib/reports/format";
 import { KpiRow, ReportTable } from "@/components/report-view";
@@ -16,7 +16,7 @@ export default async function PrintReport({ params, searchParams }: { params: Pr
   const me = await pageUser("reports:export");
   const { key } = await params;
   const def = REPORT_BY_KEY.get(key);
-  if (!def || (def.perm && !me.permissions.has(def.perm))) notFound();
+  if (!def || !reportAllowed(def, me.permissions)) notFound();
   const t = (await getTranslations()) as unknown as T;
   const locale = await getLocale();
   const q = parseQuery(def, await searchParams);

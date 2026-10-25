@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { can, pageUser } from "@/lib/auth";
+import { can, canSeeMoney, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { docReceipt, paymentReceipt } from "@/lib/receipt-data";
@@ -17,6 +17,7 @@ export default async function PrintReceipt({ params, searchParams }: { params: P
   if (kind !== "doc" && kind !== "payment") notFound();
   const me = await pageUser("stock:view");
   if (kind === "payment" && !(can(me, "cash:view") || can(me, "stock:sell"))) notFound();
+  if (!canSeeMoney(me)) notFound(); // receipts show prices and payments (M3)
   const t = await getTranslations();
   const data = kind === "doc" ? await docReceipt(id) : await paymentReceipt(id);
   if (!data) notFound();

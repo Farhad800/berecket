@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft, FileSpreadsheet, Printer } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
 import { toFactoryDateInput } from "@/lib/time";
-import { REPORT_BY_KEY, parseQuery, queryParams } from "@/lib/reports/registry";
+import { REPORT_BY_KEY, parseQuery, queryParams, reportAllowed } from "@/lib/reports/registry";
 import { describeFilters, filterSelects } from "@/lib/reports/context";
 import type { T } from "@/lib/reports/format";
 import { EmptyState, PageHeader } from "@/components/ui";
@@ -23,7 +23,7 @@ export default async function ReportPage({ params, searchParams }: { params: Pro
   const me = await pageUser("reports:view");
   const { key } = await params;
   const def = REPORT_BY_KEY.get(key);
-  if (!def || (def.perm && !can(me, def.perm))) notFound();
+  if (!def || !reportAllowed(def, me.permissions)) notFound();
   const t = (await getTranslations()) as unknown as T;
   const locale = await getLocale();
   const q = parseQuery(def, await searchParams);

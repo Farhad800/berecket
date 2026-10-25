@@ -1614,6 +1614,14 @@
       "docSELL": {
         "title": "Sold {number}: {n} items · {total}",
         "body": "to {party} · by {by}"
+      },
+      "docBUYPlain": {
+        "title": "Purchase {number}: {n} items",
+        "body": "by {by}"
+      },
+      "docSELLPlain": {
+        "title": "Sale {number}: {n} items",
+        "body": "by {by}"
       }
     },
     "product": {

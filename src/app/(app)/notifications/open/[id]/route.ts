@@ -7,6 +7,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const me = await getCurrentUser();
   const base = new URL(req.url);
   if (!me) return NextResponse.redirect(new URL("/login", base));
+  if (me.mustChangePassword) return NextResponse.redirect(new URL("/change-password", base));
   const { id } = await params;
   const n = await db.notification.findFirst({ where: { id, userId: me.id } });
   if (!n) return NextResponse.redirect(new URL("/notifications", base));

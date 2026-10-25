@@ -43,7 +43,7 @@ const changeSchema = z
 
 export async function changePasswordAction(_: unknown, fd: FormData): Promise<ActionResult> {
   const result = await run(async () => {
-    const me = await requireUser();
+    const me = await requireUser({ allowPasswordChange: true });
     const v = changeSchema.parse(Object.fromEntries(fd));
     const strength = validatePasswordStrength(v.next);
     if (strength) throw new UserError(strength);
@@ -67,7 +67,7 @@ export async function setLocaleAction(locale: string) {
   if (!isLocale(locale)) return;
   (await cookies()).set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   try {
-    const me = await requireUser();
+    const me = await requireUser({ allowPasswordChange: true });
     await db.user.update({ where: { id: me.id }, data: { locale } });
   } catch {
     // signed out (login page) — cookie alone is enough

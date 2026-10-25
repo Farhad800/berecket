@@ -5,6 +5,7 @@ import { factoryDay, parseFactoryDate, toFactoryDateInput } from "@/lib/time";
 import { ISSUE_TONE, MAINT_TONE, MOVE_TONE, ORDER_TONE, PRIORITY_TONE, SEVERITY_TONE, ENTRY_QC_TONE } from "@/lib/tones";
 import type { Column, ReportDef, ReportQuery, Row } from "./types";
 import { lineTotal } from "@/lib/money";
+import { canSeeMoney } from "@/lib/auth";
 
 // ─────────────────────────────────────────────────────────── helpers
 const DAY = 86_400_000;
@@ -536,6 +537,7 @@ export const REPORTS: ReportDef[] = [
   {
     key: "trade",
     section: "warehouse",
+    money: true,
     icon: "ArrowLeftRight",
     filters: ["range", "product", "type"],
     typeFilter: { ns: "sd.type", values: ["BUY", "SELL"] },
@@ -632,6 +634,13 @@ export const REPORTS: ReportDef[] = [
     },
   },
 ];
+
+/** Whether this person may open the report (screen, CSV and PDF all use this). */
+export function reportAllowed(def: ReportDef, perms: Set<string>) {
+  if (def.perm && !perms.has(def.perm)) return false;
+  if (def.money && !canSeeMoney({ permissions: perms })) return false;
+  return true;
+}
 
 export const REPORT_BY_KEY = new Map(REPORTS.map((r) => [r.key, r]));
 export const SECTIONS = ["production", "orders", "service", "quality", "warehouse", "money"] as const;
