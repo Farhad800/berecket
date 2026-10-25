@@ -541,7 +541,7 @@ model StockMovement {
   entry       ProductionEntry? @relation(fields: [entryId], references: [id])
   docId       String?
   doc         StockDoc?        @relation(fields: [docId], references: [id])
-  unitPrice   Decimal?         @db.Decimal(14, 2) // Buy / Sell only, in the document's currency
+  unitPrice   Decimal?         @db.Decimal(18, 6) // Buy / Sell only, in the document's currency (up to 6 decimals, e.g. 0.005 per label)
   reference   String? // e.g. who/where the goods went
   reason      String?
   createdById String

@@ -10,6 +10,7 @@ import { nextNumber } from "@/lib/numbering";
 import { run, UserError } from "@/lib/action";
 import { shortages, type Shortage } from "@/lib/consumption";
 import { takeOut, type Cur } from "@/lib/cash";
+import { PRICE_DECIMALS, docTotal, maxDecimals } from "@/lib/money";
 import type { Permission } from "@/lib/permissions";
 
 /**
@@ -40,7 +41,8 @@ const schema = z.object({
   lines: z.array(z.object({
     itemId: z.string().min(1, "Choose the item").max(40),
     qty: z.coerce.number().positive("Quantity must be more than 0").max(50_000_000),
-    unitPrice: z.coerce.number().min(0, "Price can't be negative").max(1_000_000_000).optional(),
+    unitPrice: z.coerce.number().min(0, "Price can't be negative").max(1_000_000_000)
+      .refine((n) => maxDecimals(n, PRICE_DECIMALS), `A price can have at most ${PRICE_DECIMALS} decimals`).optional(),
   })).min(1, "Add at least one item").max(500, "At most 500 lines"),
 });
 
@@ -61,7 +63,7 @@ export async function saveStockDocAction(input: unknown) {
     const ids = raw.lines.map((l) => l.itemId);
     if (new Set(ids).size !== ids.length) throw new UserError("The same item is on two lines. Put it on one line.");
 
-    const total = money(t) ? Math.round(raw.lines.reduce((s, l) => s + l.qty * (l.unitPrice ?? 0), 0) * 100) / 100 : null;
+    const total = money(t) ? docTotal(raw.lines.map((l) => ({ qty: l.qty, price: l.unitPrice ?? 0 }))) : null;
     const paid = money(t) ? Math.round((raw.paid ?? 0) * 100) / 100 : 0;
     if (total !== null && paid > total + 1e-9) throw new UserError("Paid now can't be more than the total.");
 

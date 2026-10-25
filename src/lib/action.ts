@@ -32,6 +32,9 @@ export async function run<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
       const target = (e.meta?.target as string[] | undefined)?.join(", ") ?? "value";
       return { ok: false, error: `That ${target} is already in use.` };
     }
+    // Someone else changed or deleted the record meanwhile, or a linked record is missing / still in use.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") return { ok: false, error: "That record no longer exists. Reload the page and try again." };
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") return { ok: false, error: "This is linked to other records, so it can't be changed this way. Reload the page, or archive it instead of deleting." };
     // Next.js uses thrown errors for redirect()/notFound() — let them through.
     if (e && typeof e === "object" && "digest" in e && String((e as { digest: unknown }).digest).startsWith("NEXT_")) throw e;
     console.error("[action error]", e);

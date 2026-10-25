@@ -45,12 +45,24 @@ with sync_playwright() as p:
     ck("buy saved with its number BUY-YYYY-0001", f"BUY-{yr}-0001" in out and "/stock/" in A.url)
     ck("buy raised stock (1,000.5 kg / 20,000 labels)", abs(stock("M-100")-1000.5)<1e-6 and stock("S-100")==20000)
     ck("buy total 2,701.25 USD shown", "2,701.25" in out and "USD" in out and "Gulf Polymers" in out and "INV-9" in out)
-    ck("price stored per line", sql(f"SELECT {Q('\"unitPrice\"')}::text FROM {Q('\"StockMovement\"')} WHERE type='BUY' AND {Q('\"productId\"')}='tM-100'")=="2.50")
+    ck("price stored per line", sql(f"SELECT {Q('\"unitPrice\"')}::text FROM {Q('\"StockMovement\"')} WHERE type='BUY' AND {Q('\"productId\"')}='tM-100'")=="2.500000")
     before=sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")
     out=stock_doc(A, B, "BUY", [("M-100",5,"1")], currency="IQD")
     ck("buy without a supplier is refused", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")==before and "/stock/new" in A.url)
     out=stock_doc(A, B, "SELL", [("P-100",5,None)], party="X", currency="IQD")
     ck("sale without prices is refused", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")==before)
+
+    # 1b. small prices (0.005 per label) keep lines, total, receipt and "still owed" in agreement
+    out=stock_doc(A, B, "BUY", [("S-100",20000,"0.005"),("M-100","1.5","1.234567")], party="Label printer", currency="USD", paid=0)
+    sd=A.url.split("/")[-1].split("?")[0]
+    ck("price with 6 decimals stored exactly", sql(f"SELECT {Q('\"unitPrice\"')}::text FROM {Q('\"StockMovement\"')} WHERE {Q('\"docId\"')}='{sd}' ORDER BY qty DESC LIMIT 1")=="0.005000")
+    ck("lines 100 + 1.85, total 101.85 everywhere", sql(f"SELECT total::text FROM {Q('\"StockDoc\"')} WHERE id='{sd}'")=="101.85" and "0.005" in out and "101.85 USD" in out)
+    A.goto(B+f"/print/receipt/doc/{sd}"); rc=A.inner_text("main")
+    ck("receipt shows 0.005, line 100 and total 101.85", "0.005" in rc and "101.85 USD" in rc)
+    n0=sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")
+    stock_doc(A, B, "BUY", [("S-100",10,"0.0000001")], party="X", currency="USD", paid=0)
+    ck("a price with 7 decimals is refused", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")==n0)
+    sql(f"DELETE FROM {Q('\"StockMovement\"')} WHERE {Q('\"docId\"')}='{sd}'"); sql(f"DELETE FROM {Q('\"StockDoc\"')} WHERE id='{sd}'")
 
     # 2. Input (no money, with a reason)
     out=stock_doc(A, B, "INPUT", [("P-100",800,None)], reason="RETURN")
@@ -98,7 +110,7 @@ with sync_playwright() as p:
     A.goto(B+f"/search?q=BUY-{yr}-0001"); ck("search opens the document", "/stock/" in A.url and "Gulf Polymers" in A.inner_text("main"))
     acts=set(sql(f"SELECT DISTINCT action FROM {Q('\"AuditLog\"')}").split("\n"))
     ck("audit log has stock.buy/sell/input/output", {"stock.buy","stock.sell","stock.input","stock.output"}<=acts)
-    ck("warehouse team was notified of the purchase", sql(f"SELECT count(*) FROM {Q('\"Notification\"')} n JOIN {Q('\"User\"')} u ON u.id=n.{Q('\"userId\"')} WHERE u.username='walid' AND n.type='stock.docBUY'")=="1")
+    ck("warehouse team was notified of the purchase", sql(f"SELECT count(*) FROM {Q('\"Notification\"')} n JOIN {Q('\"User\"')} u ON u.id=n.{Q('\"userId\"')} WHERE u.username='walid' AND n.type='stock.docBUY'")!="0")
     W.goto(B+"/notifications"); ck("notification text is readable", "Bought" in W.inner_text("main"))
 
     # 7. Phone + Arabic

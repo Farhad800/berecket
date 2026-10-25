@@ -8,6 +8,7 @@ import { formatDateTime } from "@/lib/time";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import { DOC_PERM, DOC_TONE, DOC_TYPES, fmtMoney, type DocType } from "./types";
+import { docTotal } from "@/lib/money";
 
 export const metadata = { title: "Stock movements" };
 const ICON = { INPUT: ArrowDownToLine, OUTPUT: ArrowUpFromLine, BUY: ShoppingCart, SELL: BadgeDollarSign };
@@ -50,7 +51,7 @@ export default async function StockDocsPage({ searchParams }: { searchParams: Pr
         <Card className="p-0 sm:p-0">
           <ul className="divide-y divide-line">
             {docs.map((d) => {
-              const total = d.lines.reduce((s, l) => s + Math.abs(Number(l.qty)) * Number(l.unitPrice ?? 0), 0);
+              const total = d.total !== null ? Number(d.total) : docTotal(d.lines.map((l) => ({ qty: Math.abs(Number(l.qty)), price: Number(l.unitPrice ?? 0) })));
               return (
                 <li key={d.id}>
                   <Link href={`/stock/${d.id}`} className="grid grid-cols-[1fr_auto] gap-x-3 px-4 py-3 hover:bg-surface-2">

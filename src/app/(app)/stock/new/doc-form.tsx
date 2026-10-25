@@ -8,6 +8,7 @@ import Combobox from "@/components/combobox";
 import { Alert, Button, Card, Input, Select, Textarea, cn } from "@/components/ui";
 import { saveStockDocAction } from "@/app/actions/stock";
 import { fmtMoney, fmtQty, type DocType } from "../types";
+import { docTotal, lineTotal } from "@/lib/money";
 
 type Item = { id: string; code: string; name: string; name2: string | null; unit: string; kind: string; stock: number };
 type Order = { id: string; number: string; lines: { productId: string; quantity: number }[] };
@@ -43,7 +44,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
 
   const options = useMemo(() => items.map((i) => ({ value: i.id, label: i.name, hint: `${i.code} · ${t(`md.kind.${i.kind}`)}${i.name2 ? ` · ${i.name2}` : ""}` })), [items, t]);
   const set = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
-  const total = lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0);
+  const total = docTotal(lines.map((l) => ({ qty: Number(l.qty) || 0, price: Number(l.price) || 0 })));
   const filled = lines.filter((l) => l.itemId);
   const round2 = (n: number) => Math.round(n * 100) / 100;
   const paidNow = paidText === null ? round2(total) : Number(paidText) || 0;
@@ -161,7 +162,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
                       <span className="md:sr-only">{t("sd.unitPrice")}</span>
                       <Input type="number" inputMode="decimal" min={0} step="any" value={l.price} onChange={(e) => set(l.key, { price: e.target.value })} dir="ltr" className="text-end" aria-label={`${it?.code ?? ""} ${t("sd.unitPrice")}`} />
                     </label>
-                    <p className="self-center text-end text-sm font-semibold tabular-nums" dir="ltr">{fmtMoney((Number(l.qty) || 0) * (Number(l.price) || 0))} {currency}</p>
+                    <p className="self-center text-end text-sm font-semibold tabular-nums" dir="ltr">{fmtMoney(lineTotal(Number(l.qty) || 0, Number(l.price) || 0))} {currency}</p>
                   </>
                 )}
                 <Button type="button" size="sm" variant="ghost" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((x) => x.key !== l.key) : [blank()]))} aria-label={t("order.removeLine")}><Trash2 className="size-4" /></Button>

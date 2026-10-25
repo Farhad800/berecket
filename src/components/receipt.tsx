@@ -1,4 +1,5 @@
 import { amountInWords, type WordsLang } from "@/lib/num-words";
+import { fmtPrice } from "@/lib/money";
 import type { ColumnKey, ReceiptData, ReceiptLang, ReceiptSettings } from "@/lib/receipt-layout";
 
 /** Printed words in each receipt language (kept here so a receipt can differ from the screen language). */
@@ -44,7 +45,7 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
       case "name2": return l.name2 ?? "";
       case "qty": return qtyFmt(l.qty);
       case "unit": return unit(l.unit);
-      case "price": return money(l.price);
+      case "price": return fmtPrice(l.price);
       case "total": return money(l.total);
     }
   };

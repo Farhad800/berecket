@@ -154,6 +154,12 @@ export async function pageUser(perm?: Permission): Promise<CurrentUser> {
   return user;
 }
 
+/** Id of the session making this request (to keep it when signing out the person's other devices). */
+export async function currentSessionId(): Promise<string | null> {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  return token ? hashToken(token) : null;
+}
+
 export async function revokeAllSessions(userId: string) {
   await db.session.deleteMany({ where: { userId } });
 }

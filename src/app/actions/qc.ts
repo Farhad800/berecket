@@ -140,27 +140,6 @@ export async function recordInspectionAction(_: unknown, fd: FormData) {
 }
 
 // ───────── Quality issues (non-conformances) ─────────
-const issueSchema = z.object({
-  entryId: z.string().min(1),
-  categoryId: z.string().min(1, "Choose the defect type"),
-  severity: z.enum(["MINOR", "MAJOR", "CRITICAL"]),
-  issueDescription: z.string().trim().min(3, "Describe the defect").max(4000),
-  recommendedAction: z.string().trim().max(2000).optional(),
-  responsibleDept: z.enum(DEPTS),
-});
-
-export async function createIssueAction(_: unknown, fd: FormData) {
-  return run(async () => {
-    const me = await requirePermission("qc:create");
-    const v = issueSchema.parse(formObject(fd));
-    const issue = await db.$transaction((tx) =>
-      createIssue(me, tx, { entryId: v.entryId, inspectionId: null, categoryId: v.categoryId, severity: v.severity, description: v.issueDescription, recommendedAction: v.recommendedAction, responsibleDept: v.responsibleDept }),
-    );
-    refreshQc(v.entryId, issue.id);
-    return { id: issue.id };
-  });
-}
-
 const DEPT_PERMS: Record<string, string[]> = {
   PRODUCTION: ["production:edit"],
   SERVICE: ["maintenance:edit", "service:create"],

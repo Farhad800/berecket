@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { login, logout, requireUser, hashPassword, validatePasswordStrength } from "@/lib/auth";
+import { currentSessionId, login, logout, requireUser, hashPassword, validatePasswordStrength } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { run, UserError, type ActionResult } from "@/lib/action";
 import { LOCALE_COOKIE, isLocale } from "@/i18n/config";
@@ -55,9 +55,9 @@ export async function changePasswordAction(_: unknown, fd: FormData): Promise<Ac
       data: { passwordHash: await hashPassword(v.next), mustChangePassword: false },
     });
     await audit({ userId: me.id, action: "auth.password_change", entityType: "User", entityId: me.id });
-    // Sign out other devices but keep this session.
-    const keep = await db.session.findMany({ where: { userId: me.id }, orderBy: { createdAt: "desc" }, take: 1 });
-    await db.session.deleteMany({ where: { userId: me.id, id: { notIn: keep.map((s) => s.id) } } });
+    // Sign out other devices but keep this session (the one making the change).
+    const keep = await currentSessionId();
+    await db.session.deleteMany({ where: { userId: me.id, ...(keep ? { id: { not: keep } } : {}) } });
   });
   if (result.ok) redirect("/dashboard");
   return result;

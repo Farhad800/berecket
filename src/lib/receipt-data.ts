@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "./db";
 import { FACTORY_TZ } from "./time";
 import type { ReceiptData } from "./receipt-layout";
+import { docTotal, lineTotal } from "./money";
 
 const r2 = (n: number) => Math.round(n * 100) / 100;
 function stamp(d: Date) {
@@ -20,9 +21,9 @@ export async function docReceipt(id: string): Promise<ReceiptData | null> {
   const by = await db.user.findUnique({ where: { id: d.createdById }, select: { fullName: true } });
   const lines = d.lines.map((l) => {
     const qty = Math.abs(Number(l.qty)), price = Number(l.unitPrice ?? 0);
-    return { code: l.product.code, name: l.product.name, name2: l.product.name2, qty, unit: l.product.unit, price, total: r2(qty * price) };
+    return { code: l.product.code, name: l.product.name, name2: l.product.name2, qty, unit: l.product.unit, price, total: lineTotal(qty, price) };
   });
-  const total = d.total !== null ? Number(d.total) : r2(lines.reduce((s, l) => s + l.total, 0));
+  const total = d.total !== null ? Number(d.total) : docTotal(lines);
   const paid = r2(d.payments.reduce((s, p) => s + Math.abs(Number(p.amount)), 0));
   return {
     kind: d.type, number: d.number, ...stamp(d.createdAt), invoiceNo: d.invoiceNo, orderNo: d.order?.number ?? null, party: d.party, phone: d.phone,

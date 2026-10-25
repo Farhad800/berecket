@@ -8,6 +8,7 @@ import { getStock } from "@/lib/stock";
 import { formatDateTime } from "@/lib/time";
 import { Alert, Badge, Card, LinkButton, PageHeader } from "@/components/ui";
 import { DOC_TONE, fmtMoney, fmtQty } from "../types";
+import { docTotal, fmtPrice, lineTotal } from "@/lib/money";
 import PayForm from "./pay-form";
 
 export const metadata = { title: "Stock movement" };
@@ -30,7 +31,8 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   ]);
   const payers = await db.user.findMany({ where: { id: { in: [...new Set(payments.map((p) => p.createdById))] } }, select: { id: true, fullName: true } });
   const money = !!d.currency;
-  const total = d.lines.reduce((s, l) => s + Math.abs(Number(l.qty)) * Number(l.unitPrice ?? 0), 0);
+  // The stored total is what payments are checked against; older documents fall back to the lines.
+  const total = d.total !== null ? Number(d.total) : docTotal(d.lines.map((l) => ({ qty: Math.abs(Number(l.qty)), price: Number(l.unitPrice ?? 0) })));
   const sell = d.type === "SELL";
   const paid = Math.round(payments.reduce((s, p) => s + Math.abs(Number(p.amount)), 0) * 100) / 100;
   const owed = Math.round((total - paid) * 100) / 100;
@@ -96,7 +98,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
                   <tr key={l.id}>
                     <td className="px-4 py-2"><Link href={`/products/${l.product.id}`} className="font-medium hover:underline">{l.product.name}</Link><div className="text-xs text-muted" dir="ltr">{[l.product.code, l.product.name2].filter(Boolean).join(" · ")}</div></td>
                     <td className="px-3 py-2 text-end tabular-nums" dir="ltr">{Number(l.qty) < 0 ? "−" : "+"}{fmtQty(q)} {l.product.unit}</td>
-                    {money && <><td className="px-3 py-2 text-end tabular-nums" dir="ltr">{fmtMoney(Number(l.unitPrice ?? 0))}</td><td className="px-3 py-2 text-end font-semibold tabular-nums" dir="ltr">{fmtMoney(q * Number(l.unitPrice ?? 0))}</td></>}
+                    {money && <><td className="px-3 py-2 text-end tabular-nums" dir="ltr">{fmtPrice(Number(l.unitPrice ?? 0))}</td><td className="px-3 py-2 text-end font-semibold tabular-nums" dir="ltr">{fmtMoney(lineTotal(q, Number(l.unitPrice ?? 0)))}</td></>}
                     <td className={`px-4 py-2 text-end tabular-nums ${now < 0 ? "font-bold text-red-600" : ""}`} dir="ltr">{fmtQty(now)}</td>
                   </tr>
                 );

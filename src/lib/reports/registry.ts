@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { factoryDay, parseFactoryDate, toFactoryDateInput } from "@/lib/time";
 import { ISSUE_TONE, MAINT_TONE, MOVE_TONE, ORDER_TONE, PRIORITY_TONE, SEVERITY_TONE, ENTRY_QC_TONE } from "@/lib/tones";
 import type { Column, ReportDef, ReportQuery, Row } from "./types";
+import { lineTotal } from "@/lib/money";
 
 // ─────────────────────────────────────────────────────────── helpers
 const DAY = 86_400_000;
@@ -549,7 +550,7 @@ export const REPORTS: ReportDef[] = [
         const qty = Math.abs(Number(m.qty)), price = Number(m.unitPrice ?? 0);
         return {
           at: m.createdAt, doc: m.doc?.number ?? m.reference, type: m.type, party: m.doc?.party ?? "", invoice: m.doc?.invoiceNo ?? "",
-          product: `${m.product.code} · ${m.product.name}`, qty, price, total: Math.round(qty * price * 100) / 100, currency: m.doc?.currency ?? "",
+          product: `${m.product.code} · ${m.product.name}`, qty, price, total: lineTotal(qty, price), currency: m.doc?.currency ?? "",
           ...(m.doc ? { _href: { doc: `/stock/${m.doc.id}` } } : {}),
         };
       });
