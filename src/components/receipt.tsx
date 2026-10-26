@@ -7,15 +7,21 @@ const L = {
   ar: { SELL: "فاتورة بيع", BUY: "فاتورة شراء", PAYMENT: "وصل قبض", number: "رقم", date: "التاريخ", time: "الوقت", invoice: "رقم الفاتورة", order: "رقم الطلب",
     customer: "اسم الزبون", supplier: "اسم المورد", phone: "رقم الهاتف", by: "المحاسب", note: "ملاحظات", no: "ت", code: "الرمز", name: "اسم المادة", name2: "الاسم الثاني",
     qty: "الكمية", unit: "الوحدة", price: "السعر", total: "المجموع", grand: "المجموع الكلي", paid: "المدفوع", owed: "المتبقي", received: "المبلغ المستلم",
-    forDoc: "عن فاتورة", docTotal: "مبلغ الفاتورة", paidSoFar: "المدفوع حتى الآن", sign1: "توقيع المستلم", sign2: "توقيع المحاسب", pcs: "قطعة", kg: "كغم" },
+    forDoc: "عن فاتورة", docTotal: "مبلغ الفاتورة", paidSoFar: "المدفوع حتى الآن", sign1: "توقيع المستلم", sign2: "توقيع المحاسب", pcs: "قطعة", kg: "كغم",
+    customerCode: "رمز الزبون", delivery: "مكان التسليم", discount: "الخصم", subtotal: "المجموع قبل الخصم", invDiscount: "خصم الفاتورة",
+    prevBalance: "الرصيد السابق", paidNow: "المدفوع الآن", newBalance: "الرصيد الحالي", signHint: "(−) يعني أن الزبون مدين للمعمل" },
   en: { SELL: "Sales invoice", BUY: "Purchase invoice", PAYMENT: "Payment receipt", number: "No.", date: "Date", time: "Time", invoice: "Invoice no.", order: "Order no.",
     customer: "Customer", supplier: "Supplier", phone: "Phone", by: "Accountant", note: "Notes", no: "#", code: "Code", name: "Item", name2: "Second name",
     qty: "Qty", unit: "Unit", price: "Price", total: "Total", grand: "Grand total", paid: "Paid", owed: "Remaining", received: "Amount received",
-    forDoc: "For invoice", docTotal: "Invoice total", paidSoFar: "Paid so far", sign1: "Receiver's signature", sign2: "Accountant's signature", pcs: "pcs", kg: "kg" },
+    forDoc: "For invoice", docTotal: "Invoice total", paidSoFar: "Paid so far", sign1: "Receiver's signature", sign2: "Accountant's signature", pcs: "pcs", kg: "kg",
+    customerCode: "Customer code", delivery: "Delivery place", discount: "Discount", subtotal: "Subtotal", invDiscount: "Invoice discount",
+    prevBalance: "Previous balance", paidNow: "Paid now", newBalance: "New balance", signHint: "(−) = the customer owes the factory" },
   tr: { SELL: "Satış faturası", BUY: "Alış faturası", PAYMENT: "Tahsilat makbuzu", number: "No", date: "Tarih", time: "Saat", invoice: "Fatura no", order: "Sipariş no",
     customer: "Müşteri", supplier: "Tedarikçi", phone: "Telefon", by: "Muhasebeci", note: "Notlar", no: "#", code: "Kod", name: "Ürün", name2: "İkinci ad",
     qty: "Miktar", unit: "Birim", price: "Fiyat", total: "Tutar", grand: "Genel toplam", paid: "Ödenen", owed: "Kalan", received: "Alınan tutar",
-    forDoc: "Fatura", docTotal: "Fatura tutarı", paidSoFar: "Şimdiye kadar ödenen", sign1: "Teslim alan imza", sign2: "Muhasebeci imza", pcs: "adet", kg: "kg" },
+    forDoc: "Fatura", docTotal: "Fatura tutarı", paidSoFar: "Şimdiye kadar ödenen", sign1: "Teslim alan imza", sign2: "Muhasebeci imza", pcs: "adet", kg: "kg",
+    customerCode: "Müşteri kodu", delivery: "Teslim yeri", discount: "İndirim", subtotal: "Ara toplam", invDiscount: "Fatura indirimi",
+    prevBalance: "Önceki bakiye", paidNow: "Şimdi ödenen", newBalance: "Yeni bakiye", signHint: "(−) = müşteri fabrikaya borçlu" },
 };
 type Key = keyof typeof L.en;
 const money = (n: number) => n.toLocaleString("en", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -31,7 +37,8 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
   const rtl = lang === "ar" || lang === "ar-en";
   const f = s.fields;
   const { date, time } = d;
-  const cols = s.columns.filter((c) => c.show);
+  const hasLineDisc = d.lines.some((l) => (l.discount ?? 0) > 0);
+  const cols = s.columns.filter((c) => c.show && (c.key !== "discount" || hasLineDisc));
   const partyLabel = d.kind === "BUY" ? lb("supplier") : lb("customer");
   const wordsLang: WordsLang[] = lang === "ar-en" ? ["ar", "en"] : [lang];
   const wordsAmount = d.payment ? d.payment.amount : d.total;
@@ -46,10 +53,11 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
       case "qty": return qtyFmt(l.qty);
       case "unit": return unit(l.unit);
       case "price": return fmtPrice(l.price);
+      case "discount": return (l.discount ?? 0) > 0 ? `−${money(l.discount!)}${l.discountLabel ? ` (${l.discountLabel})` : ""}` : "";
       case "total": return money(l.total);
     }
   };
-  const num = (k: ColumnKey) => k === "qty" || k === "price" || k === "total" || k === "no";
+  const num = (k: ColumnKey) => k === "qty" || k === "price" || k === "discount" || k === "total" || k === "no";
   const info: [string, string | null | undefined, boolean?][] = [
     [lb("number"), f.number ? d.number : null, true],
     [lb("date"), f.date ? date : null, true],
@@ -57,6 +65,8 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
     [lb("invoice"), f.invoice ? d.invoiceNo : null, true],
     [lb("order"), f.order ? d.orderNo : null, true],
     [partyLabel, f.customer ? d.party : null],
+    [lb("customerCode"), f.customerCode ? d.customerCode : null, true],
+    [lb("delivery"), f.delivery ? d.delivery : null],
     [lb("phone"), f.phone ? d.phone : null, true],
     [lb("by"), f.by ? d.by : null],
   ];
@@ -93,8 +103,10 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
       {d.payment ? (
         <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "4mm" }}>
           <tbody>
-            {[[lb("received"), `${money(d.payment.amount)} ${d.currency}`], [lb("forDoc"), d.payment.docNumber], [lb("docTotal"), `${money(d.payment.docTotal)} ${d.currency}`],
-              ...(f.paid ? [[lb("paidSoFar"), `${money(d.paid)} ${d.currency}`]] : []), ...(f.owed ? [[lb("owed"), `${money(d.owed)} ${d.currency}`]] : [])].map(([k, v], i) => (
+            {[[lb("received"), `${money(d.payment.amount)} ${d.currency}`],
+              ...(d.payment.docNumber ? [[lb("forDoc"), d.payment.docNumber], [lb("docTotal"), `${money(d.payment.docTotal ?? 0)} ${d.currency}`]] : []),
+              ...(d.balance && f.balance ? [[lb("prevBalance"), `${money(d.balance.before)} ${d.currency}`], [lb("newBalance"), `${money(d.balance.after)} ${d.currency}`]]
+                : [...(f.paid && d.payment.docNumber ? [[lb("paidSoFar"), `${money(d.paid)} ${d.currency}`]] : []), ...(f.owed && d.payment.docNumber ? [[lb("owed"), `${money(d.owed)} ${d.currency}`]] : [])])].map(([k, v], i) => (
               <tr key={k}><td style={{ border, padding: "2mm", background: i === 0 ? `${s.accent}18` : undefined, width: "45%" }}>{k}</td><td style={{ border, padding: "2mm", fontWeight: 700, fontSize: i === 0 ? "1.3em" : undefined }} dir="ltr">{v}</td></tr>
             ))}
           </tbody>
@@ -112,12 +124,23 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
             ))}
           </tbody>
           <tfoot>
+            {(d.discount ?? 0) > 0 && d.subtotal !== undefined && <>
+              <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("subtotal")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">{money(d.subtotal)} {d.currency}</td>}</tr>
+              <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("invDiscount")}{d.discountLabel ? ` (${d.discountLabel})` : ""}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">−{money(d.discount!)} {d.currency}</td>}</tr>
+            </>}
             <tr>
               <td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "2mm", fontWeight: 700, textAlign: "end" }}>{lb("grand")}</td>
               {cols.length > 1 && <td style={{ border, padding: "2mm", fontWeight: 700, textAlign: "center", fontSize: "1.15em" }} dir="ltr">{money(d.total)} {d.currency}</td>}
             </tr>
+            {d.balance && f.balance ? <>
+              {/* Customer account: what was owed before, this invoice, paid now, and what is owed now (− = customer owes) */}
+              <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("prevBalance")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">{money(d.balance.before)} {d.currency}</td>}</tr>
+              {f.paid && <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("paidNow")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">{money(d.balance.paidNow)} {d.currency}</td>}</tr>}
+              <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "2mm", fontWeight: 700, textAlign: "end" }}>{lb("newBalance")} <span style={{ fontWeight: 400, fontSize: "0.8em", color: "#555" }}>{lb("signHint")}</span></td>{cols.length > 1 && <td style={{ border, padding: "2mm", textAlign: "center", fontWeight: 700, fontSize: "1.1em", color: d.balance.after < 0 ? "#b91c1c" : undefined }} dir="ltr" data-testid="receipt-new-balance">{money(d.balance.after)} {d.currency}</td>}</tr>
+            </> : <>
             {f.paid && <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("paid")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">{money(d.paid)} {d.currency}</td>}</tr>}
             {f.owed && <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("owed")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center", fontWeight: 700 }} dir="ltr">{money(d.owed)} {d.currency}</td>}</tr>}
+            </>}
           </tfoot>
         </table>
       )}
