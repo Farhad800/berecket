@@ -172,7 +172,8 @@
       "sell": "Sell",
       "in": "Money in",
       "out": "Money out",
-      "exchange": "Exchange"
+      "exchange": "Exchange",
+      "transfer": "Transfer between safes"
     }
   },
   "install": {
@@ -566,7 +567,11 @@
       "pay": "Payment made",
       "categoryAdd": "Expense category added",
       "categoryHide": "Expense category hidden",
-      "categoryRestore": "Expense category shown again"
+      "categoryRestore": "Expense category shown again",
+      "transfer": "Money moved between safes",
+      "safeCreate": "Safe added",
+      "safeUpdate": "Safe changed",
+      "safeDelete": "Safe deleted"
     },
     "receipt": {
       "layoutCreate": "Receipt layout created",
@@ -1240,7 +1245,8 @@
       "note": "Note",
       "moneyIn": "In",
       "moneyOut": "Out",
-      "discount": "Discount"
+      "discount": "Discount",
+      "safe": "Safe"
     },
     "kpi": {
       "achievement": "Plan achieved",
@@ -1385,7 +1391,8 @@
       "CashEntry": "Safe entry",
       "ExpenseCategory": "Expense category",
       "ReceiptLayout": "Receipt layout",
-      "Customer": "Customer"
+      "Customer": "Customer",
+      "Safe": "Safe"
     }
   },
   "sys": {
@@ -1749,6 +1756,10 @@
       "pay": {
         "title": "Paid {amount} for {doc}",
         "body": "to {party} · by {by}"
+      },
+      "transfer": {
+        "title": "Transfer {number}: {amount}",
+        "body": "{from} → {to} · by {by}"
       }
     }
   },
@@ -1857,7 +1868,7 @@
     "invoiceDiscountKind": "Invoice discount type"
   },
   "cash": {
-    "intro": "Money in the safe per currency. Sales and money put in add to it; purchases and expenses take from it.",
+    "intro": "Money in each safe, per currency. Sales and money put in add to a safe; purchases and expenses take from it.",
     "search": "Number, name, note or document…",
     "allKinds": "All kinds",
     "allCurrencies": "All currencies",
@@ -1911,29 +1922,34 @@
     "tab": {
       "movements": "Movements",
       "owed": "Still owed",
-      "categories": "Expense categories"
+      "categories": "Expense categories",
+      "safes": "Safes"
     },
     "kind": {
       "DEPOSIT": "Money in",
       "EXPENSE": "Expense",
       "SALE": "Sale payment",
       "PURCHASE": "Purchase payment",
-      "EXCHANGE": "Exchange"
+      "EXCHANGE": "Exchange",
+      "TRANSFER": "Transfer"
     },
     "new": {
       "IN": "Money in",
       "OUT": "Money out",
-      "EXCHANGE": "Exchange"
+      "EXCHANGE": "Exchange",
+      "TRANSFER": "Transfer"
     },
     "save": {
       "IN": "Save money in",
       "OUT": "Save expense",
-      "EXCHANGE": "Save exchange"
+      "EXCHANGE": "Save exchange",
+      "TRANSFER": "Save transfer"
     },
     "help": {
       "IN": "Money put into the safe by hand (not from a sale), e.g. from the owner or a bank.",
       "OUT": "An expense paid from the safe: salaries, electricity, fuel… You can't take out more than the safe holds.",
-      "EXCHANGE": "Change money from one currency into another at the rate you got."
+      "EXCHANGE": "Change money from one currency into another. Type any two of the three boxes — amount you give, rate, amount you receive — and the third is calculated. The money can go into another safe.",
+      "TRANSFER": "Move money of one currency from one safe to another. The total doesn't change."
     },
     "cat": {
       "SALARIES": "Salaries",
@@ -2075,5 +2091,28 @@
       "sale": "Sale",
       "payment": "Payment"
     }
+  },
+  "safe": {
+    "safe": "Safe",
+    "noneHolds": "No safe holds {currency}",
+    "calculated": "Calculated from the other two boxes — type here to change it",
+    "exFrom": "From",
+    "exTo": "To",
+    "fromSafe": "From safe",
+    "toSafe": "To safe",
+    "exFromAmount": "Amount you give",
+    "exToAmount": "Amount you receive",
+    "new": "New safe",
+    "edit": "Edit",
+    "delete": "Delete",
+    "name": "Safe name",
+    "holds": "Currencies it holds",
+    "save": "Save safe",
+    "main": "Main",
+    "manageHint": "Each safe has its own name and the currencies it holds. A currency can be removed only when that safe has none of it; a safe can be deleted only if it was never used.",
+    "allSafes": "All safes together",
+    "allSafesFilter": "All safes",
+    "intoSafe": "Into safe",
+    "outOfSafe": "Paid from safe"
   }
 }

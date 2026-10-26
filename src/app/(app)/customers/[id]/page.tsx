@@ -8,6 +8,7 @@ import { formatDateTime } from "@/lib/time";
 import { Alert, Badge, Card, LinkButton, PageHeader, cn } from "@/components/ui";
 import { fmtMoney } from "../../stock/types";
 import CustomerTools from "./customer-tools";
+import { listSafes } from "@/lib/cash";
 
 export const metadata = { title: "Customer" };
 const CURS = ["IQD", "USD", "EUR"] as const;
@@ -61,6 +62,7 @@ export default async function CustomerPage({ params, searchParams }: { params: P
         customer={{ id: c.id, code: c.code, name: c.name, phone: c.phone ?? "", address: c.address ?? "", note: c.note ?? "", archived: !!c.archivedAt }}
         canEdit={can(me, "customers:manage")}
         canReceive={money && (can(me, "cash:in") || can(me, "stock:sell"))}
+        safes={money ? await listSafes(can(me, "cash:view")) : []}
       />
       <Card className="mt-4 p-0 sm:p-0">
         <h2 className="border-b border-line px-4 py-3 font-semibold">{t("cust.statement")}</h2>

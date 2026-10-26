@@ -10,6 +10,7 @@ import { saveStockDocAction } from "@/app/actions/stock";
 import { createCustomerAction } from "@/app/actions/customers";
 import { fmtMoney, fmtQty, type DocType } from "../types";
 import { docTotal, lineTotal, saleTotals, type Discount } from "@/lib/money";
+import SafeSelect, { fitSafe, type SafeOpt } from "../../cash/safe-select";
 
 type Item = { id: string; code: string; name: string; name2: string | null; unit: string; kind: string; stock: number };
 type Order = { id: string; number: string; lines: { productId: string; quantity: number }[] };
@@ -20,11 +21,12 @@ const disc = (kind: "PERCENT" | "AMOUNT", v: string): Discount => (Number(v) > 0
 const REASONS = ["RETURN", "TRANSFER", "COUNT", "DAMAGE", "SAMPLE", "OTHER"] as const;
 
 /** One Input / Output / Buy / Sell document with any number of lines. */
-export default function DocForm({ allowed, initialType, initialOrder, items, orders, parties = [], customers = [], initialCustomer = "" }: {
+export default function DocForm({ allowed, initialType, initialOrder, items, orders, parties = [], customers = [], initialCustomer = "", safes = [] }: {
   allowed: DocType[]; initialType: DocType; initialOrder: string; items: Item[]; orders: Order[];
   parties?: { type: "BUY" | "SELL"; name: string; phone: string | null }[];
   customers?: CustomerOpt[];
   initialCustomer?: string;
+  safes?: SafeOpt[];
 }) {
   const t = useTranslations();
   const router = useRouter();
@@ -37,6 +39,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   // "Paid now" follows the total until the user types their own amount.
   const [paidText, setPaidText] = useState<string | null>(null);
   const [orderId, setOrderId] = useState(initialOrder);
+  const [safeChoice, setSafeChoice] = useState("");
   const [note, setNote] = useState("");
   // Sell: customer account (or a new one made right here), delivery place, invoice discount.
   const [custList, setCustList] = useState(customers);
@@ -66,6 +69,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const round2 = (n: number) => Math.round(n * 100) / 100;
   const paidNow = paidText === null ? round2(total) : Number(paidText) || 0;
   const owed = round2(total - paidNow);
+  const safeId = fitSafe(safes, currency, safeChoice); // the safe the paid-now money goes into / out of
 
   const fillFromOrder = () => {
     const o = orders.find((x) => x.id === orderId);
@@ -87,7 +91,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
       type, reason: money ? undefined : reason || undefined, party: !sell && party ? party : undefined, phone: money ? phone || undefined : undefined,
       invoiceNo: !sell && invoiceNo ? invoiceNo : undefined, customerId: sell ? customerId || undefined : undefined, delivery: sell ? delivery || undefined : undefined,
       discount: sell ? disc(invKind, invDisc) ?? undefined : undefined,
-      currency: money ? currency : undefined, paid: money ? paidNow : undefined, orderId: sell && orderId ? orderId : undefined, note: note || undefined,
+      currency: money ? currency : undefined, paid: money ? paidNow : undefined, safeId: money && paidNow > 0 && safeId ? safeId : undefined, orderId: sell && orderId ? orderId : undefined, note: note || undefined,
       lines: filled.map((l) => ({ itemId: l.itemId, qty: l.qty, unitPrice: money ? (l.price === "" ? undefined : l.price) : undefined, discount: sell ? disc(l.discKind, l.disc) ?? undefined : undefined })),
     });
     if (!r.ok) { setError(r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error); return; }
@@ -272,6 +276,11 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
             )}
           </div>
           {paidText !== null && <button type="button" onClick={() => setPaidText(null)} className="mt-2 text-xs font-semibold text-brand-600 hover:underline">{t("cash.payAll")}</button>}
+          {paidNow > 0 && safes.length > 0 && (
+            <div className="mt-3 sm:max-w-sm">
+              <SafeSelect safes={safes} currency={currency} value={safeId} onChange={setSafeChoice} label={t(type === "SELL" ? "safe.intoSafe" : "safe.outOfSafe")} />
+            </div>
+          )}
         </Card>
       )}
 

@@ -41,3 +41,33 @@ export function saleTotals(lines: { qty: number; price: number; discount?: Disco
   const discount = discountOf(subtotal, invoiceDiscount);
   return { lines: rows, subtotal, discount, total: round2(subtotal - discount) };
 }
+
+/**
+ * Exchange (accountant, 26 Oct 2026): FROM amount, TO amount and the rate — any two give the third.
+ * The rate is always written as "1 of the stronger currency = rate of the other" (EUR > USD > IQD),
+ * e.g. 1 USD = 1,450 IQD whichever way the money goes.
+ */
+const STRENGTH: Record<string, number> = { EUR: 3, USD: 2, IQD: 1 };
+export const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
+export function rateSides(from: string, to: string) {
+  const fromStrong = (STRENGTH[from] ?? 0) >= (STRENGTH[to] ?? 0);
+  return { fromStrong, strong: fromStrong ? from : to, weak: fromStrong ? to : from };
+}
+/** TO amount from the FROM amount and the rate. */
+export const exchangeTo = (fromAmt: number, rate: number, fromStrong: boolean) => (rate > 0 ? round2(fromStrong ? fromAmt * rate : fromAmt / rate) : 0);
+/** FROM amount from the TO amount and the rate. */
+export const exchangeFrom = (toAmt: number, rate: number, fromStrong: boolean) => (rate > 0 ? round2(fromStrong ? toAmt / rate : toAmt * rate) : 0);
+/** The rate from both amounts. */
+export const exchangeRate = (fromAmt: number, toAmt: number, fromStrong: boolean) => (fromAmt > 0 && toAmt > 0 ? round6(fromStrong ? toAmt / fromAmt : fromAmt / toAmt) : 0);
+/** null when the two amounts and the rate agree (allowing for rounding to cents and 6-decimal rates). */
+export function exchangeProblem(fromAmt: number, toAmt: number, rate: number, fromStrong: boolean): string | null {
+  const strong = fromStrong ? fromAmt : toAmt, weak = fromStrong ? toAmt : fromAmt;
+  const tol = 0.006 + 0.006 * rate + strong * 6e-7;
+  return Math.abs(weak - strong * rate) <= tol ? null : "The two amounts and the rate don't match. Check them.";
+}
+/** Readable rate of a saved exchange (old entries kept "1 given = rate received"; new ones are always ≥ 1). */
+export function rateText(rate: number, a: string, b: string) {
+  const { strong, weak } = rateSides(a, b);
+  const r = rate >= 1 ? rate : 1 / rate;
+  return `1 ${strong} = ${r.toLocaleString("en", { maximumFractionDigits: 6 })} ${weak}`;
+}

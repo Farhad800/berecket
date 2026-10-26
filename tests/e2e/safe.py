@@ -16,9 +16,10 @@ def login(pg,u,pw):
 def cash(pg, typ, amount, currency="IQD", category=None, party=None, note=None, to=None, rate=None, save=True):
     pg.goto(B+f"/cash/new?type={typ}"); pg.wait_for_load_state("networkidle")
     pg.get_by_label("Currency you give" if typ=="EXCHANGE" else "Currency", exact=True).select_option(currency)
-    pg.get_by_label("Amount", exact=True).fill(str(amount))
     if to: pg.get_by_label("Currency you receive").select_option(to)
-    if rate: pg.get_by_label("Exchange rate").fill(str(rate))
+    if typ=="EXCHANGE": pg.get_by_test_id("ex-from").fill(str(amount))
+    else: pg.get_by_label("Amount", exact=True).fill(str(amount))
+    if rate: pg.get_by_test_id("ex-rate").fill(str(rate))
     if category: pg.get_by_label("Spent on").select_option(label=category)
     if party: pg.get_by_label(re.compile("^(From|Paid to)$")).fill(party)
     if note: pg.get_by_label("Note").fill(note)
@@ -66,7 +67,7 @@ with sync_playwright() as p:
 
     # 3. exchange inside the safe
     out=cash(A,"EXCHANGE","1000","USD",to="IQD",rate="1450",save=False)
-    ck("exchange shows what you receive (1,450,000 IQD)", A.get_by_test_id("exchange-got").inner_text()=="1,450,000 IQD")
+    ck("exchange shows what you receive (1,450,000 IQD)", A.get_by_test_id("ex-to").input_value()=="1450000")
     A.get_by_role("button", name="Save exchange").click(); A.wait_for_url(re.compile(r".*/cash/[^/]+\?saved=1$")); out=A.inner_text("main")
     ck("exchange EXC: USD −1,000, IQD +1,450,000", f"EXC-{yr}-0001" in out and bal("USD")==4000 and bal("IQD")==8_950_000 and "−1,000 USD" in out and "+1,450,000 IQD" in out)
     cash(A,"EXCHANGE","9999","USD",to="IQD",rate="1450",save=False); ck("can't exchange more than the safe has", A.get_by_role("button", name="Save exchange").is_disabled())
@@ -78,7 +79,7 @@ with sync_playwright() as p:
 
     # 5. buy in EUR, paid later from the safe
     stock_doc(A, B, "BUY", [("M-100","100","2")], party="Euro Polymers", currency="EUR")
-    ck("buy fully paid in EUR refused: the safe has no EUR", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")=="0" and "The safe has only 0 EUR" in A.inner_text("main"))
+    ck("buy fully paid in EUR refused: the safe has no EUR", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")=="0" and "\"Main safe\" has only 0 EUR" in A.inner_text("main"))
     out=stock_doc(A, B, "BUY", [("M-100","100","2")], party="Euro Polymers", currency="EUR", paid=0)
     did=A.url.split("/")[-1].split("?")[0]
     ck("buy saved unpaid: 200 EUR still owed", "/stock/" in A.url and "200 EUR" in out and bal("EUR")==0)

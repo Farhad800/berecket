@@ -1,30 +1,33 @@
 import Link from "next/link";
 import type { CashKind, Currency, Prisma } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowDownToLine, ArrowUpFromLine, Repeat } from "lucide-react";
+import { ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, Repeat, Vault } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { balances, paidFor } from "@/lib/cash";
+import { balances, listSafes, paidFor } from "@/lib/cash";
 import { customerBalances } from "@/lib/customers";
 import { formatDateTime } from "@/lib/time";
 import { Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import Converter from "./converter";
 import Categories from "./categories";
+import Safes from "./safes";
 import { CURS, KINDS, KIND_TONE, catName, fmtMoney, type CurCode } from "./types";
 
 export const metadata = { title: "Safe" };
-const TABS = ["movements", "owed", "categories"] as const;
+const TABS = ["movements", "owed", "safes", "categories"] as const;
 
 /** The safe: balance per currency, every movement of money, what is still owed, expense categories. */
-export default async function CashPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; kind?: string; currency?: string }> }) {
+export default async function CashPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; kind?: string; currency?: string; safe?: string }> }) {
   const me = await pageUser("cash:view");
   const t = await getTranslations();
   const locale = await getLocale();
   const sp = await searchParams;
-  const tabs = TABS.filter((k) => k !== "categories" || can(me, "cash:manage"));
+  const tabs = TABS.filter((k) => (k !== "categories" && k !== "safes") || can(me, "cash:manage"));
   const tab = (tabs as readonly string[]).includes(sp.tab ?? "") ? sp.tab! : "movements";
-  const bal = await balances();
+  const [bal, safes] = await Promise.all([balances(), listSafes(true)]);
+  const safeName = new Map(safes.map((x) => [x.id, x.name]));
+  const oneSafe = safes.find((x) => x.id === sp.safe);
 
   // Last exchange rates as the converter's starting point.
   const ex = await db.cashEntry.findMany({ where: { kind: "EXCHANGE" }, orderBy: { createdAt: "desc" }, take: 60, select: { number: true, currency: true, amount: true } });
@@ -41,6 +44,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageHeader title={t("nav.cash")} subtitle={t("cash.intro")} />
+      <p className="mb-1 text-xs font-semibold tracking-wide text-muted uppercase">{t("safe.allSafes")}</p>
       <div className="mb-4 grid gap-3 sm:grid-cols-3">
         {CURS.map((c) => (
           <Card key={c}>
@@ -49,10 +53,22 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
           </Card>
         ))}
       </div>
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="safes">
+        {safes.map((x) => (
+          <Link key={x.id} href={`/cash?safe=${x.id}`} aria-current={sp.safe === x.id ? "true" : undefined}
+            className={cn("rounded-xl border bg-surface p-4 hover:bg-surface-2", sp.safe === x.id ? "border-brand-600 ring-1 ring-brand-600" : "border-line")}>
+            <p className="flex items-center gap-2 font-semibold"><Vault className="size-4 text-muted" />{x.name}</p>
+            <ul className="mt-1 space-y-0.5 text-sm tabular-nums" dir="ltr" data-testid={`safe-${x.name}`}>
+              {x.currencies.map((c) => <li key={c} className={cn(x.balance![c] < 0 && "text-red-600")}>{fmtMoney(x.balance![c])} {c}</li>)}
+            </ul>
+          </Link>
+        ))}
+      </div>
       <div className="mb-4 flex flex-wrap gap-2">
-        {can(me, "cash:in") && <LinkButton href="/cash/new?type=IN"><ArrowDownToLine className="size-4" /> {t("cash.new.IN")}</LinkButton>}
-        {can(me, "cash:out") && <LinkButton href="/cash/new?type=OUT" variant="secondary"><ArrowUpFromLine className="size-4" /> {t("cash.new.OUT")}</LinkButton>}
-        {can(me, "cash:exchange") && <LinkButton href="/cash/new?type=EXCHANGE" variant="secondary"><Repeat className="size-4" /> {t("cash.new.EXCHANGE")}</LinkButton>}
+        {can(me, "cash:in") && <LinkButton href={`/cash/new?type=IN${oneSafe ? `&safe=${oneSafe.id}` : ""}`}><ArrowDownToLine className="size-4" /> {t("cash.new.IN")}</LinkButton>}
+        {can(me, "cash:out") && <LinkButton href={`/cash/new?type=OUT${oneSafe ? `&safe=${oneSafe.id}` : ""}`} variant="secondary"><ArrowUpFromLine className="size-4" /> {t("cash.new.OUT")}</LinkButton>}
+        {can(me, "cash:exchange") && <LinkButton href={`/cash/new?type=EXCHANGE${oneSafe ? `&safe=${oneSafe.id}` : ""}`} variant="secondary"><Repeat className="size-4" /> {t("cash.new.EXCHANGE")}</LinkButton>}
+        {can(me, "cash:transfer") && safes.length > 1 && <LinkButton href={`/cash/new?type=TRANSFER${oneSafe ? `&safe=${oneSafe.id}` : ""}`} variant="secondary"><ArrowLeftRight className="size-4" /> {t("cash.new.TRANSFER")}</LinkButton>}
       </div>
       <div className="mb-4"><Converter bal={bal} usdRate={lastRate("USD")} eurRate={lastRate("EUR")} /></div>
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
@@ -63,7 +79,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
           </Link>
         ))}
       </div>
-      {tab === "movements" ? <Movements /> : tab === "owed" ? <Owed /> : <CategoriesTab />}
+      {tab === "movements" ? <Movements /> : tab === "owed" ? <Owed /> : tab === "safes" ? <SafesTab /> : <CategoriesTab />}
     </>
   );
 
@@ -72,7 +88,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
     const kind = (KINDS as readonly string[]).includes(sp.kind ?? "") ? (sp.kind as CashKind) : undefined;
     const currency = (CURS as readonly string[]).includes(sp.currency ?? "") ? (sp.currency as Currency) : undefined;
     const where: Prisma.CashEntryWhereInput = {
-      ...(kind ? { kind } : {}), ...(currency ? { currency } : {}),
+      ...(kind ? { kind } : {}), ...(currency ? { currency } : {}), ...(oneSafe ? { safeId: oneSafe.id } : {}),
       ...(q ? { OR: [{ number: { contains: q, mode: "insensitive" } }, { party: { contains: q, mode: "insensitive" } }, { note: { contains: q, mode: "insensitive" } }, { stockDoc: { number: { contains: q, mode: "insensitive" } } }] } : {}),
     };
     const list = await db.cashEntry.findMany({ where, orderBy: { createdAt: "desc" }, take: 300, include: { category: true, stockDoc: { select: { id: true, number: true } } } });
@@ -82,6 +98,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
         <ListToolbar placeholder={t("cash.search")} filters={[
           { name: "kind", label: t("cash.allKinds"), options: KINDS.map((k) => ({ value: k, label: t(`cash.kind.${k}`) })) },
           { name: "currency", label: t("cash.allCurrencies"), options: CURS.map((c) => ({ value: c, label: c })) },
+          ...(safes.length > 1 ? [{ name: "safe", label: t("safe.allSafesFilter"), options: safes.map((x) => ({ value: x.id, label: x.name })) }] : []),
         ]} />
         {list.length === 0 ? <EmptyState>{t("cash.none")}</EmptyState> : (
           <Card className="p-0 sm:p-0">
@@ -94,7 +111,8 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
                       <div className="min-w-0">
                         <p className="flex flex-wrap items-center gap-2"><Badge tone={KIND_TONE[e.kind]}>{t(`cash.kind.${e.kind}`)}</Badge><span className="font-semibold" dir="ltr">{e.number}</span>
                           {e.category && <span className="text-sm">{catName(t, e.category)}</span>}{e.party && <span className="truncate text-sm">{e.party}</span>}
-                          {e.stockDoc && <span className="text-xs text-muted" dir="ltr">{e.stockDoc.number}</span>}</p>
+                          {e.stockDoc && <span className="text-xs text-muted" dir="ltr">{e.stockDoc.number}</span>}
+                          {safes.length > 1 && <span className="inline-flex items-center gap-1 text-xs text-muted"><Vault className="size-3" />{safeName.get(e.safeId)}</span>}</p>
                         <p className="mt-0.5 truncate text-xs text-muted">{formatDateTime(e.createdAt, locale)} · {users.find((u) => u.id === e.createdById)?.fullName ?? "—"}{e.note && ` · ${e.note}`}</p>
                       </div>
                       <span className={cn("self-center text-end font-bold tabular-nums", a < 0 ? "text-red-600" : "text-green-700 dark:text-green-400")} dir="ltr">{a < 0 ? "−" : "+"}{fmtMoney(Math.abs(a))} {e.currency}</span>
@@ -154,6 +172,11 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
       );
     };
     return <div className="grid gap-4 lg:grid-cols-2">{block("SELL")}{block("BUY")}</div>;
+  }
+
+  async function SafesTab() {
+    const used = await db.cashEntry.groupBy({ by: ["safeId"], _count: { _all: true } });
+    return <Safes rows={safes.map((x) => ({ id: x.id, name: x.name, currencies: x.currencies, isMain: x.isMain, balance: x.balance!, used: used.find((u) => u.safeId === x.id)?._count._all ?? 0 }))} />;
   }
 
   async function CategoriesTab() {
