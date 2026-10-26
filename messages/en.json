@@ -271,6 +271,12 @@
       "STICKER": "Label",
       "MATERIAL": "Raw material",
       "PACKAGING": "Packaging"
+    },
+    "kindPlural": {
+      "PRODUCT": "Products",
+      "STICKER": "Labels",
+      "MATERIAL": "Raw materials",
+      "PACKAGING": "Packaging"
     }
   },
   "status": {
@@ -531,7 +537,8 @@
       "restore": "Product restored",
       "delete": "Product deleted",
       "bulk_create": "Labels added to a mold",
-      "recipe": "Made of / packaging changed"
+      "recipe": "Made of / packaging changed",
+      "cost": "Cost changed"
     },
     "machine": {
       "create": "Machine added",
@@ -998,9 +1005,9 @@
     "itemsN": "Items",
     "withStock": "Items in stock",
     "totalKg": "Total in kg",
-    "noStickers": "No stickers yet. Add them with Import from Excel.",
-    "noMaterials": "No materials yet. Add them with Import from Excel.",
-    "noPackaging": "No packaging items yet. Add them with Import from Excel.",
+    "noStickers": "No labels yet. Add them with New item or Import from Excel.",
+    "noMaterials": "No raw materials yet. Add them with New item or Import from Excel.",
+    "noPackaging": "No packaging items yet. Add them with New item or Import from Excel.",
     "readOnlyNote": "Stock on hand. It changes only through Stock Movements (input, output, buy, sell) and daily production."
   },
   "rep": {
@@ -2114,5 +2121,59 @@
     "allSafesFilter": "All safes",
     "intoSafe": "Into safe",
     "outOfSafe": "Paid from safe"
+  },
+  "item": {
+    "newButton": "New item",
+    "newTitle": "New label, raw material or packaging",
+    "intro": "Choose what it is, type its name and how it is counted, and its cost.",
+    "whatIsIt": "What is it?",
+    "name": "Name",
+    "name2": "Second name",
+    "code": "Code",
+    "codeHint": "Leave empty for an automatic code.",
+    "unit": "Counted in",
+    "unitPcs": "Pieces",
+    "unitKg": "Kilograms (kg)",
+    "bagWeight": "Weight of one bag / piece (kg)",
+    "bagWeightHint": "For packaging bought by kg but used by the piece (e.g. nylon bags).",
+    "save": "Save item",
+    "created": "{code} saved. It is now in the warehouse and can be used in products, buying and stock movements.",
+    "section": "Section",
+    "allSections": "All"
+  },
+  "cost": {
+    "title": "Cost",
+    "hint": "Price of one unit, in the currency you paid. For USD or EUR also type today's rate — product costs are always worked out in IQD.",
+    "onePiece": "1 piece",
+    "price": "Price of {per}",
+    "priceLabel": "Price",
+    "currency": "Price currency",
+    "rate": "Rate: 1 {cur} = ? IQD",
+    "rateLabel": "Rate to IQD",
+    "rateHint": "Today's rate, typed by you.",
+    "inIqd": "In IQD",
+    "rateShort": "rate 1 {cur} in IQD",
+    "updated": "Set {at}",
+    "none": "No cost yet.",
+    "set": "Set cost",
+    "change": "Change cost",
+    "save": "Save cost",
+    "productTitle": "Cost of one piece",
+    "productHint": "Label + what it is made of + packaging, in IQD, from each item's cost. It changes when an item's cost changes.",
+    "missing": "No cost yet for: {items} — the total doesn't include them.",
+    "noRecipe": "Nothing is set yet for what this product is made of and packed in, so its cost can't be worked out.",
+    "perPiece": "Per piece",
+    "unitCost": "Cost per unit (IQD)",
+    "cost": "Cost (IQD)",
+    "colPiece": "Cost / piece",
+    "colUnit": "Cost / unit",
+    "partial": "Some items have no cost yet",
+    "stockValue": "Stock value",
+    "tableHint": "Cost per piece = label + materials + packaging, in IQD. * = some of its items have no cost yet.",
+    "why": {
+      "label": "label",
+      "made": "made of",
+      "pack": "packaging"
+    }
   }
 }

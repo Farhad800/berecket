@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { StockMoveType } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
-import { can, pageUser } from "@/lib/auth";
+import { can, canSeeMoney, pageUser } from "@/lib/auth";
+import { productCosts } from "@/lib/product-costs";
+import { fmtIqd } from "@/lib/cost";
 import { db } from "@/lib/db";
 import { formatDateTime, formatNumber } from "@/lib/time";
 import { getStock } from "@/lib/stock";
 import { MOVE_TONE } from "@/lib/tones";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, PackagePlus } from "lucide-react";
 import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import StockTable from "./stock-table";
@@ -24,10 +26,14 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const tab = (TABS as readonly string[]).includes(sp.tab ?? "") ? sp.tab! : "stock";
   const n = (v: number) => formatNumber(v, locale);
   const q = sp.q?.trim();
+  const money = canSeeMoney(me); // costs only for people who see money (Buy, Sell or Safe)
 
   return (
     <>
-      <PageHeader title={t("nav.inventory")} subtitle={t("wh.readOnlyNote")} actions={can(me, "stock:view") ? <LinkButton href="/stock"><ArrowLeftRight className="size-4" /> {t("nav.stock")}</LinkButton> : undefined} />
+      <PageHeader title={t("nav.inventory")} subtitle={t("wh.readOnlyNote")} actions={<>
+        {can(me, "products:create") && <LinkButton href={`/products/new-item${tab === "stickers" ? "?kind=STICKER" : tab === "materials" ? "?kind=MATERIAL" : tab === "packaging" ? "?kind=PACKAGING" : ""}`} variant="secondary"><PackagePlus className="size-4" /> {t("item.newButton")}</LinkButton>}
+        {can(me, "stock:view") && <LinkButton href="/stock"><ArrowLeftRight className="size-4" /> {t("nav.stock")}</LinkButton>}
+      </>} />
       <div className="mb-4 flex gap-1 overflow-x-auto border-b border-line" role="tablist">
         {TABS.map((k) => (
           <Link key={k} href={`/inventory?tab=${k}`} role="tab" aria-selected={tab === k}
@@ -41,19 +47,26 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   );
 
   async function StockTab() {
-    const [products, stock] = await Promise.all([
+    const [products, stock, costs] = await Promise.all([
       db.product.findMany({ where: { archivedAt: null, kind: "PRODUCT" }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, mold: { select: { code: true } } } }),
       getStock(),
+      money ? productCosts() : Promise.resolve(null),
     ]);
-    const rows = products.map((p) => ({ id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0 }));
+    const rows = products.map((p) => {
+      const c = costs?.get(p.id);
+      return { id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0, cost: c && !c.noRecipe ? c.total : null, costPartial: !!c?.missing.length };
+    });
+    const value = rows.reduce((s, r) => s + (r.cost && r.stock > 0 ? r.cost * r.stock : 0), 0);
     const total = rows.reduce((s, r) => s + r.stock, 0);
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card><p className="text-xs text-muted">{t("wh.totalPieces")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(total)}</p></Card>
           <Card><p className="text-xs text-muted">{t("wh.productsInStock")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.filter((r) => r.stock > 0).length)}</p></Card>
+          {money && <Card><p className="text-xs text-muted">{t("cost.stockValue")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr" data-testid="stock-value">{fmtIqd(value)} IQD</p></Card>}
         </div>
-        <StockTable rows={rows} withMolds />
+        {money && <p className="text-xs text-muted">{t("cost.tableHint")}</p>}
+        <StockTable rows={rows} withMolds money={money} />
       </div>
     );
   }
@@ -63,9 +76,10 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       archivedAt: null, kind,
       ...(q ? { OR: [{ code: { contains: q, mode: "insensitive" as const } }, { name: { contains: q, mode: "insensitive" as const } }, { name2: { contains: q, mode: "insensitive" as const } }] } : {}),
     };
-    const items = await db.product.findMany({ where, orderBy: [{ name: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true } });
+    const items = await db.product.findMany({ where, orderBy: [{ name: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, costIqd: true } });
     const stock = await getStock(items.map((i) => i.id));
-    const rows = items.map((i) => ({ ...i, stock: stock.get(i.id) ?? 0 }));
+    const rows = items.map(({ costIqd, ...i }) => ({ ...i, stock: stock.get(i.id) ?? 0, cost: money && costIqd !== null ? Number(costIqd) : null }));
+    const value = rows.reduce((s, r) => s + (r.cost && r.stock > 0 ? r.cost * r.stock : 0), 0);
     const kg = rows.filter((r) => r.unit.toLowerCase() === "kg");
     return (
       <div className="space-y-4">
@@ -73,8 +87,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <Card><p className="text-xs text-muted">{t("wh.itemsN")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.length)}</p></Card>
           <Card><p className="text-xs text-muted">{t("wh.withStock")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.filter((r) => r.stock > 0).length)}</p></Card>
           {kg.length > 0 && <Card><p className="text-xs text-muted">{t("wh.totalKg")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr">{fmt(kg.reduce((s, r) => s + r.stock, 0))} kg</p></Card>}
+          {money && <Card><p className="text-xs text-muted">{t("cost.stockValue")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr" data-testid="stock-value">{fmtIqd(value)} IQD</p></Card>}
         </div>
-        {rows.length === 0 ? <EmptyState>{t(kind === "STICKER" ? "wh.noStickers" : kind === "PACKAGING" ? "wh.noPackaging" : "wh.noMaterials")}</EmptyState> : <StockTable key={kind} rows={rows} />}
+        {rows.length === 0 ? <EmptyState>{t(kind === "STICKER" ? "wh.noStickers" : kind === "PACKAGING" ? "wh.noPackaging" : "wh.noMaterials")}</EmptyState> : <StockTable key={kind} rows={rows} money={money} />}
       </div>
     );
   }

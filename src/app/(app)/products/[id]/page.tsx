@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
-import { can, pageUser } from "@/lib/auth";
+import { can, canSeeMoney, pageUser } from "@/lib/auth";
+import { productCosts } from "@/lib/product-costs";
+import { formatDateTime } from "@/lib/time";
+import { getLocale } from "next-intl/server";
+import ItemCost from "./item-cost";
+import ProductCostCard from "./product-cost";
 import { db } from "@/lib/db";
 import { getStock } from "@/lib/stock";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui";
@@ -30,6 +35,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
   if (!p) notFound();
   const back = p.kind === "PRODUCT" ? "/products" : `/inventory?tab=${p.kind === "STICKER" ? "stickers" : p.kind === "PACKAGING" ? "packaging" : "materials"}`;
   const kindLabel = t(`md.kind.${p.kind}`);
+  const money = canSeeMoney(me); // costs only for people who see money (Buy, Sell or Safe)
 
   if (p.kind !== "PRODUCT") {
     const stock = (await getStock([p.id])).get(p.id) ?? 0;
@@ -38,6 +44,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
       <>
         <Link href={back} className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {kindLabel}</Link>
         <PageHeader title={p.name} subtitle={<span dir="ltr">{[p.name2, p.code].filter(Boolean).join(" · ")}</span>} />
+        {created && <div className="mb-4"><Alert tone="green">{t("item.created", { code: p.code })}</Alert></div>}
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
             <dl className="grid grid-cols-2 gap-3 text-sm">
@@ -46,6 +53,12 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
             </dl>
             {p.unit.toLowerCase() === "kg" && (
               <div className="mt-4"><UnitWeight itemId={p.id} value={p.unitWeightKg ? Number(p.unitWeightKg) : null} canEdit={can(me, "products:edit")} /></div>
+            )}
+            {money && (
+              <div className="mt-4 border-t border-line pt-4">
+                <ItemCost id={p.id} unit={p.unit.toLowerCase() === "kg" ? "kg" : "pcs"} canEdit={can(me, "products:edit")}
+                  saved={p.costIqd === null ? null : { price: Number(p.costPrice), currency: p.costCurrency ?? "IQD", rate: Number(p.costRate ?? 1), iqd: Number(p.costIqd), at: p.costUpdatedAt ? formatDateTime(p.costUpdatedAt, await getLocale()) : "—" }} />
+              </div>
             )}
           </Card>
           <Card>
@@ -73,6 +86,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
       <Link href={back} className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.products")}</Link>
       <PageHeader title={p.name} subtitle={<span dir="ltr">{[p.name2, p.code, p.mold && `${t("md.mold")}: ${p.mold.code}`].filter(Boolean).join(" · ")}</span>} />
       {created && <div className="mb-4"><Alert tone="green">{t("rc.created")}</Alert></div>}
+      {money && <ProductCostCard cost={(await productCosts([p.id])).get(p.id)!} />}
       <RecipeEditor
         productId={p.id}
         canEdit={can(me, "products:edit")}

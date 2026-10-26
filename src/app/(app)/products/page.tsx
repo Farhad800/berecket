@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
-import { FileSpreadsheet, Plus, Tags } from "lucide-react";
+import { FileSpreadsheet, Plus, Tags, PackagePlus } from "lucide-react";
 import { pageUser, can } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Alert, LinkButton, PageHeader } from "@/components/ui";
@@ -64,6 +64,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <>
             {mold && mold !== "none" && <LinkButton href={`/assets/molds/${mold.id}/labels`}><Tags className="size-4" /> {t("md.addLabels")}</LinkButton>}
             <LinkButton href="/products/new"><Plus className="size-4" /> {t("md.newProduct")}</LinkButton>
+            <LinkButton href="/products/new-item" variant="secondary"><PackagePlus className="size-4" /> {t("item.newButton")}</LinkButton>
             <LinkButton href="/import" variant="secondary"><FileSpreadsheet className="size-4" /> {t("imp.button")}</LinkButton>
           </>
         ) : undefined}

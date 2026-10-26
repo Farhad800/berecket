@@ -59,7 +59,10 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const money = type === "BUY" || type === "SELL";
   const goesOut = type === "OUTPUT" || type === "SELL";
 
-  const options = useMemo(() => items.map((i) => ({ value: i.id, label: i.name, hint: `${i.code} · ${t(`md.kind.${i.kind}`)}${i.name2 ? ` · ${i.name2}` : ""}` })), [items, t]);
+  // Section of the warehouse to pick from (Products · Labels · Raw materials · Packaging); a chosen line keeps its item.
+  const [section, setSection] = useState<"ALL" | "PRODUCT" | "STICKER" | "MATERIAL" | "PACKAGING">("ALL");
+  const options = useMemo(() => items.map((i) => ({ value: i.id, label: i.name, kind: i.kind, hint: `${i.code} · ${t(`md.kind.${i.kind}`)}${i.name2 ? ` · ${i.name2}` : ""}` })), [items, t]);
+  const optionsFor = (itemId: string) => options.filter((o) => section === "ALL" || o.kind === section || o.value === itemId);
   const set = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
   const sell = type === "SELL";
   const sale = saleTotals(lines.map((l) => ({ qty: Number(l.qty) || 0, price: Number(l.price) || 0, discount: sell ? disc(l.discKind, l.disc) : null })), sell ? disc(invKind, invDisc) : null);
@@ -192,6 +195,15 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
       </Card>
 
       <Card className="p-0 sm:p-0">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3" role="radiogroup" aria-label={t("item.section")}>
+          <span className="text-sm font-medium">{t("item.section")}:</span>
+          {(["ALL", "PRODUCT", "STICKER", "MATERIAL", "PACKAGING"] as const).map((k) => (
+            <button key={k} type="button" role="radio" aria-checked={section === k} onClick={() => setSection(k)}
+              className={cn("min-h-9 rounded-full border px-3 text-sm font-semibold", section === k ? "border-brand-600 bg-brand-600 text-white" : "border-line bg-surface text-muted hover:text-ink")}>
+              {k === "ALL" ? t("item.allSections") : t(`md.kindPlural.${k}`)} <span className="text-xs opacity-75">{k === "ALL" ? items.length : items.filter((i) => i.kind === k).length}</span>
+            </button>
+          ))}
+        </div>
         <div className={cn("hidden gap-3 border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-muted md:grid", sell ? "md:grid-cols-[1fr_7rem_8rem_10rem_8rem_2.5rem]" : money ? "md:grid-cols-[1fr_8rem_9rem_9rem_2.5rem]" : "md:grid-cols-[1fr_8rem_2.5rem]")}>
           <span>{t("wh.item")}</span><span className="text-end">{t("order.quantity")}</span>
           {money && <><span className="text-end">{t("sd.unitPrice")}</span>{sell && <span className="text-end">{t("sd.discount")}</span>}<span className="text-end">{t("sd.lineTotal")}</span></>}<span />
@@ -203,7 +215,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
             return (
               <li key={l.key} className={cn("grid gap-2 px-4 py-3 md:items-start md:gap-3", sell ? "md:grid-cols-[1fr_7rem_8rem_10rem_8rem_2.5rem]" : money ? "md:grid-cols-[1fr_8rem_9rem_9rem_2.5rem]" : "md:grid-cols-[1fr_8rem_2.5rem]")}>
                 <div>
-                  <Combobox name={`item_${l.key}`} options={options} defaultValue={l.itemId} onChange={(v) => set(l.key, { itemId: v })} placeholder={t("rc.chooseItem")} />
+                  <Combobox key={section} name={`item_${l.key}`} options={optionsFor(l.itemId)} defaultValue={l.itemId} onChange={(v) => set(l.key, { itemId: v })} placeholder={t("rc.chooseItem")} />
                   {it && (
                     <p className={cn("mt-1 text-xs", after < 0 ? "font-semibold text-amber-600" : "text-muted")} dir="ltr">
                       {it.code} · {t("order.inStock")}: {fmtQty(it.stock)} {it.unit}{Number(l.qty) > 0 && ` → ${fmtQty(after)} ${it.unit}`}{after < 0 && ` · ${t("sd.willGoMinus")}`}
