@@ -271,6 +271,12 @@
       "STICKER": "Etiket",
       "MATERIAL": "Hammadde",
       "PACKAGING": "Ambalaj"
+    },
+    "kindPlural": {
+      "PRODUCT": "Ürünler",
+      "STICKER": "Etiketler",
+      "MATERIAL": "Hammaddeler",
+      "PACKAGING": "Ambalaj"
     }
   },
   "status": {
@@ -531,7 +537,8 @@
       "restore": "Ürün geri alındı",
       "delete": "Ürün silindi",
       "bulk_create": "Kalıba etiketler eklendi",
-      "recipe": "İçerik / ambalaj değişti"
+      "recipe": "İçerik / ambalaj değişti",
+      "cost": "Maliyet değişti"
     },
     "machine": {
       "create": "Makine eklendi",
@@ -998,9 +1005,9 @@
     "itemsN": "Kalemler",
     "withStock": "Stoktaki kalemler",
     "totalKg": "Toplam kg",
-    "noStickers": "Henüz etiket yok. Excel'den içe aktararak ekleyin.",
-    "noMaterials": "Henüz malzeme yok. Excel'den içe aktararak ekleyin.",
-    "noPackaging": "Henüz ambalaj kalemi yok. Excel'den içe aktararak ekleyin.",
+    "noStickers": "Henüz etiket yok. Yeni kalem veya Excel'den içe aktararak ekleyin.",
+    "noMaterials": "Henüz hammadde yok. Yeni kalem veya Excel'den içe aktararak ekleyin.",
+    "noPackaging": "Henüz ambalaj yok. Yeni kalem veya Excel'den içe aktararak ekleyin.",
     "readOnlyNote": "Eldeki stok. Yalnızca Stok Hareketleri (giriş, çıkış, alış, satış) ve günlük üretimle değişir."
   },
   "rep": {
@@ -2114,5 +2121,59 @@
     "allSafesFilter": "Tüm kasalar",
     "intoSafe": "Girdiği kasa",
     "outOfSafe": "Ödendiği kasa"
+  },
+  "item": {
+    "newButton": "Yeni kalem",
+    "newTitle": "Yeni etiket, hammadde veya ambalaj",
+    "intro": "Ne olduğunu seçin, adını, nasıl sayıldığını ve maliyetini yazın.",
+    "whatIsIt": "Bu nedir?",
+    "name": "Ad",
+    "name2": "İkinci ad",
+    "code": "Kod",
+    "codeHint": "Otomatik kod için boş bırakın.",
+    "unit": "Birim",
+    "unitPcs": "Adet",
+    "unitKg": "Kilogram (kg)",
+    "bagWeight": "Bir torba / parçanın ağırlığı (kg)",
+    "bagWeightHint": "Kiloyla alınıp adetle kullanılan ambalaj için (ör. naylon poşet).",
+    "save": "Kalemi kaydet",
+    "created": "{code} kaydedildi. Artık depoda; ürünlerde, alımlarda ve stok hareketlerinde kullanılabilir.",
+    "section": "Bölüm",
+    "allSections": "Tümü"
+  },
+  "cost": {
+    "title": "Maliyet",
+    "hint": "Bir birimin fiyatı, ödenen para biriminde. USD veya EUR için bugünkü kuru da yazın — ürün maliyetleri her zaman IQD ile hesaplanır.",
+    "onePiece": "1 adet",
+    "price": "{per} fiyatı",
+    "priceLabel": "Fiyat",
+    "currency": "Fiyat para birimi",
+    "rate": "Kur: 1 {cur} = ? IQD",
+    "rateLabel": "IQD kuru",
+    "rateHint": "Bugünkü kur, sizin yazdığınız.",
+    "inIqd": "IQD olarak",
+    "rateShort": "1 {cur} kuru IQD",
+    "updated": "Belirlendi {at}",
+    "none": "Henüz maliyet yok.",
+    "set": "Maliyet gir",
+    "change": "Maliyeti değiştir",
+    "save": "Maliyeti kaydet",
+    "productTitle": "Bir adetin maliyeti",
+    "productHint": "Etiket + içerik + ambalaj, IQD olarak, her kalemin maliyetinden. Bir kalemin maliyeti değişince değişir.",
+    "missing": "Henüz maliyeti olmayanlar: {items} — toplama dahil değil.",
+    "noRecipe": "Bu ürünün henüz etiketi, içeriği veya ambalajı yok; maliyeti hesaplanamaz.",
+    "perPiece": "Adet başına",
+    "unitCost": "Birim maliyet (IQD)",
+    "cost": "Maliyet (IQD)",
+    "colPiece": "Maliyet / adet",
+    "colUnit": "Maliyet / birim",
+    "partial": "Bazı kalemlerin henüz maliyeti yok",
+    "stockValue": "Stok değeri",
+    "tableHint": "Adet maliyeti = etiket + içerik + ambalaj, IQD. * = bazı kalemlerinin henüz maliyeti yok.",
+    "why": {
+      "label": "etiket",
+      "made": "içerik",
+      "pack": "ambalaj"
+    }
   }
 }
