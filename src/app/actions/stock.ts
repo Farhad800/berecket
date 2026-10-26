@@ -9,7 +9,7 @@ import { audit } from "@/lib/audit";
 import { nextNumber } from "@/lib/numbering";
 import { run, UserError } from "@/lib/action";
 import { shortages, type Shortage } from "@/lib/consumption";
-import { takeOut, type Cur } from "@/lib/cash";
+import { pickSafe, takeOut, type Cur } from "@/lib/cash";
 import { PRICE_DECIMALS, docTotal, discountProblem, maxDecimals, saleTotals } from "@/lib/money";
 import type { Permission } from "@/lib/permissions";
 
@@ -38,6 +38,7 @@ const schema = z.object({
   currency: z.enum(["IQD", "USD", "EUR"]).optional(),
   /** Buy / Sell: paid now, goes into (sale) or out of (purchase) the safe. Empty = nothing paid yet. */
   paid: z.coerce.number().min(0, "Paid can't be negative").max(100_000_000_000).optional(),
+  safeId: z.string().min(1).max(40).optional(), // the safe the paid-now money goes into / comes out of
   orderId: z.string().max(40).optional(),
   /** Sell: the customer account, where the goods go, and a discount on the whole invoice. */
   customerId: z.string().max(40).optional(),
@@ -120,9 +121,10 @@ export async function saveStockDocAction(input: unknown) {
         })),
       });
       if (paid > 0) {
-        if (t === "BUY") await takeOut(tx, raw.currency as Cur, paid);
+        const safe = await pickSafe(tx, raw.safeId, raw.currency as Cur);
+        if (t === "BUY") await takeOut(tx, safe, raw.currency as Cur, paid);
         await tx.cashEntry.create({
-          data: { number: await nextNumber(t === "SELL" ? "cashReceive" : "cashPay", tx), kind: t === "SELL" ? "SALE" : "PURCHASE", currency: raw.currency!,
+          data: { number: await nextNumber(t === "SELL" ? "cashReceive" : "cashPay", tx), kind: t === "SELL" ? "SALE" : "PURCHASE", safeId: safe.id, currency: raw.currency!,
             amount: t === "SELL" ? paid : -paid, stockDocId: doc.id, customerId: t === "SELL" ? raw.customerId! : null, party, createdById: me.id },
         });
       }

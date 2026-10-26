@@ -597,20 +597,20 @@ export const REPORTS: ReportDef[] = [
     icon: "Vault",
     perm: "cash:view",
     filters: ["range", "type"],
-    typeFilter: { ns: "cash.kind", values: ["DEPOSIT", "EXPENSE", "SALE", "PURCHASE", "EXCHANGE"] },
+    typeFilter: { ns: "cash.kind", values: ["DEPOSIT", "EXPENSE", "SALE", "PURCHASE", "EXCHANGE", "TRANSFER"] },
     async run(q) {
       const [list, name] = await Promise.all([
         db.cashEntry.findMany({
           where: { ...(q.type ? { kind: q.type as never } : {}), createdAt: { gte: q.start, lt: q.end } },
           orderBy: { createdAt: "asc" }, take: MAX_ROWS,
-          include: { category: true, stockDoc: { select: { id: true, number: true } } },
+          include: { category: true, safe: { select: { name: true } }, stockDoc: { select: { id: true, number: true } } },
         }),
         userNames(),
       ]);
       const rows: Row[] = list.map((e) => {
         const a = Number(e.amount);
         return {
-          at: e.createdAt, number: e.number, kind: e.kind, category: e.category ? (e.category.key ?? `=${e.category.name}`) : "", party: e.party ?? "",
+          at: e.createdAt, number: e.number, kind: e.kind, safe: e.safe.name, category: e.category ? (e.category.key ?? `=${e.category.name}`) : "", party: e.party ?? "",
           doc: e.stockDoc?.number ?? "", note: e.note ?? "", in: a > 0 ? a : null, out: a < 0 ? -a : null, currency: e.currency, by: name(e.createdById),
           _href: { number: `/cash/${e.id}`, ...(e.stockDoc ? { doc: `/stock/${e.stockDoc.id}` } : {}) },
         };
@@ -621,7 +621,8 @@ export const REPORTS: ReportDef[] = [
         columns: [
           { key: "at", label: "rep.col.when", type: "datetime" },
           { key: "number", label: "rep.col.document", type: "code" },
-          { key: "kind", label: "rep.col.movement", type: "status", ns: "cash.kind", tones: { DEPOSIT: "green", EXPENSE: "red", SALE: "purple", PURCHASE: "blue", EXCHANGE: "amber" } },
+          { key: "kind", label: "rep.col.movement", type: "status", ns: "cash.kind", tones: { DEPOSIT: "green", EXPENSE: "red", SALE: "purple", PURCHASE: "blue", EXCHANGE: "amber", TRANSFER: "gray" } },
+          { key: "safe", label: "rep.col.safe" },
           { key: "category", label: "rep.col.expenseCat", type: "status", ns: "cash.cat" },
           { key: "party", label: "rep.col.party" },
           { key: "doc", label: "rep.col.forDoc", type: "code", wide: true },

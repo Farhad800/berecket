@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/time";
 import { Alert, Badge, Card, LinkButton, PageHeader } from "@/components/ui";
 import { KIND_TONE, catName, fmtMoney } from "../types";
+import { rateText } from "@/lib/money";
 
 export const metadata = { title: "Safe" };
 
@@ -17,11 +18,11 @@ export default async function CashEntryPage({ params, searchParams }: { params: 
   const locale = await getLocale();
   const { id } = await params;
   const saved = (await searchParams).saved === "1";
-  const e = await db.cashEntry.findUnique({ where: { id }, include: { category: true, stockDoc: { select: { id: true, number: true, type: true } } } });
+  const e = await db.cashEntry.findUnique({ where: { id }, include: { safe: { select: { name: true } }, category: true, stockDoc: { select: { id: true, number: true, type: true } } } });
   if (!e) notFound();
   const [by, pair] = await Promise.all([
     db.user.findUnique({ where: { id: e.createdById }, select: { fullName: true } }),
-    e.kind === "EXCHANGE" ? db.cashEntry.findMany({ where: { number: e.number }, orderBy: { amount: "asc" } }) : Promise.resolve([e]),
+    e.kind === "EXCHANGE" || e.kind === "TRANSFER" ? db.cashEntry.findMany({ where: { number: e.number }, orderBy: { amount: "asc" }, include: { safe: { select: { name: true } } } }) : Promise.resolve([e]),
   ]);
   const row = (label: string, value: React.ReactNode, ltr = false) => <div><dt className="text-xs text-muted">{label}</dt><dd className="font-semibold" dir={ltr ? "ltr" : undefined}>{value}</dd></div>;
   return (
@@ -33,9 +34,9 @@ export default async function CashEntryPage({ params, searchParams }: { params: 
         <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
           {pair.map((p) => {
             const a = Number(p.amount);
-            return <div key={p.id}><dt className="text-xs text-muted">{a < 0 ? t("cash.moneyOut") : t("cash.moneyIn")}</dt><dd className={`text-xl font-bold tabular-nums ${a < 0 ? "text-red-600" : "text-green-700 dark:text-green-400"}`} dir="ltr">{a < 0 ? "−" : "+"}{fmtMoney(Math.abs(a))} {p.currency}</dd></div>;
+            return <div key={p.id}><dt className="text-xs text-muted">{a < 0 ? t("cash.moneyOut") : t("cash.moneyIn")} · {p.safe.name}</dt><dd className={`text-xl font-bold tabular-nums ${a < 0 ? "text-red-600" : "text-green-700 dark:text-green-400"}`} dir="ltr" data-testid={a < 0 ? "side-out" : "side-in"}>{a < 0 ? "−" : "+"}{fmtMoney(Math.abs(a))} {p.currency}</dd></div>;
           })}
-          {e.rate && row(t("cash.rateLabel"), `1 ${pair[0]?.currency} = ${Number(e.rate).toLocaleString("en", { maximumFractionDigits: 6 })} ${pair[1]?.currency ?? ""}`, true)}
+          {e.rate && pair.length === 2 && row(t("cash.rateLabel"), rateText(Number(e.rate), pair[0].currency, pair[1].currency), true)}
           {e.category && row(t("cash.category"), catName(t, e.category))}
           {e.party && row(e.kind === "EXPENSE" ? t("cash.paidTo") : e.kind === "DEPOSIT" ? t("cash.from") : e.kind === "SALE" ? t("sd.customer") : t("sd.supplier"), e.party)}
           {e.stockDoc && row(t("cash.forDoc"), <Link href={`/stock/${e.stockDoc.id}`} className="text-brand-600 hover:underline" dir="ltr">{e.stockDoc.number}</Link>)}

@@ -11,7 +11,7 @@ export const RESOURCES = [
   "stock", // stock movement documents: input, output, buy, sell
   "receipts", // printed receipts: saved layouts
   "customers", // customer accounts: balances, sales, payments
-  "cash", // the safe: money in, money out (expenses), currency exchange, expense categories
+  "cash", // the safes: money in, money out (expenses), currency exchange, transfers between safes, expense categories
   "products",
   "assets", // machines & molds
   "reports",
@@ -21,7 +21,7 @@ export const RESOURCES = [
   "audit",
 ] as const;
 
-export const ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage", "input", "output", "buy", "sell", "in", "out", "exchange"] as const;
+export const ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage", "input", "output", "buy", "sell", "in", "out", "exchange", "transfer"] as const;
 
 export type Resource = (typeof RESOURCES)[number];
 export type Action = (typeof ACTIONS)[number];
@@ -36,7 +36,7 @@ export const RESOURCE_ACTIONS: Record<Resource, Action[]> = {
   qc: ["view", "create", "edit", "approve", "export"],
   warehouse: ["view", "create", "edit", "approve", "export"],
   stock: ["view", "input", "output", "buy", "sell"],
-  cash: ["view", "in", "out", "exchange", "manage", "export"],
+  cash: ["view", "in", "out", "exchange", "transfer", "manage", "export"],
   receipts: ["manage"],
   customers: ["view", "manage"],
   products: ["view", "create", "edit", "archive", "export"],

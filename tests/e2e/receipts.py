@@ -95,7 +95,7 @@ with sync_playwright() as p:
     S.goto(B+f"/print/receipt/payment/{pid}"); ck("payment receipt uses the A5 payment layout", "Small payment slip" in S.inner_text("main") and S.locator(".receipt-page").evaluate("e => e.style.width")=="148mm")
 
     # 7. purchase receipt
-    sql(f"INSERT INTO {Q('\"CashEntry\"')} (id,number,kind,currency,amount,{Q('\"createdById\"')}) SELECT 'cashseed','CIN-T','DEPOSIT','USD',1000,id FROM {Q('\"User\"')} WHERE username='owner'")
+    sql(f"INSERT INTO {Q('\"CashEntry\"')} (id,number,kind,{Q('\"safeId\"')},currency,amount,{Q('\"createdById\"')}) SELECT 'cashseed','CIN-T','DEPOSIT','safe_main','USD',1000,id FROM {Q('\"User\"')} WHERE username='owner'")
     stock_doc(A, B, "BUY", [("P-200",100,"1.5")], party="Gulf Polymers", currency="USD", paid="150")
     bid=A.url.split("/")[-1].split("?")[0]; A.goto(B+f"/print/receipt/doc/{bid}"); txt=A.inner_text("main")
     ck("purchase receipt says supplier and purchase invoice", "فاتورة شراء" in txt and "اسم المورد" in txt and "Gulf Polymers" in txt and "150 USD" in txt)

@@ -63,3 +63,30 @@ describe("sale discounts", () => {
     expect(discountProblem(100, { kind: "AMOUNT", value: 1.234 })).toMatch(/decimals/);
   });
 });
+
+import { exchangeFrom, exchangeProblem, exchangeRate, exchangeTo, rateSides, rateText } from "@/lib/money";
+
+describe("exchange with three boxes (any two give the third)", () => {
+  it("writes the rate as 1 of the stronger currency, whichever way the money goes", () => {
+    expect(rateSides("USD", "IQD")).toEqual({ fromStrong: true, strong: "USD", weak: "IQD" });
+    expect(rateSides("IQD", "USD")).toEqual({ fromStrong: false, strong: "USD", weak: "IQD" });
+    expect(rateSides("USD", "EUR").strong).toBe("EUR");
+  });
+  it("calculates the missing box", () => {
+    expect(exchangeTo(1000, 1450, true)).toBe(1_450_000); // 1,000 USD → IQD
+    expect(exchangeTo(1_460_000, 1460, false)).toBe(1000); // IQD → USD
+    expect(exchangeFrom(500, 1470, false)).toBe(735_000); // receive 500 USD, give IQD
+    expect(exchangeRate(1_460_000, 1000, false)).toBe(1460);
+    expect(exchangeRate(1000, 1_450_000, true)).toBe(1450);
+  });
+  it("accepts rounding but refuses amounts that don't match the rate", () => {
+    expect(exchangeProblem(1000, 1_450_000, 1450, true)).toBeNull();
+    expect(exchangeProblem(333.33, 483_328.5, 1450, true)).toBeNull();
+    expect(exchangeProblem(1_000_000, 689.66, 1450, false)).toBeNull(); // 1,000,000 IQD at 1,450 → 689.66 USD
+    expect(exchangeProblem(1000, 1_500_000, 1450, true)).not.toBeNull();
+  });
+  it("shows old and new saved rates the same way", () => {
+    expect(rateText(1450, "USD", "IQD")).toBe("1 USD = 1,450 IQD");
+    expect(rateText(1 / 1450, "IQD", "USD")).toBe("1 USD = 1,450 IQD"); // older entry: 1 IQD = 0.00069 USD
+  });
+});

@@ -11,6 +11,7 @@ import { DOC_TONE, fmtMoney, fmtQty } from "../types";
 import { docTotal, fmtPrice, lineTotal } from "@/lib/money";
 import PayForm from "./pay-form";
 import { customerBalance } from "@/lib/customers";
+import { listSafes } from "@/lib/cash";
 
 export const metadata = { title: "Stock movement" };
 
@@ -85,7 +86,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
             </ul>
           )}
           {balance !== null && <p className="mt-3 text-sm" data-testid="customer-balance">{t("cust.balanceNow")}: <b dir="ltr" className={balance < 0 ? "text-red-600" : ""}>{fmtMoney(balance)} {d.currency}</b> <span className="text-xs text-muted">({t("cust.signHint")})</span></p>}
-          {owed > 0 && mayPay && <PayForm docId={d.id} owed={owed} currency={d.currency!} sell={sell} />}
+          {owed > 0 && mayPay && <PayForm docId={d.id} owed={owed} currency={d.currency!} sell={sell} safes={await listSafes(can(me, "cash:view"))} />}
         </Card>
       )}
       <Card className="p-0 sm:p-0">

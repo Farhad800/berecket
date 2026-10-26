@@ -651,6 +651,18 @@ enum CashKind {
   SALE // money received for a Sell document
   PURCHASE // money paid for a Buy document
   EXCHANGE // one currency changed into another (two entries, same number)
+  TRANSFER // the same currency moved from one safe to another (two entries, same number)
+}
+
+/// A safe (cash box). Each holds the currencies chosen for it; every CashEntry belongs to one safe.
+model Safe {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  currencies Currency[]
+  isMain     Boolean     @default(false) // the first safe; default choice, can't be deleted
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  entries    CashEntry[]
 }
 
 /// Expense categories for money going out of the safe. Built-in ones have a key (translated); added ones only a name.
@@ -670,7 +682,9 @@ model CashEntry {
   kind        CashKind
   currency    Currency
   amount      Decimal          @db.Decimal(16, 2)
-  rate        Decimal?         @db.Decimal(18, 6) // exchange: 1 unit of the currency given = rate units received
+  rate        Decimal?         @db.Decimal(18, 6) // exchange: 1 unit of the stronger currency (EUR > USD > IQD) = rate units of the other
+  safeId      String
+  safe        Safe             @relation(fields: [safeId], references: [id])
   categoryId  String?
   category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
   stockDocId  String?
@@ -683,6 +697,7 @@ model CashEntry {
   createdAt   DateTime         @default(now())
 
   @@index([currency])
+  @@index([safeId, currency])
   @@index([number])
   @@index([stockDocId])
   @@index([customerId])

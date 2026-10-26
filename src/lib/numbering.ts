@@ -15,6 +15,7 @@ const PREFIX = {
   cashReceive: "RCV",
   cashPay: "PAY",
   cashExchange: "EXC",
+  cashTransfer: "TRF",
   salesInvoice: "INV",
   customer: "C",
 } as const;

@@ -10,6 +10,7 @@ import { nextNumber } from "@/lib/numbering";
 import { run, UserError } from "@/lib/action";
 import { maxDecimals } from "@/lib/money";
 import { customerBalance } from "@/lib/customers";
+import { pickSafe } from "@/lib/cash";
 import { once, submissionKey } from "@/lib/submission";
 
 /** Customer accounts (accountant, 26 Oct 2026): code, name, phone, address; sales and payments are booked to them. */
@@ -76,6 +77,7 @@ export async function archiveCustomerAction(input: unknown) {
 const paySchema = z.object({
   customerId: z.string().min(1).max(40),
   currency: z.enum(["IQD", "USD", "EUR"]),
+  safeId: z.string().min(1).max(40).optional(),
   amount: z.coerce.number().positive("The amount must be more than 0").max(100_000_000_000).refine((n) => maxDecimals(n, 2), "At most 2 decimals"),
   note: z.string().trim().max(1000).optional(),
   submissionId: z.string().optional(),
@@ -95,10 +97,11 @@ export async function receiveFromCustomerAction(input: unknown) {
       const c = await tx.customer.findFirst({ where: { id: v.customerId } });
       if (!c) throw new UserError("That customer no longer exists.");
       const before = (await customerBalance(c.id, {}, tx))[v.currency];
+      const safe = await pickSafe(tx, v.safeId, v.currency);
       const number = await nextNumber("cashReceive", tx);
-      const e = await tx.cashEntry.create({ data: { number, kind: "SALE", currency: v.currency, amount: v.amount, customerId: c.id, party: c.name, note: v.note || null, createdById: me.id } });
+      const e = await tx.cashEntry.create({ data: { number, kind: "SALE", safeId: safe.id, currency: v.currency, amount: v.amount, customerId: c.id, party: c.name, note: v.note || null, createdById: me.id } });
       await audit({ userId: me.id, action: "cash.receive", entityType: "CashEntry", entityId: e.id, reason: v.note ?? null,
-        after: { number, customer: `${c.code} · ${c.name}`, amount: fmt(v.amount), balanceBefore: fmt(before), balanceAfter: fmt(before + v.amount) } }, tx);
+        after: { number, customer: `${c.code} · ${c.name}`, safe: safe.name, amount: fmt(v.amount), balanceBefore: fmt(before), balanceAfter: fmt(before + v.amount) } }, tx);
       await notify({ type: "cash.receive", data: { number, doc: c.code, amount: fmt(v.amount), party: c.name, by: me.fullName },
         link: `/customers/${c.id}`, toPermission: "cash:view", exceptUserId: me.id }, tx);
       return { id: e.id, number };

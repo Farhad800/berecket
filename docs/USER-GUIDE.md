@@ -65,21 +65,24 @@ Every manual change of stock is one numbered document. Press one of the four but
 - Old sales were moved into customer accounts automatically by name (same name written in different upper/lower case or spacing counts as one customer). Purchases are not part of customer accounts.
 - Permissions: Administration → Roles → *Customers*: View, Manage. Roles that can Sell or view the Safe got them automatically. Someone who may Sell can add a new customer while selling.
 
-## Safe (money)
-The safe keeps **IQD, USD and EUR apart** — each has its own balance. Open **Safe** in the menu.
+## Safes (money)
+You can have **several safes** (e.g. *Main safe*, *Dollar box*, *Office safe*). Each has its own name and holds the currencies chosen for it; **IQD, USD and EUR are always kept apart**. Open **Safe** in the menu: the top shows all safes together, then one card per safe — click a card to see only that safe's movements.
 | What | Number | Effect |
 |---|---|---|
-| **Money in** | CIN-2026-0001 | adds money by hand (owner, bank…); write where it came from |
-| **Money out** | COUT-2026-0001 | an expense; choose what it was spent on (Salaries, Electricity, Fuel/generator, Rent, Maintenance, Transport, Food, Other, or your own) |
-| **Exchange** | EXC-2026-0001 | e.g. 1,000 USD → 1,450,000 IQD at the rate you got: USD goes down, IQD goes up |
-| Sale payment | RCV-2026-0001 | made automatically from the "received now" of a Sell, or later with **Receive payment** on the sale |
-| Purchase payment | PAY-2026-0001 | made automatically from the "paid now" of a Buy, or later with **Pay** on the purchase |
-- Money can never leave the safe if there isn't enough of that currency — the button turns off and the server refuses it.
+| **Money in** | CIN-2026-0001 | adds money by hand (owner, bank…) to the safe you choose; write where it came from |
+| **Money out** | COUT-2026-0001 | an expense from the safe you choose; choose what it was spent on (Salaries, Electricity, Fuel/generator, Rent, Maintenance, Transport, Food, Other, or your own) |
+| **Exchange** | EXC-2026-0001 | three boxes: **amount you give**, **rate** and **amount you receive** — type any two, the third is calculated (shaded). The rate is always "1 USD = … IQD" (1 of the stronger currency). The money can go into another safe, e.g. 1,000 USD from *Main safe* → 1,450,000 IQD into *Office safe* |
+| **Transfer** | TRF-2026-0001 | moves the same currency from one safe to another, e.g. 500 USD from *Dollar box* to *Main safe*; the total doesn't change |
+| Sale payment | RCV-2026-0001 | from the "received now" of a Sell, **Receive payment** on the sale, or **Receive payment** on the customer — choose **Into safe** |
+| Purchase payment | PAY-2026-0001 | from the "paid now" of a Buy, or later with **Pay** on the purchase — choose **Paid from safe** |
+- Money can never leave a safe if **that safe** doesn't have enough of that currency (other safes don't count) — the button turns off and the server refuses it.
+- **Safes** tab (needs *Safe: Manage*): **New safe** → name + tick the currencies it holds. **Edit** renames it or changes its currencies (a currency can be removed only when that safe has none of it). **Delete** only for a safe that was never used. The *Main safe* (where all money before 26 Oct 2026 is) can be renamed but not deleted.
+- People who sell but can't see the Safe choose the safe by name only — they don't see what is in it.
 - **Still owed** tab: customers with a minus balance (click to open their account), and what we still owe suppliers per purchase.
-- **Total value of the safe**: type 1 USD = … IQD and 1 EUR = … IQD to see everything as one total (starts at the last exchange rate). This is only a calculation; it changes nothing.
+- **Total value of the safe**: type 1 USD = … IQD and 1 EUR = … IQD to see all safes as one total (starts at the last exchange rate). This is only a calculation; it changes nothing.
 - **Expense categories** tab (needs *Safe: Manage*): add your own, hide ones you don't use.
-- Report **Safe: money in and out** (Reports → Money) with totals per currency; CSV/Excel/PDF.
-- Permissions in Administration → Roles → *Safe (money)*: View, Money in, Money out, Exchange, Manage, Export. Only the Administrator has them at first. A person who may **Sell** can always record what the customer paid; a person who may **Buy** can pay the supplier.
+- Report **Safe: money in and out** (Reports → Money) has a **Safe** column and totals per currency; CSV/Excel/PDF.
+- Permissions in Administration → Roles → *Safe (money)*: View, Money in, Money out, Exchange, **Transfer between safes**, Manage, Export. Roles that could exchange got Transfer automatically. A person who may **Sell** can always record what the customer paid; a person who may **Buy** can pay the supplier.
 
 ## Receipts (printing sales, purchases and payments)
 - **Receipts** in the menu (needs *Receipts: Manage*) lists the saved layouts. **New layout**: name, used for (Sales / Purchases / Payment received later), language (Arabic, English, Turkish or Arabic + English), paper (A4 / A5), text size, margin, colour, **banner picture on top**, title, text under the banner, text at the bottom, what to show (date, time, numbers, customer, phone, accountant, note, paid, remaining, total in words, signature boxes) and the item columns (tick and move up/down). The preview on the right shows your latest real sale as it will print.

@@ -172,7 +172,8 @@
       "sell": "Satış",
       "in": "Para girişi",
       "out": "Para çıkışı",
-      "exchange": "Döviz çevir"
+      "exchange": "Döviz çevir",
+      "transfer": "Kasalar arası transfer"
     }
   },
   "install": {
@@ -566,7 +567,11 @@
       "pay": "Ödeme",
       "categoryAdd": "Gider kategorisi eklendi",
       "categoryHide": "Gider kategorisi gizlendi",
-      "categoryRestore": "Gider kategorisi tekrar gösterildi"
+      "categoryRestore": "Gider kategorisi tekrar gösterildi",
+      "transfer": "Kasalar arası para taşındı",
+      "safeCreate": "Kasa eklendi",
+      "safeUpdate": "Kasa değiştirildi",
+      "safeDelete": "Kasa silindi"
     },
     "receipt": {
       "layoutCreate": "Makbuz düzeni oluşturuldu",
@@ -1240,7 +1245,8 @@
       "note": "Not",
       "moneyIn": "Giren",
       "moneyOut": "Çıkan",
-      "discount": "İndirim"
+      "discount": "İndirim",
+      "safe": "Kasa"
     },
     "kpi": {
       "achievement": "Plan gerçekleşme",
@@ -1385,7 +1391,8 @@
       "CashEntry": "Kasa kaydı",
       "ExpenseCategory": "Gider kategorisi",
       "ReceiptLayout": "Makbuz düzeni",
-      "Customer": "Müşteri"
+      "Customer": "Müşteri",
+      "Safe": "Kasa"
     }
   },
   "sys": {
@@ -1749,6 +1756,10 @@
       "pay": {
         "title": "{doc} için {amount} ödendi",
         "body": "{party} · {by}"
+      },
+      "transfer": {
+        "title": "Transfer {number}: {amount}",
+        "body": "{from} → {to} · {by}"
       }
     }
   },
@@ -1857,7 +1868,7 @@
     "invoiceDiscountKind": "Fatura indirimi türü"
   },
   "cash": {
-    "intro": "Para birimine göre kasadaki para. Satışlar ve yatırılan para artırır; alışlar ve giderler azaltır.",
+    "intro": "Her kasadaki para, para birimine göre. Satışlar ve yatırılan para kasaya eklenir; alımlar ve giderler kasadan çıkar.",
     "search": "Numara, ad, not veya belge…",
     "allKinds": "Tüm türler",
     "allCurrencies": "Tüm para birimleri",
@@ -1911,29 +1922,34 @@
     "tab": {
       "movements": "Hareketler",
       "owed": "Borçlar",
-      "categories": "Gider kategorileri"
+      "categories": "Gider kategorileri",
+      "safes": "Kasalar"
     },
     "kind": {
       "DEPOSIT": "Para girişi",
       "EXPENSE": "Gider",
       "SALE": "Satış tahsilatı",
       "PURCHASE": "Alış ödemesi",
-      "EXCHANGE": "Döviz çevirme"
+      "EXCHANGE": "Döviz çevirme",
+      "TRANSFER": "Transfer"
     },
     "new": {
       "IN": "Para girişi",
       "OUT": "Para çıkışı",
-      "EXCHANGE": "Döviz çevir"
+      "EXCHANGE": "Döviz çevir",
+      "TRANSFER": "Kasalar arası transfer"
     },
     "save": {
       "IN": "Girişi kaydet",
       "OUT": "Gideri kaydet",
-      "EXCHANGE": "Çevirmeyi kaydet"
+      "EXCHANGE": "Çevirmeyi kaydet",
+      "TRANSFER": "Transferi kaydet"
     },
     "help": {
       "IN": "Kasaya elle konan para (satıştan değil), ör. sahibinden veya bankadan.",
       "OUT": "Kasadan ödenen gider: maaş, elektrik, yakıt… Kasadakinden fazla çıkarılamaz.",
-      "EXCHANGE": "Parayı aldığınız kurla bir para biriminden diğerine çevirin."
+      "EXCHANGE": "Parayı bir para biriminden diğerine çevirin. Üç kutudan herhangi ikisini yazın — verilen tutar, kur, alınan tutar — üçüncüsü hesaplanır. Para başka bir kasaya girebilir.",
+      "TRANSFER": "Bir para birimindeki parayı bir kasadan diğerine taşıyın. Toplam değişmez."
     },
     "cat": {
       "SALARIES": "Maaşlar",
@@ -2075,5 +2091,28 @@
       "sale": "Satış",
       "payment": "Ödeme"
     }
+  },
+  "safe": {
+    "safe": "Kasa",
+    "noneHolds": "{currency} tutan kasa yok",
+    "calculated": "Diğer iki kutudan hesaplandı — değiştirmek için buraya yazın",
+    "exFrom": "Nereden",
+    "exTo": "Nereye",
+    "fromSafe": "Çıkan kasa",
+    "toSafe": "Giren kasa",
+    "exFromAmount": "Verilen tutar",
+    "exToAmount": "Alınan tutar",
+    "new": "Yeni kasa",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "name": "Kasa adı",
+    "holds": "Tuttuğu para birimleri",
+    "save": "Kasayı kaydet",
+    "main": "Ana",
+    "manageHint": "Her kasanın kendi adı ve tuttuğu para birimleri vardır. Bir para birimi yalnızca kasada hiç yoksa kaldırılabilir; kasa yalnızca hiç kullanılmadıysa silinebilir.",
+    "allSafes": "Tüm kasalar birlikte",
+    "allSafesFilter": "Tüm kasalar",
+    "intoSafe": "Girdiği kasa",
+    "outOfSafe": "Ödendiği kasa"
   }
 }
