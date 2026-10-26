@@ -44,7 +44,7 @@ group("cost", {
     "productTitle": ("Cost of one piece", "تكلفة القطعة الواحدة", "Bir adetin maliyeti"),
     "productHint": ("Label + what it is made of + packaging, in IQD, from each item's cost. It changes when an item's cost changes.", "الملصق + المكونات + التغليف، بالدينار، من تكلفة كل مادة. تتغير عند تغيّر تكلفة أي مادة.", "Etiket + içerik + ambalaj, IQD olarak, her kalemin maliyetinden. Bir kalemin maliyeti değişince değişir."),
     "missing": ("No cost yet for: {items} — the total doesn't include them.", "لا توجد تكلفة بعد لـ: {items} — المجموع لا يشملها.", "Henüz maliyeti olmayanlar: {items} — toplama dahil değil."),
-    "noRecipe": ("This product has no label, materials or packaging yet, so its cost can't be worked out.", "هذا المنتج ليس له ملصق أو مكونات أو تغليف بعد، فلا يمكن حساب تكلفته.", "Bu ürünün henüz etiketi, içeriği veya ambalajı yok; maliyeti hesaplanamaz."),
+    "noRecipe": ("Nothing is set yet for what this product is made of and packed in, so its cost can't be worked out.", "هذا المنتج ليس له ملصق أو مكونات أو تغليف بعد، فلا يمكن حساب تكلفته.", "Bu ürünün henüz etiketi, içeriği veya ambalajı yok; maliyeti hesaplanamaz."),
     "perPiece": ("Per piece", "لكل قطعة", "Adet başına"),
     "unitCost": ("Cost per unit (IQD)", "تكلفة الوحدة (دينار)", "Birim maliyet (IQD)"),
     "cost": ("Cost (IQD)", "التكلفة (دينار)", "Maliyet (IQD)"),

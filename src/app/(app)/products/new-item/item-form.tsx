@@ -52,7 +52,7 @@ export default function ItemForm({ initialKind, canCost }: { initialKind: Kind |
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="text-sm font-medium">{t("item.name")} *<Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" aria-label={t("item.name")} maxLength={160} /></label>
               <label className="text-sm font-medium">{t("item.name2")}<Input value={name2} onChange={(e) => setName2(e.target.value)} className="mt-1" aria-label={t("item.name2")} maxLength={160} /></label>
-              <label className="text-sm font-medium">{t("item.code")}<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" aria-label={t("item.code")} placeholder={kind === "STICKER" ? "LBL-0001" : kind === "MATERIAL" ? "MAT-0001" : "PKG-0001"} maxLength={40} />
+              <label className="text-sm font-medium">{t("item.code")}<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" aria-label={t("item.code")} placeholder={kind === "STICKER" ? "LBL-…" : kind === "MATERIAL" ? "MAT-…" : "PKG-…"} maxLength={40} />
                 <span className="text-xs font-normal text-muted">{t("item.codeHint")}</span></label>
               <label className="text-sm font-medium">{t("item.unit")}
                 <Select value={unit} onChange={(e) => setUnit(e.target.value as "pcs" | "kg")} className="mt-1" aria-label={t("item.unit")}>

@@ -2161,7 +2161,7 @@
     "productTitle": "Cost of one piece",
     "productHint": "Label + what it is made of + packaging, in IQD, from each item's cost. It changes when an item's cost changes.",
     "missing": "No cost yet for: {items} — the total doesn't include them.",
-    "noRecipe": "This product has no label, materials or packaging yet, so its cost can't be worked out.",
+    "noRecipe": "Nothing is set yet for what this product is made of and packed in, so its cost can't be worked out.",
     "perPiece": "Per piece",
     "unitCost": "Cost per unit (IQD)",
     "cost": "Cost (IQD)",
