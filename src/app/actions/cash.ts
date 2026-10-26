@@ -100,7 +100,7 @@ export async function payDocAction(input: unknown) {
   return run(async () => {
     const v = paySchema.parse(input);
     const me = await requireUser();
-    const doc = await db.stockDoc.findUnique({ where: { id: v.docId }, select: { id: true, type: true, number: true, currency: true, total: true, party: true, orderId: true } });
+    const doc = await db.stockDoc.findUnique({ where: { id: v.docId }, select: { id: true, type: true, number: true, currency: true, total: true, party: true, orderId: true, customerId: true } });
     if (!doc || (doc.type !== "BUY" && doc.type !== "SELL") || !doc.currency) throw new UserError("Payments are only for purchases and sales.");
     const sell = doc.type === "SELL";
     if (!(sell ? can(me, "stock:sell") || can(me, "cash:in") : can(me, "stock:buy") || can(me, "cash:out"))) throw new UserError("You don't have permission to do this.");
@@ -112,7 +112,7 @@ export async function payDocAction(input: unknown) {
       if (!sell) await takeOut(tx, doc.currency as Cur, v.amount);
       const number = await nextNumber(sell ? "cashReceive" : "cashPay", tx);
       const e = await tx.cashEntry.create({
-        data: { number, kind: sell ? "SALE" : "PURCHASE", currency: doc.currency!, amount: sell ? v.amount : -v.amount, stockDocId: doc.id, party: doc.party, note: v.note || null, createdById: me.id },
+        data: { number, kind: sell ? "SALE" : "PURCHASE", currency: doc.currency!, amount: sell ? v.amount : -v.amount, stockDocId: doc.id, customerId: sell ? doc.customerId : null, party: doc.party, note: v.note || null, createdById: me.id },
       });
       await audit({ userId: me.id, action: sell ? "cash.receive" : "cash.pay", entityType: "CashEntry", entityId: e.id, reason: v.note ?? null,
         after: { number, doc: doc.number, amount: fmt(v.amount, doc.currency!), stillOwed: fmt(owed - v.amount, doc.currency!) } }, tx);

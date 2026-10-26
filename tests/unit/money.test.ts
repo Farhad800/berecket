@@ -35,3 +35,31 @@ describe("Buy / Sell money rules", () => {
     expect(fmtPrice(1.234567)).toBe("1.234567");
   });
 });
+
+import { discountOf, discountProblem, saleTotals } from "../../src/lib/money";
+describe("sale discounts", () => {
+  it("line and invoice discounts, % and amount", () => {
+    const t = saleTotals(
+      [{ qty: 1800, price: 250, discount: { kind: "PERCENT", value: 10 } }, { qty: 5000, price: 50, discount: { kind: "AMOUNT", value: 10_000 } }, { qty: 3, price: 0.333333 }],
+      { kind: "AMOUNT", value: 50_000 },
+    );
+    expect(t.lines.map((l) => l.net)).toEqual([405_000, 240_000, 1]);
+    expect(t.subtotal).toBe(645_001);
+    expect(t.discount).toBe(50_000);
+    expect(t.total).toBe(595_001);
+    const p = saleTotals([{ qty: 3, price: 33.33 }], { kind: "PERCENT", value: 12.5 });
+    expect(p.subtotal).toBe(99.99);
+    expect(p.discount).toBe(12.5);
+    expect(p.total).toBe(87.49);
+  });
+  it("no discount = old behaviour", () => {
+    expect(saleTotals([{ qty: 20_000, price: 0.005 }]).total).toBe(100);
+    expect(discountOf(100, null)).toBe(0);
+  });
+  it("refuses impossible discounts", () => {
+    expect(discountProblem(100, { kind: "PERCENT", value: 101 })).toMatch(/100%/);
+    expect(discountProblem(100, { kind: "AMOUNT", value: 100.01 })).toMatch(/more than/);
+    expect(discountProblem(100, { kind: "AMOUNT", value: 100 })).toBeNull();
+    expect(discountProblem(100, { kind: "AMOUNT", value: 1.234 })).toMatch(/decimals/);
+  });
+});

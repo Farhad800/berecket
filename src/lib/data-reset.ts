@@ -12,7 +12,7 @@ export type ResetScope = "operations" | "everything";
 
 const OPERATIONAL_ENTITIES = ["Order", "ProductionEntry", "MaintenanceRequest", "ServiceReport", "QcInspection", "QualityIssue", "StockMovement", "StockDoc", "CashEntry"];
 const MASTER_ENTITIES = ["Product", "Machine", "Mold"];
-const OPERATIONAL_COUNTERS = ["order-", "maintenance-", "service-", "inspection-", "issue-", "stock", "cash"];
+const OPERATIONAL_COUNTERS = ["order-", "maintenance-", "service-", "inspection-", "issue-", "stock", "cash", "salesInvoice"];
 
 /** How many records a reset would delete (shown before the admin confirms). */
 export async function resetPreview(db: PrismaClient) {
@@ -60,6 +60,8 @@ export async function resetData(db: PrismaClient, scope: ResetScope) {
         await tx.mold.deleteMany({});
         await tx.machine.deleteMany({});
         await tx.product.deleteMany({});
+        await tx.customer.deleteMany({});
+        await tx.counter.deleteMany({ where: { name: "customer" } });
       } else {
         // Test maintenance may have left machines "down" — start clean.
         await tx.machine.updateMany({ where: { status: { not: "RETIRED" } }, data: { status: "AVAILABLE" } });
