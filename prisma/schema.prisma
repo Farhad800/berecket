@@ -479,25 +479,56 @@ enum Currency {
 
 /// One stock movement document (Input / Output / Buy / Sell) with its lines (StockMovement.docId).
 model StockDoc {
-  id          String          @id @default(cuid())
-  number      String          @unique // IN-2026-0001, OUT-…, BUY-…, SAL-…
-  type        StockDocType
-  reason      String? // Input/Output: RETURN, TRANSFER, COUNT, DAMAGE, SAMPLE, OTHER
-  party       String? // Buy: supplier · Sell: customer (typed)
-  phone       String? // customer / supplier phone, printed on the receipt
-  invoiceNo   String?
-  currency    Currency?
-  orderId     String?
-  order       Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  note        String?
-  total       Decimal?        @db.Decimal(16, 2) // Buy / Sell: sum of qty × price
-  createdById String
-  createdAt   DateTime        @default(now())
-  lines       StockMovement[]
-  payments    CashEntry[]
+  id            String          @id @default(cuid())
+  number        String          @unique // IN-2026-0001, OUT-…, BUY-…, SAL-…
+  type          StockDocType
+  reason        String? // Input/Output: RETURN, TRANSFER, COUNT, DAMAGE, SAMPLE, OTHER
+  party         String? // Buy: supplier · Sell: customer (typed)
+  phone         String? // customer / supplier phone, printed on the receipt
+  invoiceNo     String? // Sell: automatic INV-2026-0001 · Buy: the supplier's invoice number (typed)
+  currency      Currency?
+  orderId       String?
+  order         Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customerId    String? // Sell: the customer account the sale is booked to
+  customer      Customer?       @relation(fields: [customerId], references: [id])
+  delivery      String? // Sell: where the goods are delivered
+  note          String?
+  subtotal      Decimal?        @db.Decimal(16, 2) // Sell: sum of the lines after line discounts
+  discountKind  DiscountKind? // Sell: discount on the whole invoice
+  discountValue Decimal?        @db.Decimal(16, 4) // the % or the amount typed
+  discount      Decimal?        @db.Decimal(16, 2) // the invoice discount in money
+  total         Decimal?        @db.Decimal(16, 2) // Buy / Sell: what is charged (sum of lines − invoice discount)
+  createdById   String
+  createdAt     DateTime        @default(now())
+  lines         StockMovement[]
+  payments      CashEntry[]
 
   @@index([type, createdAt])
   @@index([orderId])
+  @@index([customerId])
+}
+
+enum DiscountKind {
+  PERCENT
+  AMOUNT
+}
+
+/// A customer account (accountant, 26 Oct 2026): sales are booked to it and payments received from it.
+/// Balance per currency = payments received − sales totals (negative = the customer owes the factory).
+model Customer {
+  id         String      @id @default(cuid())
+  code       String      @unique // C-0001 (automatic, can be changed)
+  name       String
+  phone      String?
+  address    String?
+  note       String?
+  archivedAt DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  sales      StockDoc[]
+  payments   CashEntry[]
+
+  @@index([name])
 }
 
 /// What a stock item is. Only PRODUCT is made on machines, ordered and inspected by QC.
@@ -532,20 +563,23 @@ model ProductComponent {
 
 /// Stock ledger: the balance of a product is the sum of its movements. Never edited.
 model StockMovement {
-  id          String           @id @default(cuid())
-  productId   String
-  product     Product          @relation(fields: [productId], references: [id])
-  type        StockMoveType
-  qty         Decimal          @db.Decimal(14, 3) // + in, − out (pieces, or kg for materials)
-  entryId     String?
-  entry       ProductionEntry? @relation(fields: [entryId], references: [id])
-  docId       String?
-  doc         StockDoc?        @relation(fields: [docId], references: [id])
-  unitPrice   Decimal?         @db.Decimal(18, 6) // Buy / Sell only, in the document's currency (up to 6 decimals, e.g. 0.005 per label)
-  reference   String? // e.g. who/where the goods went
-  reason      String?
-  createdById String
-  createdAt   DateTime         @default(now())
+  id            String           @id @default(cuid())
+  productId     String
+  product       Product          @relation(fields: [productId], references: [id])
+  type          StockMoveType
+  qty           Decimal          @db.Decimal(14, 3) // + in, − out (pieces, or kg for materials)
+  entryId       String?
+  entry         ProductionEntry? @relation(fields: [entryId], references: [id])
+  docId         String?
+  doc           StockDoc?        @relation(fields: [docId], references: [id])
+  unitPrice     Decimal?         @db.Decimal(18, 6) // Buy / Sell only, in the document's currency (up to 6 decimals, e.g. 0.005 per label)
+  discountKind  DiscountKind? // Sell: discount on this line
+  discountValue Decimal?         @db.Decimal(16, 4) // the % or the amount typed
+  discount      Decimal?         @db.Decimal(16, 2) // the line discount in money
+  reference     String? // e.g. who/where the goods went
+  reason        String?
+  createdById   String
+  createdAt     DateTime         @default(now())
 
   @@index([productId])
   @@index([createdAt])
@@ -641,6 +675,8 @@ model CashEntry {
   category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
   stockDocId  String?
   stockDoc    StockDoc?        @relation(fields: [stockDocId], references: [id], onDelete: SetNull)
+  customerId  String? // money received from (or paid back to) a customer account
+  customer    Customer?        @relation(fields: [customerId], references: [id])
   party       String?
   note        String?
   createdById String
@@ -649,6 +685,7 @@ model CashEntry {
   @@index([currency])
   @@index([number])
   @@index([stockDocId])
+  @@index([customerId])
   @@index([createdAt])
 }
 
