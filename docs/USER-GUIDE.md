@@ -15,6 +15,15 @@ Sign in at **https://bereket-fms.vercel.app** with your own username. Your first
 - When daily production is saved, the label (1 per piece), materials, cartons and nylon are taken from stock automatically. Started cartons and bags count as used. Corrections give back or take the difference. If something isn't in stock, production is still saved, stock shows minus (red) and the warehouse gets a notification.
 - Excel: Products sheet *Label code* and *Weight per bag (kg)* columns; a **Recipe** sheet (Product code, Item code, Quantity, Per = piece or pack) sets many products at once.
 
+### Labels, raw materials and packaging by hand, and their cost
+- **Products → New item** (or **New item** on Warehouse Stock): choose **Label**, **Raw material** or **Packaging**, type the name, **Counted in** pieces or kg (packaging bought by kg but used by the bag: also the weight of one bag), and the **cost**. Leave the code empty for an automatic one (LBL-0001, MAT-0001, PKG-0001). Import from Excel still works for long lists.
+- **Cost** = price of 1 piece / 1 kg + currency. For **USD or EUR** the form asks the rate of the day (1 USD = ? IQD) — you type it every time; nothing is filled in for you. The price stays in its own currency, and its IQD value is what product costs use.
+- Change a cost on the item's page (**Change cost**). Buying and production never change a cost — only you do.
+- **What a product costs**: on the product's page, *Cost of one piece* = its label + what it is made of (grams × cost per kg, or pieces) + its packaging (a carton that holds 1,800 → 1/1,800 of a carton). Items without a cost are named in orange and left out of the total.
+- **Warehouse Stock** shows the cost per piece of each product and the cost per unit of each label / material / packaging item, plus the stock value. * means some of its items have no cost yet.
+- Costs are shown only to roles that can **Buy**, **Sell** or **view the Safe** (like all money). Others still see items and stock.
+- Production still takes the label, materials and packaging out of stock exactly as before.
+
 ## Sales
 1. **Orders → New order**: the whole product list is shown as one sheet. Type the amount next to each product you need and leave the rest empty (Enter jumps to the next box; *Show only chosen* hides the empty ones). Press **Save order**. Up to 500 products per order. No customer or date is needed.
 2. While an order is **Open** you can *Edit* it (change amounts, add or remove products). Mark it **Completed** when everything has been delivered, or **Cancel** it (reason needed). A completed or cancelled order can be *Reopened*.
@@ -42,7 +51,7 @@ d.
 The warehouse only **shows** what is in stock. It has five tabs: **Products**, **Labels**, **Raw materials** (granules, dyes, regrind), **Packaging** (nylon, cartons, stretch film, tape, pallets) and **Movements**. Nothing can be typed here; a number below zero is shown in red so it can be counted and corrected.
 
 ## Stock Movements (Input · Output · Buy · Sell)
-Every manual change of stock is one numbered document. Press one of the four buttons, choose the items (any product, label, material or packaging), type the quantities and save.
+Every manual change of stock is one numbered document. Press one of the four buttons, pick a **Section** (All · Products · Labels · Raw materials · Packaging) to list only those items, choose the items, type the quantities and save. Bought items go into their own section of the warehouse.
 | Document | Number | Money | You fill in |
 |---|---|---|---|
 | **Input** | IN-2026-0001 | no | reason: return, transfer, count correction, other |
