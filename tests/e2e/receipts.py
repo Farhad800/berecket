@@ -2,7 +2,7 @@
    Start the app on :3001 against bereket_accept (see TESTING.md), then: python3 tests/e2e/receipts.py"""
 import os, re, subprocess, sys
 from playwright.sync_api import sync_playwright
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc, pick_customer
 B=os.environ.get("BASE","http://localhost:3001"); DB=os.environ.get("PGDB","bereket_accept"); TOKEN=os.environ.get("SETUP_TOKEN","acceptance-setup-token-2026")
 O="/tmp/claude-0/-home-claude/f2fd9017-1975-5c5d-8632-f9a800ffa010/scratchpad/receipts/"; os.makedirs(O, exist_ok=True)
 res=[]
@@ -39,12 +39,11 @@ with sync_playwright() as p:
     yr=sql("SELECT extract(year from now())::int")
 
     # 1. a sale with phone; part paid
-    out=stock_doc(S, B, "SELL", [("P-100",1800,"250"),("P-200",5000,"50")], party="Al Noor Market", currency="IQD", invoice="1001", paid="500000", save=False)
-    S.get_by_label("Phone").fill("0750 123 4567")
+    out=stock_doc(S, B, "SELL", [("P-100",1800,"250"),("P-200",5000,"50")], party="Al Noor Market", phone="0750 123 4567", currency="IQD", paid="500000", save=False)
     S.get_by_role("button", name=re.compile("^Save sale")).click(); S.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$")); sid=S.url.split("/")[-1].split("?")[0]
     ck("sale saved with the customer's phone", sql(f"SELECT phone FROM {Q('\"StockDoc\"')} WHERE id='{sid}'")=="0750 123 4567" and "0750 123 4567" in S.inner_text("main"))
-    S.goto(B+"/stock/new?type=SELL"); S.get_by_label("Customer").fill("Al Noor Market")
-    ck("typing a known customer fills the phone", S.get_by_label("Phone").input_value()=="0750 123 4567")
+    S.goto(B+"/stock/new?type=SELL"); pick_customer(S, "Al Noor Market")
+    ck("choosing a known customer fills the phone", S.get_by_label("Phone", exact=True).input_value()=="0750 123 4567")
 
     # 2. no layouts yet: standard layout still prints everything
     A.goto(B+f"/print/receipt/doc/{sid}"); txt=A.inner_text("main")

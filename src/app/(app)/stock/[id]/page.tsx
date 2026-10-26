@@ -10,6 +10,7 @@ import { Alert, Badge, Card, LinkButton, PageHeader } from "@/components/ui";
 import { DOC_TONE, fmtMoney, fmtQty } from "../types";
 import { docTotal, fmtPrice, lineTotal } from "@/lib/money";
 import PayForm from "./pay-form";
+import { customerBalance } from "@/lib/customers";
 
 export const metadata = { title: "Stock movement" };
 
@@ -21,7 +22,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   const saved = (await searchParams).saved === "1";
   const d = await db.stockDoc.findUnique({
     where: { id },
-    include: { order: { select: { id: true, number: true } }, lines: { orderBy: { createdAt: "asc" }, include: { product: { select: { id: true, code: true, name: true, name2: true, unit: true } } } } },
+    include: { order: { select: { id: true, number: true } }, customer: { select: { id: true, code: true, name: true } }, lines: { orderBy: { createdAt: "asc" }, include: { product: { select: { id: true, code: true, name: true, name2: true, unit: true } } } } },
   });
   if (!d) notFound();
   const [by, stock, payments] = await Promise.all([
@@ -38,6 +39,8 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   const paid = Math.round(payments.reduce((s, p) => s + Math.abs(Number(p.amount)), 0) * 100) / 100;
   const owed = Math.round((total - paid) * 100) / 100;
   const mayPay = sell ? can(me, "stock:sell") || can(me, "cash:in") : can(me, "stock:buy") || can(me, "cash:out");
+  const balance = money && sell && d.customerId && d.currency ? (await customerBalance(d.customerId))[d.currency] : null;
+  const hasLineDisc = d.lines.some((l) => Number(l.discount ?? 0) > 0);
   const minus = d.lines.filter((l) => (stock.get(l.productId) ?? 0) < 0);
 
   return (
@@ -49,7 +52,10 @@ export default async function StockDocPage({ params, searchParams }: { params: P
       <Card className="mb-4">
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           {d.reason && <div><dt className="text-xs text-muted">{t("sd.reasonLabel")}</dt><dd>{t(`sd.reason.${d.reason}`)}</dd></div>}
-          {d.party && <div><dt className="text-xs text-muted">{t(d.type === "BUY" ? "sd.supplier" : "sd.customer")}</dt><dd className="font-semibold">{d.party}</dd></div>}
+          {d.party && <div><dt className="text-xs text-muted">{t(d.type === "BUY" ? "sd.supplier" : "sd.customer")}</dt><dd className="font-semibold">
+            {d.customer && can(me, "customers:view") && canSeeMoney(me) ? <Link href={`/customers/${d.customer.id}`} className="text-brand-600 hover:underline">{d.party}</Link> : d.party}
+            {d.customer && <span className="ms-1 text-xs font-normal text-muted" dir="ltr">{d.customer.code}</span>}</dd></div>}
+          {d.delivery && <div><dt className="text-xs text-muted">{t("sd.delivery")}</dt><dd>{d.delivery}</dd></div>}
           {money && d.phone && <div><dt className="text-xs text-muted">{t("sd.phone")}</dt><dd dir="ltr">{d.phone}</dd></div>}
           {d.invoiceNo && <div><dt className="text-xs text-muted">{t("sd.invoice")}</dt><dd dir="ltr">{d.invoiceNo}</dd></div>}
           {d.order && <div><dt className="text-xs text-muted">{t("sd.order")}</dt><dd><Link href={`/orders/${d.order.id}`} className="text-brand-600 hover:underline" dir="ltr">{d.order.number}</Link></dd></div>}
@@ -78,6 +84,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
               ))}
             </ul>
           )}
+          {balance !== null && <p className="mt-3 text-sm" data-testid="customer-balance">{t("cust.balanceNow")}: <b dir="ltr" className={balance < 0 ? "text-red-600" : ""}>{fmtMoney(balance)} {d.currency}</b> <span className="text-xs text-muted">({t("cust.signHint")})</span></p>}
           {owed > 0 && mayPay && <PayForm docId={d.id} owed={owed} currency={d.currency!} sell={sell} />}
         </Card>
       )}
@@ -88,7 +95,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
               <tr>
                 <th className="px-4 py-2 text-start">{t("wh.item")}</th>
                 <th className="px-3 py-2 text-end">{t("order.quantity")}</th>
-                {money && <><th className="px-3 py-2 text-end">{t("sd.unitPrice")}</th><th className="px-3 py-2 text-end">{t("sd.lineTotal")}</th></>}
+                {money && <><th className="px-3 py-2 text-end">{t("sd.unitPrice")}</th>{hasLineDisc && <th className="px-3 py-2 text-end">{t("sd.discount")}</th>}<th className="px-3 py-2 text-end">{t("sd.lineTotal")}</th></>}
                 <th className="px-4 py-2 text-end">{t("sd.stockNow")}</th>
               </tr>
             </thead>
@@ -99,13 +106,23 @@ export default async function StockDocPage({ params, searchParams }: { params: P
                   <tr key={l.id}>
                     <td className="px-4 py-2"><Link href={`/products/${l.product.id}`} className="font-medium hover:underline">{l.product.name}</Link><div className="text-xs text-muted" dir="ltr">{[l.product.code, l.product.name2].filter(Boolean).join(" · ")}</div></td>
                     <td className="px-3 py-2 text-end tabular-nums" dir="ltr">{Number(l.qty) < 0 ? "−" : "+"}{fmtQty(q)} {l.product.unit}</td>
-                    {money && <><td className="px-3 py-2 text-end tabular-nums" dir="ltr">{fmtPrice(Number(l.unitPrice ?? 0))}</td><td className="px-3 py-2 text-end font-semibold tabular-nums" dir="ltr">{fmtMoney(lineTotal(q, Number(l.unitPrice ?? 0)))}</td></>}
+                    {money && <><td className="px-3 py-2 text-end tabular-nums" dir="ltr">{fmtPrice(Number(l.unitPrice ?? 0))}</td>
+                      {hasLineDisc && <td className="px-3 py-2 text-end tabular-nums" dir="ltr">{Number(l.discount ?? 0) > 0 ? `−${fmtMoney(Number(l.discount))}${l.discountKind === "PERCENT" ? ` (${Number(l.discountValue)}%)` : ""}` : ""}</td>}
+                      <td className="px-3 py-2 text-end font-semibold tabular-nums" dir="ltr">{fmtMoney(lineTotal(q, Number(l.unitPrice ?? 0)) - Number(l.discount ?? 0))}</td></>}
                     <td className={`px-4 py-2 text-end tabular-nums ${now < 0 ? "font-bold text-red-600" : ""}`} dir="ltr">{fmtQty(now)}</td>
                   </tr>
                 );
               })}
             </tbody>
-            {money && <tfoot><tr className="border-t border-line font-bold"><td className="px-4 py-2" colSpan={3}>{t("sd.total")}</td><td className="px-3 py-2 text-end" dir="ltr">{fmtMoney(total)} {d.currency}</td><td /></tr></tfoot>}
+            {money && (
+              <tfoot>
+                {Number(d.discount ?? 0) > 0 && <>
+                  <tr className="border-t border-line"><td className="px-4 py-2" colSpan={hasLineDisc ? 4 : 3}>{t("sd.subtotal")}</td><td className="px-3 py-2 text-end" dir="ltr">{fmtMoney(Number(d.subtotal))} {d.currency}</td><td /></tr>
+                  <tr><td className="px-4 py-2" colSpan={hasLineDisc ? 4 : 3}>{t("sd.invoiceDiscount")}{d.discountKind === "PERCENT" ? ` (${Number(d.discountValue)}%)` : ""}</td><td className="px-3 py-2 text-end" dir="ltr">−{fmtMoney(Number(d.discount))} {d.currency}</td><td /></tr>
+                </>}
+                <tr className="border-t border-line font-bold"><td className="px-4 py-2" colSpan={hasLineDisc ? 4 : 3}>{t("sd.total")}</td><td className="px-3 py-2 text-end" dir="ltr">{fmtMoney(total)} {d.currency}</td><td /></tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </Card>

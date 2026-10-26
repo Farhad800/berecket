@@ -3,22 +3,28 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ClipboardList, Plus, Save, Trash2 } from "lucide-react";
+import { ClipboardList, Plus, Save, Trash2, UserPlus } from "lucide-react";
 import Combobox from "@/components/combobox";
 import { Alert, Button, Card, Input, Select, Textarea, cn } from "@/components/ui";
 import { saveStockDocAction } from "@/app/actions/stock";
+import { createCustomerAction } from "@/app/actions/customers";
 import { fmtMoney, fmtQty, type DocType } from "../types";
-import { docTotal, lineTotal } from "@/lib/money";
+import { docTotal, lineTotal, saleTotals, type Discount } from "@/lib/money";
 
 type Item = { id: string; code: string; name: string; name2: string | null; unit: string; kind: string; stock: number };
 type Order = { id: string; number: string; lines: { productId: string; quantity: number }[] };
-type Line = { key: number; itemId: string; qty: string; price: string };
+type Line = { key: number; itemId: string; qty: string; price: string; discKind: "PERCENT" | "AMOUNT"; disc: string };
+type Cur = "IQD" | "USD" | "EUR";
+export type CustomerOpt = { id: string; code: string; name: string; phone: string | null; address: string | null; balance: Record<Cur, number> };
+const disc = (kind: "PERCENT" | "AMOUNT", v: string): Discount => (Number(v) > 0 ? { kind, value: Number(v) } : null);
 const REASONS = ["RETURN", "TRANSFER", "COUNT", "DAMAGE", "SAMPLE", "OTHER"] as const;
 
 /** One Input / Output / Buy / Sell document with any number of lines. */
-export default function DocForm({ allowed, initialType, initialOrder, items, orders, parties = [] }: {
+export default function DocForm({ allowed, initialType, initialOrder, items, orders, parties = [], customers = [], initialCustomer = "" }: {
   allowed: DocType[]; initialType: DocType; initialOrder: string; items: Item[]; orders: Order[];
   parties?: { type: "BUY" | "SELL"; name: string; phone: string | null }[];
+  customers?: CustomerOpt[];
+  initialCustomer?: string;
 }) {
   const t = useTranslations();
   const router = useRouter();
@@ -26,16 +32,24 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const [reason, setReason] = useState("");
   const [party, setParty] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(() => customers.find((c) => c.id === initialCustomer)?.phone ?? "");
   const [currency, setCurrency] = useState<"IQD" | "USD" | "EUR">("IQD");
   // "Paid now" follows the total until the user types their own amount.
   const [paidText, setPaidText] = useState<string | null>(null);
   const [orderId, setOrderId] = useState(initialOrder);
   const [note, setNote] = useState("");
+  // Sell: customer account (or a new one made right here), delivery place, invoice discount.
+  const [custList, setCustList] = useState(customers);
+  const [customerId, setCustomerId] = useState(initialCustomer);
+  const [adding, setAdding] = useState(false);
+  const [newCust, setNewCust] = useState({ name: "", phone: "", address: "" });
+  const [delivery, setDelivery] = useState("");
+  const [invKind, setInvKind] = useState<"PERCENT" | "AMOUNT">("PERCENT");
+  const [invDisc, setInvDisc] = useState("");
   // Keys start at 0 on every render tree, so server and browser HTML match (hydration).
   const seq = useRef(0);
-  const blank = (): Line => ({ key: ++seq.current, itemId: "", qty: "", price: "" });
-  const [lines, setLines] = useState<Line[]>(() => [{ key: 0, itemId: "", qty: "", price: "" }]);
+  const blank = (): Line => ({ key: ++seq.current, itemId: "", qty: "", price: "", discKind: "PERCENT", disc: "" });
+  const [lines, setLines] = useState<Line[]>(() => [{ key: 0, itemId: "", qty: "", price: "", discKind: "PERCENT", disc: "" }]);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -44,7 +58,10 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
 
   const options = useMemo(() => items.map((i) => ({ value: i.id, label: i.name, hint: `${i.code} · ${t(`md.kind.${i.kind}`)}${i.name2 ? ` · ${i.name2}` : ""}` })), [items, t]);
   const set = (key: number, patch: Partial<Line>) => setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
-  const total = docTotal(lines.map((l) => ({ qty: Number(l.qty) || 0, price: Number(l.price) || 0 })));
+  const sell = type === "SELL";
+  const sale = saleTotals(lines.map((l) => ({ qty: Number(l.qty) || 0, price: Number(l.price) || 0, discount: sell ? disc(l.discKind, l.disc) : null })), sell ? disc(invKind, invDisc) : null);
+  const total = sell ? sale.total : docTotal(lines.map((l) => ({ qty: Number(l.qty) || 0, price: Number(l.price) || 0 })));
+  const cust = custList.find((c) => c.id === customerId);
   const filled = lines.filter((l) => l.itemId);
   const round2 = (n: number) => Math.round(n * 100) / 100;
   const paidNow = paidText === null ? round2(total) : Number(paidText) || 0;
@@ -53,15 +70,25 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const fillFromOrder = () => {
     const o = orders.find((x) => x.id === orderId);
     if (!o) return;
-    setLines(o.lines.map((l) => ({ key: ++seq.current, itemId: l.productId, qty: String(l.quantity), price: "" })));
+    setLines(o.lines.map((l) => ({ key: ++seq.current, itemId: l.productId, qty: String(l.quantity), price: "", discKind: "PERCENT" as const, disc: "" })));
   };
+
+  const addCustomer = () => start(async () => {
+    setError(null);
+    const r = await createCustomerAction({ name: newCust.name, phone: newCust.phone || undefined, address: newCust.address || undefined });
+    if (!r.ok) { setError(r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error); return; }
+    setCustList((l) => [...l, { ...r.data, address: newCust.address || null, balance: { IQD: 0, USD: 0, EUR: 0 } }]);
+    setCustomerId(r.data.id); setPhone(r.data.phone ?? ""); setAdding(false); setNewCust({ name: "", phone: "", address: "" });
+  });
 
   const save = () => start(async () => {
     setError(null);
     const r = await saveStockDocAction({
-      type, reason: money ? undefined : reason || undefined, party: party || undefined, phone: money ? phone || undefined : undefined, invoiceNo: invoiceNo || undefined,
-      currency: money ? currency : undefined, paid: money ? paidNow : undefined, orderId: type === "SELL" && orderId ? orderId : undefined, note: note || undefined,
-      lines: filled.map((l) => ({ itemId: l.itemId, qty: l.qty, unitPrice: money ? (l.price === "" ? undefined : l.price) : undefined })),
+      type, reason: money ? undefined : reason || undefined, party: !sell && party ? party : undefined, phone: money ? phone || undefined : undefined,
+      invoiceNo: !sell && invoiceNo ? invoiceNo : undefined, customerId: sell ? customerId || undefined : undefined, delivery: sell ? delivery || undefined : undefined,
+      discount: sell ? disc(invKind, invDisc) ?? undefined : undefined,
+      currency: money ? currency : undefined, paid: money ? paidNow : undefined, orderId: sell && orderId ? orderId : undefined, note: note || undefined,
+      lines: filled.map((l) => ({ itemId: l.itemId, qty: l.qty, unitPrice: money ? (l.price === "" ? undefined : l.price) : undefined, discount: sell ? disc(l.discKind, l.disc) ?? undefined : undefined })),
     });
     if (!r.ok) { setError(r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error); return; }
     router.push(`/stock/${r.data.id}?saved=1`);
@@ -91,6 +118,26 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
           )}
           {money && (
             <>
+              {sell ? (
+                <div className="text-sm font-medium sm:col-span-2">{t("sd.customer")} *
+                  <div className="mt-1 flex gap-2">
+                    <div className="min-w-0 flex-1">
+                      <Combobox key={customerId || "none"} name="customerId" options={custList.map((c) => ({ value: c.id, label: c.name, hint: [c.code, c.phone].filter(Boolean).join(" · ") }))}
+                        defaultValue={customerId} placeholder={t("cust.choose")} onChange={(v) => { setCustomerId(v); const c = custList.find((x) => x.id === v); setPhone(c?.phone ?? ""); }} />
+                    </div>
+                    <Button type="button" variant="secondary" onClick={() => setAdding((a) => !a)} title={t("cust.new")}><UserPlus className="size-4" /> <span className="hidden sm:inline">{t("cust.new")}</span></Button>
+                  </div>
+                  {cust && <span className="mt-1 block text-xs font-normal text-muted" dir="ltr">{cust.code}{cust.address ? ` · ${cust.address}` : ""} · {t("cust.balanceNow")}: <b className={cust.balance[currency] < 0 ? "text-red-600" : ""}>{fmtMoney(cust.balance[currency])} {currency}</b></span>}
+                  {adding && (
+                    <div className="mt-2 grid gap-2 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-3">
+                      <Input value={newCust.name} onChange={(e) => setNewCust({ ...newCust, name: e.target.value })} placeholder={t("cust.name")} aria-label={t("cust.name")} />
+                      <Input type="tel" value={newCust.phone} onChange={(e) => setNewCust({ ...newCust, phone: e.target.value })} placeholder={t("sd.phone")} aria-label={t("cust.newPhone")} dir="ltr" />
+                      <Input value={newCust.address} onChange={(e) => setNewCust({ ...newCust, address: e.target.value })} placeholder={t("cust.address")} aria-label={t("cust.address")} />
+                      <div className="sm:col-span-3"><Button type="button" size="sm" onClick={addCustomer} disabled={pending || newCust.name.trim().length < 2}><UserPlus className="size-4" /> {t("cust.add")}</Button></div>
+                    </div>
+                  )}
+                </div>
+              ) : (
               <label className="text-sm font-medium">{t(type === "BUY" ? "sd.supplier" : "sd.customer")} *
                 <Input value={party} list="party-list" autoComplete="off" onChange={(e) => {
                   const v = e.target.value; setParty(v);
@@ -99,12 +146,20 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
                 }} className="mt-1" aria-label={t(type === "BUY" ? "sd.supplier" : "sd.customer")} />
                 <datalist id="party-list">{parties.filter((p) => p.type === type).map((p) => <option key={p.name} value={p.name} />)}</datalist>
               </label>
+              )}
               <label className="text-sm font-medium">{t("sd.phone")}
                 <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" dir="ltr" aria-label={t("sd.phone")} />
               </label>
-              <label className="text-sm font-medium">{t("sd.invoice")}
-                <Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} className="mt-1" dir="ltr" aria-label={t("sd.invoice")} />
-              </label>
+              {sell ? (
+                <label className="text-sm font-medium">{t("sd.delivery")}
+                  <Input value={delivery} onChange={(e) => setDelivery(e.target.value)} className="mt-1" aria-label={t("sd.delivery")} />
+                  <span className="text-xs font-normal text-muted">{t("sd.invoiceAuto")}</span>
+                </label>
+              ) : (
+                <label className="text-sm font-medium">{t("sd.invoice")}
+                  <Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} className="mt-1" dir="ltr" aria-label={t("sd.invoice")} />
+                </label>
+              )}
               <label className="text-sm font-medium">{t("sd.currency")} *
                 <Select value={currency} onChange={(e) => setCurrency(e.target.value as "IQD" | "USD" | "EUR")} className="mt-1" aria-label={t("sd.currency")}>
                   <option value="IQD">IQD — {t("sd.iqd")}</option>
@@ -133,16 +188,16 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
       </Card>
 
       <Card className="p-0 sm:p-0">
-        <div className={cn("hidden gap-3 border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-muted md:grid", money ? "md:grid-cols-[1fr_8rem_9rem_9rem_2.5rem]" : "md:grid-cols-[1fr_8rem_2.5rem]")}>
+        <div className={cn("hidden gap-3 border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-muted md:grid", sell ? "md:grid-cols-[1fr_7rem_8rem_10rem_8rem_2.5rem]" : money ? "md:grid-cols-[1fr_8rem_9rem_9rem_2.5rem]" : "md:grid-cols-[1fr_8rem_2.5rem]")}>
           <span>{t("wh.item")}</span><span className="text-end">{t("order.quantity")}</span>
-          {money && <><span className="text-end">{t("sd.unitPrice")}</span><span className="text-end">{t("sd.lineTotal")}</span></>}<span />
+          {money && <><span className="text-end">{t("sd.unitPrice")}</span>{sell && <span className="text-end">{t("sd.discount")}</span>}<span className="text-end">{t("sd.lineTotal")}</span></>}<span />
         </div>
         <ul className="divide-y divide-line">
           {lines.map((l) => {
             const it = byId.get(l.itemId);
             const after = it ? it.stock + (goesOut ? -1 : 1) * (Number(l.qty) || 0) : 0;
             return (
-              <li key={l.key} className={cn("grid gap-2 px-4 py-3 md:items-start md:gap-3", money ? "md:grid-cols-[1fr_8rem_9rem_9rem_2.5rem]" : "md:grid-cols-[1fr_8rem_2.5rem]")}>
+              <li key={l.key} className={cn("grid gap-2 px-4 py-3 md:items-start md:gap-3", sell ? "md:grid-cols-[1fr_7rem_8rem_10rem_8rem_2.5rem]" : money ? "md:grid-cols-[1fr_8rem_9rem_9rem_2.5rem]" : "md:grid-cols-[1fr_8rem_2.5rem]")}>
                 <div>
                   <Combobox name={`item_${l.key}`} options={options} defaultValue={l.itemId} onChange={(v) => set(l.key, { itemId: v })} placeholder={t("rc.chooseItem")} />
                   {it && (
@@ -162,7 +217,19 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
                       <span className="md:sr-only">{t("sd.unitPrice")}</span>
                       <Input type="number" inputMode="decimal" min={0} step="any" value={l.price} onChange={(e) => set(l.key, { price: e.target.value })} dir="ltr" className="text-end" aria-label={`${it?.code ?? ""} ${t("sd.unitPrice")}`} />
                     </label>
-                    <p className="self-center text-end text-sm font-semibold tabular-nums" dir="ltr">{fmtMoney(lineTotal(Number(l.qty) || 0, Number(l.price) || 0))} {currency}</p>
+                    {sell && (
+                      <div className="flex gap-1 text-xs text-muted md:text-transparent">
+                        <span className="self-center md:sr-only">{t("sd.discount")}</span>
+                        <Input type="number" inputMode="decimal" min={0} step="any" value={l.disc} onChange={(e) => set(l.key, { disc: e.target.value })} dir="ltr" className="min-w-0 text-end" aria-label={`${it?.code ?? ""} ${t("sd.discount")}`} />
+                        <Select value={l.discKind} onChange={(e) => set(l.key, { discKind: e.target.value as "PERCENT" | "AMOUNT" })} className="w-20 shrink-0" aria-label={`${it?.code ?? ""} ${t("sd.discountKind")}`}>
+                          <option value="PERCENT">%</option><option value="AMOUNT">{currency}</option>
+                        </Select>
+                      </div>
+                    )}
+                    <p className="self-center text-end text-sm font-semibold tabular-nums" dir="ltr">
+                      {sell ? fmtMoney(sale.lines[lines.indexOf(l)].net) : fmtMoney(lineTotal(Number(l.qty) || 0, Number(l.price) || 0))} {currency}
+                      {sell && sale.lines[lines.indexOf(l)].discount > 0 && <span className="block text-xs font-normal text-muted line-through">{fmtMoney(sale.lines[lines.indexOf(l)].gross)}</span>}
+                    </p>
                   </>
                 )}
                 <Button type="button" size="sm" variant="ghost" onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((x) => x.key !== l.key) : [blank()]))} aria-label={t("order.removeLine")}><Trash2 className="size-4" /></Button>
@@ -173,6 +240,23 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
         <div className="border-t border-line p-3"><Button type="button" size="sm" variant="secondary" onClick={() => setLines((ls) => [...ls, blank()])}><Plus className="size-4" /> {t("sd.addLine")}</Button></div>
       </Card>
 
+      {sell && (
+        <Card>
+          <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
+            <p className="text-sm">{t("sd.subtotal")}: <b dir="ltr">{fmtMoney(sale.subtotal)} {currency}</b></p>
+            <div className="text-sm font-medium">{t("sd.invoiceDiscount")}
+              <div className="mt-1 flex gap-1">
+                <Input type="number" inputMode="decimal" min={0} step="any" value={invDisc} onChange={(e) => setInvDisc(e.target.value)} dir="ltr" className="min-w-0 text-end" aria-label={t("sd.invoiceDiscount")} />
+                <Select value={invKind} onChange={(e) => setInvKind(e.target.value as "PERCENT" | "AMOUNT")} className="w-24 shrink-0" aria-label={t("sd.invoiceDiscountKind")}>
+                  <option value="PERCENT">%</option><option value="AMOUNT">{currency}</option>
+                </Select>
+              </div>
+            </div>
+            <p className="text-sm">{t("sd.discount")}: <b dir="ltr">−{fmtMoney(sale.discount)} {currency}</b></p>
+          </div>
+        </Card>
+      )}
+
       {money && (
         <Card>
           <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
@@ -181,7 +265,11 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
               <span className="text-xs font-normal text-muted">{t(type === "SELL" ? "cash.receivedHint" : "cash.paidHint")}</span>
             </label>
             <p className="text-sm">{t("sd.total")}: <b dir="ltr">{fmtMoney(total)} {currency}</b></p>
-            <p className={cn("text-sm", owed > 0 ? "font-semibold text-amber-600" : "text-muted")}>{t("cash.stillOwed")}: <b dir="ltr">{fmtMoney(Math.max(owed, 0))} {currency}</b></p>
+            {sell && cust ? (
+              <p className="text-sm" data-testid="new-balance">{t("cust.prevBalance")}: <b dir="ltr">{fmtMoney(cust.balance[currency])}</b> · {t("cust.newBalance")}: <b dir="ltr" className={round2(cust.balance[currency] - total + paidNow) < 0 ? "text-red-600" : ""}>{fmtMoney(round2(cust.balance[currency] - total + paidNow))} {currency}</b></p>
+            ) : (
+              <p className={cn("text-sm", owed > 0 ? "font-semibold text-amber-600" : "text-muted")}>{t("cash.stillOwed")}: <b dir="ltr">{fmtMoney(Math.max(owed, 0))} {currency}</b></p>
+            )}
           </div>
           {paidText !== null && <button type="button" onClick={() => setPaidText(null)} className="mt-2 text-xs font-semibold text-brand-600 hover:underline">{t("cash.payAll")}</button>}
         </Card>

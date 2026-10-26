@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  ArrowLeftRight, Vault, Printer, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
+  ArrowLeftRight, Vault, Printer, Contact, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
   LayoutDashboard, Menu, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench, X, type LucideIcon,
 } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { cn } from "@/components/ui";
 
 const ICONS: Record<string, LucideIcon> = {
-  ArrowLeftRight, Vault, Printer, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
+  ArrowLeftRight, Vault, Printer, Contact, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
   LayoutDashboard, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench,
 };
 

@@ -30,7 +30,8 @@
     "audit": "Denetim kaydı",
     "stock": "Stok Hareketleri",
     "cash": "Kasa",
-    "receipts": "Makbuzlar"
+    "receipts": "Makbuzlar",
+    "customers": "Müşteriler"
   },
   "common": {
     "save": "Kaydet",
@@ -145,7 +146,7 @@
       "qc": "Kalite kontrol",
       "warehouse": "Depo",
       "shipments": "Sevkiyatlar",
-      "customers": "Müşteriler",
+      "customers": "Müşteriler (hesaplar)",
       "products": "Ürünler",
       "assets": "Makineler ve kalıplar",
       "reports": "Raporlar",
@@ -517,7 +518,7 @@
     },
     "customer": {
       "create": "Müşteri eklendi",
-      "update": "Müşteri güncellendi",
+      "update": "Müşteri değiştirildi",
       "archive": "Müşteri arşivlendi",
       "restore": "Müşteri geri alındı",
       "delete": "Müşteri silindi"
@@ -1238,7 +1239,8 @@
       "forDoc": "Belge",
       "note": "Not",
       "moneyIn": "Giren",
-      "moneyOut": "Çıkan"
+      "moneyOut": "Çıkan",
+      "discount": "İndirim"
     },
     "kpi": {
       "achievement": "Plan gerçekleşme",
@@ -1382,7 +1384,8 @@
       "StockDoc": "Stok hareketi",
       "CashEntry": "Kasa kaydı",
       "ExpenseCategory": "Gider kategorisi",
-      "ReceiptLayout": "Makbuz düzeni"
+      "ReceiptLayout": "Makbuz düzeni",
+      "Customer": "Müşteri"
     }
   },
   "sys": {
@@ -1844,7 +1847,14 @@
       "OTHER": "Diğer"
     },
     "eur": "Euro",
-    "phone": "Telefon"
+    "phone": "Telefon",
+    "delivery": "Teslim yeri",
+    "invoiceAuto": "Fatura numarası otomatik verilir.",
+    "discount": "İndirim",
+    "discountKind": "indirim türü",
+    "subtotal": "Ara toplam",
+    "invoiceDiscount": "Faturanın tamamına indirim",
+    "invoiceDiscountKind": "Fatura indirimi türü"
   },
   "cash": {
     "intro": "Para birimine göre kasadaki para. Satışlar ve yatırılan para artırır; alışlar ve giderler azaltır.",
@@ -2005,7 +2015,10 @@
       "paid": "Ödenen",
       "owed": "Kalan",
       "words": "Yazıyla tutar",
-      "signatures": "İmza / kaşe kutuları"
+      "signatures": "İmza / kaşe kutuları",
+      "customerCode": "Müşteri kodu",
+      "delivery": "Teslim yeri",
+      "balance": "Müşteri bakiyesi (önce / sonra)"
     },
     "c": {
       "no": "Sıra no",
@@ -2015,7 +2028,52 @@
       "qty": "Miktar",
       "unit": "Birim",
       "price": "Fiyat",
-      "total": "Toplam fiyat"
+      "total": "Toplam fiyat",
+      "discount": "İndirim"
+    }
+  },
+  "cust": {
+    "intro": "Müşteri hesapları: her satış bakiyeyi düşürür (müşteri borçlu, − ile gösterilir), her ödeme artırır.",
+    "choose": "Müşteriyi seçin…",
+    "new": "Yeni müşteri",
+    "add": "Müşteriyi ekle",
+    "name": "Müşteri adı",
+    "newPhone": "Yeni müşterinin telefonu",
+    "address": "Adres",
+    "code": "Müşteri kodu",
+    "codeAuto": "Kod (boş = otomatik C-0001)",
+    "balanceNow": "Şu anki bakiye",
+    "prevBalance": "Önceki bakiye",
+    "newBalance": "Sonraki bakiye",
+    "signHint": "− = müşteri fabrikaya borçlu",
+    "totalOwed": "Müşterilerin borcu ({cur})",
+    "search": "Kod, ad, telefon veya adres…",
+    "all": "Tüm müşteriler",
+    "owing": "Bize borçlu",
+    "none": "Henüz müşteri yok.",
+    "salesN": "{n} satış",
+    "newSale": "Yeni satış",
+    "saved": "Müşteri kaydedildi.",
+    "balance": "Bakiye ({cur})",
+    "owesUs": "Müşteri fabrikaya borçlu",
+    "weOwe": "Fabrika müşteriye borçlu",
+    "settled": "Borç yok",
+    "statement": "Hesap ekstresi",
+    "noMoves": "Henüz satış veya ödeme yok.",
+    "when": "Ne zaman",
+    "what": "Belge",
+    "amount": "Tutar",
+    "runBalance": "Bakiye",
+    "receive": "Tahsilat al",
+    "receiveHint": "Bu müşteriden gelen para kasaya girer ve bakiyeyi artırır. Borçtan fazlası olabilir — o zaman fabrika müşteriye borçlu olur (+).",
+    "receiveAmount": "Alınan tutar",
+    "receiveNote": "Ödeme notu",
+    "receiveSave": "Ödemeyi kaydet",
+    "received": "{number} kaydedildi. Para kasada.",
+    "edit": "Müşteriyi düzenle",
+    "kind": {
+      "sale": "Satış",
+      "payment": "Ödeme"
     }
   }
 }

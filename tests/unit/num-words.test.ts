@@ -20,6 +20,9 @@ describe("amount in words (receipts)", () => {
     const s = normalize({ fields: { phone: false }, columns: [{ key: "total", show: true }] });
     expect(s.fields.phone).toBe(false);
     expect(s.fields.words).toBe(true);
-    expect(s.columns.map((c) => c.key)).toEqual(["total", "no", "code", "name", "name2", "qty", "unit", "price"]);
+    // missing columns are put back in the standard order around the ones the layout has
+    expect(s.columns.map((c) => c.key)).toEqual(["no", "code", "name", "name2", "qty", "unit", "price", "discount", "total"]);
+    const old = normalize({ columns: [{ key: "name", show: true }, { key: "qty", show: true }, { key: "price", show: true }, { key: "total", show: true }] });
+    expect(old.columns.map((c) => c.key)).toEqual(["no", "code", "name", "name2", "qty", "unit", "price", "discount", "total"]);
   });
 });

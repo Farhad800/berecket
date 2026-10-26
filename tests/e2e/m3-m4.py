@@ -36,12 +36,12 @@ with sync_playwright() as p:
 
     # money documents: a purchase at 0.005 USD and a sale at 2,500 IQD, with phones
     stock_doc(A, B, "BUY", [("S-1",20000,"0.005")], party="Label Printer Co", currency="USD", paid=0, save=False)
-    A.get_by_label("Phone").fill("0770 111 2222"); A.get_by_role("button", name=re.compile("^Save purchase")).click(); A.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$"))
+    A.get_by_label("Phone", exact=True).fill("0770 111 2222"); A.get_by_role("button", name=re.compile("^Save purchase")).click(); A.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$"))
     buy=A.url.split("/")[-1].split("?")[0]
     stock_doc(A, B, "INPUT", [("P-1",500,None)], reason="COUNT")
     S=ctx(); login(S,"sara",pw["sara"])
     stock_doc(S, B, "SELL", [("P-1",100,"2500")], party="Al Noor Market", currency="IQD", paid=0, save=False)
-    S.get_by_label("Phone").fill("0750 999 8888"); S.get_by_role("button", name=re.compile("^Save sale")).click(); S.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$"))
+    S.get_by_label("Phone", exact=True).fill("0750 999 8888"); S.get_by_role("button", name=re.compile("^Save sale")).click(); S.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$"))
     sell=S.url.split("/")[-1].split("?")[0]
 
     # ── M3: the warehouse team (no Buy / Sell / Safe) sees quantities only

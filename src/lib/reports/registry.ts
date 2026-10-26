@@ -546,17 +546,22 @@ export const REPORTS: ReportDef[] = [
         where: { type: q.type ? (q.type as never) : { in: ["BUY", "SELL"] }, createdAt: { gte: q.start, lt: q.end }, ...(q.product ? { productId: q.product } : {}) },
         orderBy: { createdAt: "asc" },
         take: MAX_ROWS,
-        include: { product: { select: { code: true, name: true } }, doc: { select: { id: true, number: true, party: true, invoiceNo: true, currency: true } } },
+        include: { product: { select: { code: true, name: true } }, doc: { select: { id: true, number: true, party: true, invoiceNo: true, currency: true, total: true, discount: true } } },
       });
       const rows: Row[] = list.map((m) => {
         const qty = Math.abs(Number(m.qty)), price = Number(m.unitPrice ?? 0);
         return {
           at: m.createdAt, doc: m.doc?.number ?? m.reference, type: m.type, party: m.doc?.party ?? "", invoice: m.doc?.invoiceNo ?? "",
-          product: `${m.product.code} · ${m.product.name}`, qty, price, total: lineTotal(qty, price), currency: m.doc?.currency ?? "",
+          product: `${m.product.code} · ${m.product.name}`, qty, price, discount: Number(m.discount ?? 0) || null, total: Math.round((lineTotal(qty, price) - Number(m.discount ?? 0)) * 100) / 100, currency: m.doc?.currency ?? "",
           ...(m.doc ? { _href: { doc: `/stock/${m.doc.id}` } } : {}),
         };
       });
-      const tot = (type: string, cur: string) => Math.round(sum(rows.filter((r) => r.type === type && r.currency === cur), (r) => num(r.total)) * 100) / 100;
+      // Totals per document (after invoice discounts), each document counted once.
+      const docs = new Map(list.filter((m) => m.doc).map((m) => [m.doc!.id, { type: m.type, cur: m.doc!.currency ?? "", total: Number(m.doc!.total ?? 0) }]));
+      // With one product chosen, its lines are what counts (invoice discounts can't be split per product).
+      const tot = (type: string, cur: string) => Math.round((q.product
+        ? sum(rows.filter((r) => r.type === type && r.currency === cur), (r) => num(r.total))
+        : sum([...docs.values()].filter((d) => d.type === type && d.cur === cur), (d) => d.total)) * 100) / 100;
       return {
         columns: [
           { key: "at", label: "rep.col.when", type: "datetime" },
@@ -567,6 +572,7 @@ export const REPORTS: ReportDef[] = [
           { key: "product", label: "rep.col.product" },
           { key: "qty", label: "rep.col.qty", type: "int" },
           { key: "price", label: "rep.col.unitPrice", type: "int", wide: true },
+          { key: "discount", label: "rep.col.discount", type: "int", wide: true },
           { key: "total", label: "rep.col.amount", type: "int" },
           { key: "currency", label: "rep.col.currency" },
         ],

@@ -67,8 +67,8 @@ with sync_playwright() as p:
     ck("2. production's menu has no administration", P.locator("nav a[href='/admin']").count()==0)
     P.goto(B+"/admin"); ck("2. production blocked from administration page", "/forbidden" in P.url)
 
-    # master data (admin) — no customers any more
-    ck("customers page is gone", A.request.get(B+"/customers").status==404)
+    # the old customer master data is gone; customer ACCOUNTS (26 Oct 2026) are a money page for the administrator
+    ck("customer accounts open for the administrator", A.request.get(B+"/customers").status==200)
     for code,name,qc in [("CAP-28","28 mm bottle cap",False),("PF-500","500 ml PET preform",True),("JAR-1L","1 L food jar",False)]:
         A.goto(B+"/products/new"); A.get_by_label("Product name").fill(name); A.get_by_label("Product code *").fill(code)
         if qc: A.get_by_label("Inspection required before release").check()
