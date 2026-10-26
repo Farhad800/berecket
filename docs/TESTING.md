@@ -28,6 +28,7 @@
 - Security: **28/28**
 - Simplified workflow (23 Oct 2026): acceptance **56/56**, security **28/28**, unit **6/6**
 - Daily sheet / large orders / deletes: **26/26**
+- Safes (26 Oct 2026, branch `safes`): safes **42/42**, safe **42/42**, customers **30/30**, stock-docs **36/36**, receipts **29/29**, m3-m4 **29/29**, concurrency **29/29**, acceptance **57/57**, review-fixes **6/6**, recipes **21/21**, supplies **21/21**, replace items **7/7**, bulk **28/28**, security **28/28**, push **16/16**, unit **23/23**
 - Customers (26 Oct 2026, branch `customers`): customers **30/30**, stock-docs **36/36**, safe **42/42**, receipts **29/29**, m3-m4 **29/29**, concurrency **29/29**, acceptance **57/57**, review-fixes **6/6**, recipes **21/21**, supplies **21/21**, replace items **7/7**, bulk **28/28**, security **28/28**, push **16/16**, unit **19/19**
 - M3/M4 (26 Oct 2026): m3-m4 **29/29** (same suite on the previous code: 12/29), concurrency **29/29**, acceptance **57/57**, stock-docs **36/36**, safe **42/42**, receipts **29/29**, review-fixes **6/6**, recipes **21/21**, supplies **21/21**, replace items **7/7**, bulk **28/28**, security **28/28**, push **16/16**, unit **15/15**
 - M1/M2 (26 Oct 2026): concurrency **29/29** (same suite on the old code: most checks fail — duplicates, stock +1,100, 1,200 of 1,000 rejected), acceptance **57/57**, stock-docs **36/36**, safe **42/42**, receipts **29/29**, review-fixes **6/6**, recipes **21/21**, supplies **21/21**, replace items **7/7**, bulk **28/28**, security **28/28**, push **16/16**, unit **15/15**
