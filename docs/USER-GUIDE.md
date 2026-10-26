@@ -48,13 +48,22 @@ Every manual change of stock is one numbered document. Press one of the four but
 | **Input** | IN-2026-0001 | no | reason: return, transfer, count correction, other |
 | **Output** | OUT-2026-0001 | no | reason: damage/scrap, sample, transfer, count correction, other |
 | **Buy** | BUY-2026-0001 | yes | supplier name, invoice no. (optional), currency IQD, USD or EUR, price per unit, **paid now** (taken from the safe) |
-| **Sell** | SAL-2026-0001 | yes | customer name, invoice no. (optional), currency, price per unit, **received now** (goes into the safe); optionally the order — the list button fills the lines from the order |
+| **Sell** | SAL-2026-0001 | yes | **customer** (choose from the list or **New customer**), delivery place, currency, price per unit, discounts, **received now** (goes into the safe); optionally the order — the list button fills the lines from the order. The invoice number INV-2026-0001 is given automatically |
 - Under each line you see the stock now and after saving. If it would go below zero you are warned, but you can still save (the warehouse is notified).
 - Kg items can have 3 decimals (25.250); pieces must be whole numbers.
 - Daily production and what it uses (labels, materials, cartons, nylon) still change stock automatically.
 - A sale linked to an order shows on that order (**Sold** column + list of sales).
 - Report **Buying and selling** lists every bought/sold line with totals per currency (CSV / Excel / PDF).
 - **Who can do what** is set per role in Administration → Roles → *Stock movements*: View, Input, Output, Buy, Sell. Warehouse Team has Input and Output; switch Buy/Sell on for the roles that need them.
+
+## Customers (accounts, balances, discounts)
+- **Customers** in the menu lists every customer with a **code** (C-0001, given automatically; you can change it) and their balance. Search by code, name or phone; filter **Owes us** or **Archived**.
+- Each customer has **one running balance per currency**: sales lower it, money received raises it. **Minus (−, red) = the customer owes the factory**; plus (green) = the factory owes the customer.
+- The customer page shows the balance, the account statement (every sale and payment with the running balance), **Receive payment** (money in from that customer, not tied to one invoice; more than owed is allowed), **Edit**, **Archive** and **New sale**.
+- Selling: choose the customer — their phone fills in and you see their balance before and after this sale. **Delivery place** is where the goods go. **Discount** per line and/or on the whole invoice, as **%** or **an amount** (it can't be more than the line/invoice).
+- The sale's receipt shows the customer code, delivery place, discounts, subtotal, grand total, **previous balance, paid now and new balance** (minus = the customer owes). A payment receipt shows the balance before and after.
+- Old sales were moved into customer accounts automatically by name (same name written in different upper/lower case or spacing counts as one customer). Purchases are not part of customer accounts.
+- Permissions: Administration → Roles → *Customers*: View, Manage. Roles that can Sell or view the Safe got them automatically. Someone who may Sell can add a new customer while selling.
 
 ## Safe (money)
 The safe keeps **IQD, USD and EUR apart** — each has its own balance. Open **Safe** in the menu.
@@ -66,7 +75,7 @@ The safe keeps **IQD, USD and EUR apart** — each has its own balance. Open **S
 | Sale payment | RCV-2026-0001 | made automatically from the "received now" of a Sell, or later with **Receive payment** on the sale |
 | Purchase payment | PAY-2026-0001 | made automatically from the "paid now" of a Buy, or later with **Pay** on the purchase |
 - Money can never leave the safe if there isn't enough of that currency — the button turns off and the server refuses it.
-- **Still owed** tab: what customers still owe us and what we still owe suppliers, per document.
+- **Still owed** tab: customers with a minus balance (click to open their account), and what we still owe suppliers per purchase.
 - **Total value of the safe**: type 1 USD = … IQD and 1 EUR = … IQD to see everything as one total (starts at the last exchange rate). This is only a calculation; it changes nothing.
 - **Expense categories** tab (needs *Safe: Manage*): add your own, hide ones you don't use.
 - Report **Safe: money in and out** (Reports → Money) with totals per currency; CSV/Excel/PDF.
@@ -76,7 +85,8 @@ The safe keeps **IQD, USD and EUR apart** — each has its own balance. Open **S
 - **Receipts** in the menu (needs *Receipts: Manage*) lists the saved layouts. **New layout**: name, used for (Sales / Purchases / Payment received later), language (Arabic, English, Turkish or Arabic + English), paper (A4 / A5), text size, margin, colour, **banner picture on top**, title, text under the banner, text at the bottom, what to show (date, time, numbers, customer, phone, accountant, note, paid, remaining, total in words, signature boxes) and the item columns (tick and move up/down). The preview on the right shows your latest real sale as it will print.
 - Tick **Use this layout first** for the layout to open by default; the first layout of each kind is the default automatically.
 - To print: open the sale or purchase in Stock Movements → **Print receipt** → choose a layout at the top → **Print / Save as PDF**. Later payments have their own **Print** link (and Print receipt on the payment page).
-- The Buy / Sell form now has **Phone**. Typing a customer you used before fills in their phone.
+- The Buy / Sell form has **Phone**. On a sale it fills in from the chosen customer.
+- New fields you can tick in a layout: customer code, delivery place, balance (previous / paid now / new), and a **Discount** column (shown only when a line has a discount).
 
 ## Who sees money
 Prices, totals, payments, what is still owed, customer/supplier phones, printed receipts and the **Buying and selling** report are shown only to people whose role can **Buy**, **Sell** or **view the Safe**. Everyone else who follows stock (for example the Warehouse Team) still sees every document and quantity, and gets "Purchase BUY-…: n items" / "Sale SAL-…: n items" notices without amounts. To let someone see money, give their role Stock movements → Buy or Sell, or Safe → View (Administration → Roles).

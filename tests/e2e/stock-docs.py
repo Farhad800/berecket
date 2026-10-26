@@ -2,7 +2,7 @@
    Start the app on :3001 against bereket_accept (see TESTING.md), then: python3 tests/e2e/stock-docs.py"""
 import os, re, csv, io, subprocess, sys
 from playwright.sync_api import sync_playwright
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc, pick_customer
 B=os.environ.get("BASE","http://localhost:3001"); DB=os.environ.get("PGDB","bereket_accept"); TOKEN=os.environ.get("SETUP_TOKEN","acceptance-setup-token-2026")
 res=[]
 def ck(n,c): res.append(bool(c)); print(("PASS " if c else "FAIL ")+n)
@@ -49,7 +49,7 @@ with sync_playwright() as p:
     before=sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")
     out=stock_doc(A, B, "BUY", [("M-100",5,"1")], currency="IQD")
     ck("buy without a supplier is refused", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")==before and "/stock/new" in A.url)
-    out=stock_doc(A, B, "SELL", [("P-100",5,None)], party="X", currency="IQD")
+    out=stock_doc(A, B, "SELL", [("P-100",5,None)], party="Xy Shop", currency="IQD")
     ck("sale without prices is refused", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")==before)
 
     # 1b. small prices (0.005 per label) keep lines, total, receipt and "still owed" in agreement
@@ -74,7 +74,7 @@ with sync_playwright() as p:
     # 3. Sell linked to the order, filled from it
     A.goto(B+f"/stock/new?type=SELL&order={oid}"); A.wait_for_load_state("networkidle")
     A.get_by_title("Fill the lines from this order").click(); A.wait_for_timeout(300)
-    A.get_by_label("Customer").fill("Al Noor Market"); A.get_by_label("Currency").select_option("IQD")
+    pick_customer(A, "Al Noor Market"); A.get_by_label("Currency").select_option("IQD")
     A.locator("main ul.divide-y > li").first.locator("input[type=number]").nth(1).fill("1500")
     ck("fill from order put 500 bowls in the sale", A.locator("main ul.divide-y > li").first.locator("input[type=number]").first.input_value()=="500")
     A.get_by_role("button", name=re.compile("^Save sale")).click(); A.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$")); out=A.inner_text("main")
