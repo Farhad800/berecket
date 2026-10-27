@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { can, canSeeMoney, pageUser } from "@/lib/auth";
 import { productCosts } from "@/lib/product-costs";
+import Batches from "./batches";
 import { formatDateTime } from "@/lib/time";
 import { getLocale } from "next-intl/server";
 import ItemCost from "./item-cost";
@@ -68,6 +69,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
             )}
           </Card>
         </div>
+        {money && <Batches itemId={p.id} unit={p.unit} />}
       </>
     );
   }
@@ -76,7 +78,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
   async function costCard() {
     const c = (await productCosts([p!.id])).get(p!.id)!;
     const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
-    const it = (i: { id: string; code: string; name: string; unit: string; unitWeightKg: unknown; costIqd: unknown }) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, unitWeightKg: num(i.unitWeightKg), costIqd: num(i.costIqd) });
+    const it = (i: { id: string; code: string; name: string; unit: string; unitWeightKg: unknown; costIqd: unknown; lots?: { left: number; unit: number | null }[] }) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, unitWeightKg: num(i.unitWeightKg), costIqd: num(i.costIqd), lots: i.lots });
     const recipe = { label: c.recipe.label ? it(c.recipe.label) : null, components: c.recipe.components.map((l) => ({ qty: Number(l.qty), per: l.per, component: it(l.component) })) };
     return <ProductCostCard recipe={recipe} initialPieces={c.pieces} fromProduction={c.fromProduction} />;
   }
@@ -96,6 +98,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
       <PageHeader title={p.name} subtitle={<span dir="ltr">{[p.name2, p.code, p.mold && `${t("md.mold")}: ${p.mold.code}`].filter(Boolean).join(" · ")}</span>} />
       {created && <div className="mb-4"><Alert tone="green">{t("rc.created")}</Alert></div>}
       {money && await costCard()}
+      {money && <div className="mb-4"><Batches itemId={p.id} unit={p.unit} /></div>}
       <RecipeEditor
         productId={p.id}
         canEdit={can(me, "products:edit")}

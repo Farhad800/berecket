@@ -2162,8 +2162,8 @@
     "allSections": "All"
   },
   "cost": {
-    "title": "Cost",
-    "hint": "Price of one unit, in the currency you paid. For USD or EUR also type today's rate — product costs are always worked out in IQD.",
+    "title": "Starting cost",
+    "hint": "Price of one unit, in the currency you paid. For USD or EUR also type today's rate. It is the cost of the stock that was here before batches started, and of stock taken when no batch is left. Every purchase makes its own batch at its own price and rate.",
     "onePiece": "1 piece",
     "price": "Price of {per}",
     "priceLabel": "Price",
@@ -2179,7 +2179,7 @@
     "change": "Change cost",
     "save": "Save cost",
     "productTitle": "Product cost",
-    "productHint": "For the number of pieces made: the same amounts production takes from stock — full cartons and bags (a started one counts), nylon by its kg — times each item's cost in IQD.",
+    "productHint": "For the number of pieces made: the same amounts production takes from stock — full cartons and bags (a started one counts), nylon by its kg — costed from the oldest batches still in stock (then at the latest cost), in IQD.",
     "missing": "No cost yet for: {items} — the total doesn't include them.",
     "noRecipe": "Nothing is set yet for what this product is made of and packed in, so its cost can't be worked out.",
     "perPiece": "Per piece",
@@ -2189,7 +2189,7 @@
     "colUnit": "Cost / unit (IQD)",
     "partial": "Some items have no cost yet",
     "stockValue": "Stock value",
-    "tableHint": "Cost per piece of each product's last production (or one full carton if not made yet): label + materials + full cartons and bags, in IQD. * = some of its items have no cost yet.",
+    "tableHint": "Cost per unit = the batches still in stock (each at its own cost) ÷ the stock. With no stock: the latest cost. * = some of it has no cost yet.",
     "why": {
       "label": "label",
       "made": "made of",
@@ -2274,5 +2274,38 @@
       "payment": "Payment"
     },
     "signHint": "− = the factory owes the supplier"
+  },
+  "lot": {
+    "title": "Batches (oldest used first)",
+    "hint": "Each purchase, production run or priced input is a batch with its own cost in IQD (price × that day's rate). Production, sales and every other way out take from the oldest batch first.",
+    "inStock": "Value of the {qty} in stock",
+    "noCost": "{qty} without a cost",
+    "none": "No batches yet.",
+    "date": "Date",
+    "from": "From",
+    "qtyIn": "Came in",
+    "left": "Left",
+    "price": "Price × rate",
+    "unitCost": "Cost / {per} (IQD)",
+    "usedUp": "used up",
+    "next": "used next",
+    "opening": "Stock on {date} (starting cost)",
+    "production": "Production {day} · shift {shift}",
+    "productionGone": "Production (entry removed)",
+    "runCost": "Real cost: {piece} IQD / pc · run {run} IQD",
+    "inputCurrency": "Cost currency (optional)",
+    "inputHint": "Type a cost per line to make it a batch at that cost; empty lines use the item's starting cost.",
+    "costPerUnit": "Cost per unit",
+    "startingPh": "starting cost",
+    "startingCost": "starting cost",
+    "src": {
+      "BUY": "Purchase",
+      "INPUT": "Input",
+      "RETURN": "Given back from production",
+      "OTHER": "Added (starting cost)",
+      "OPENING": "Opening stock",
+      "PRODUCTION": "Production",
+      "SHORT": "Taken with no stock"
+    }
   }
 }

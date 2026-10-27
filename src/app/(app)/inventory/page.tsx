@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { StockMoveType } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { can, canSeeMoney, pageUser } from "@/lib/auth";
-import { productCosts } from "@/lib/product-costs";
+import { fifoState } from "@/lib/fifo";
 import { db } from "@/lib/db";
 import { formatDateTime, formatNumber } from "@/lib/time";
 import { getStock } from "@/lib/stock";
@@ -16,6 +16,12 @@ import StockValue, { type Section, type SectionValue } from "./stock-value";
 export const metadata = { title: "Warehouse stock" };
 const TABS = ["stock", "stickers", "materials", "packaging", "movements"] as const;
 const TYPES: StockMoveType[] = ["PRODUCTION", "USE", "QC_REJECT", "INPUT", "OUTPUT", "BUY", "SELL", "OUT", "ADJUST", "RECEIVE"];
+/** Average cost per unit of what is in stock (Σ batch left × its cost ÷ stock); with no stock, the latest cost. */
+function unitCost(f: Awaited<ReturnType<typeof fifoState>>, id: string) {
+  const v = f.value(id);
+  if (v.qty > 0.0005 && v.noCost < v.qty) return { unit: v.value / (v.qty - v.noCost), partial: v.noCost > 0 };
+  return { unit: f.lastUnit(id), partial: false };
+}
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; type?: string; all?: string }> }) {
@@ -50,20 +56,15 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
 
   /** Value of all stock in IQD per section (stock × cost; products at their cost per piece). Money roles only. */
   async function valuePanel() {
-    const [items, stock, costs] = await Promise.all([
-      db.product.findMany({ where: { archivedAt: null }, select: { id: true, kind: true, costIqd: true } }),
-      getStock(),
-      productCosts(),
-    ]);
+    const [items, fifo] = await Promise.all([db.product.findMany({ where: { archivedAt: null }, select: { id: true, kind: true } }), fifoState()]);
     const values = { PRODUCT: { value: 0, items: 0, noCost: 0 }, STICKER: { value: 0, items: 0, noCost: 0 }, MATERIAL: { value: 0, items: 0, noCost: 0 }, PACKAGING: { value: 0, items: 0, noCost: 0 } } as Record<Exclude<Section, "ALL">, SectionValue>;
     for (const it of items) {
-      const q = stock.get(it.id) ?? 0;
-      if (!(q > 0)) continue;
-      const c = it.kind === "PRODUCT" ? costs.get(it.id) : null;
-      const unit = it.kind === "PRODUCT" ? (c && !c.cost.noRecipe ? c.cost.perPiece : null) : it.costIqd === null ? null : Number(it.costIqd);
+      const b = fifo.value(it.id); // each batch still in stock × its own cost
+      if (!(b.qty > 0)) continue;
       const v = values[it.kind as Exclude<Section, "ALL">];
       v.items++;
-      if (unit === null) v.noCost++; else v.value += unit * q;
+      if (b.noCost > 0) v.noCost++;
+      v.value += Math.max(0, b.value);
     }
     const initial: Section = tab === "stock" ? "PRODUCT" : tab === "stickers" ? "STICKER" : tab === "materials" ? "MATERIAL" : tab === "packaging" ? "PACKAGING" : "ALL";
     return <StockValue key={tab} values={values} initial={initial} />;
@@ -73,11 +74,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     const [products, stock, costs] = await Promise.all([
       db.product.findMany({ where: { archivedAt: null, kind: "PRODUCT" }, orderBy: [{ mold: { code: "asc" } }, { code: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, mold: { select: { code: true } } } }),
       getStock(),
-      money ? productCosts() : Promise.resolve(null),
+      money ? fifoState() : Promise.resolve(null),
     ]);
     const rows = products.map((p) => {
-      const c = costs?.get(p.id);
-      return { id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0, cost: c && !c.cost.noRecipe ? c.cost.perPiece : null, costPartial: !!c?.cost.missing.length };
+      const c = costs ? unitCost(costs, p.id) : null;
+      return { id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0, cost: c?.unit ?? null, costPartial: !!c?.partial };
     });
     const total = rows.reduce((s, r) => s + r.stock, 0);
     return (
@@ -97,9 +98,9 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       archivedAt: null, kind,
       ...(q ? { OR: [{ code: { contains: q, mode: "insensitive" as const } }, { name: { contains: q, mode: "insensitive" as const } }, { name2: { contains: q, mode: "insensitive" as const } }] } : {}),
     };
-    const items = await db.product.findMany({ where, orderBy: [{ name: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, costIqd: true } });
-    const stock = await getStock(items.map((i) => i.id));
-    const rows = items.map(({ costIqd, ...i }) => ({ ...i, stock: stock.get(i.id) ?? 0, cost: money && costIqd !== null ? Number(costIqd) : null }));
+    const items = await db.product.findMany({ where, orderBy: [{ name: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true } });
+    const [stock, fifo] = await Promise.all([getStock(items.map((i) => i.id)), money ? fifoState() : null]);
+    const rows = items.map((i) => { const c = fifo ? unitCost(fifo, i.id) : null; return { ...i, stock: stock.get(i.id) ?? 0, cost: c?.unit ?? null, costPartial: !!c?.partial }; });
     const kg = rows.filter((r) => r.unit.toLowerCase() === "kg");
     return (
       <div className="space-y-4">

@@ -7,7 +7,25 @@
  */
 import { needsFor, type Recipe } from "./recipe-math";
 
-export type CostItem = { id: string; code: string; name: string; unit: string; unitWeightKg: unknown; costIqd: unknown };
+/**
+ * costIqd: cost of one unit when no batch is left (the latest batch, else the starting cost).
+ * lots: batches still in stock, oldest first — the amounts used are costed from these first (oldest first).
+ */
+export type CostItem = { id: string; code: string; name: string; unit: string; unitWeightKg: unknown; costIqd: unknown; lots?: { left: number; unit: number | null }[] };
+
+/** Cost of taking `qty` from the batches, oldest first; beyond them at `fallback`. null = some of it has no cost. */
+export function fifoTake(lots: { left: number; unit: number | null }[] | undefined, fallback: number | null, qty: number): number | null {
+  let need = qty, cost = 0;
+  for (const l of lots ?? []) {
+    if (need <= 1e-9) break;
+    const q = Math.min(l.left, need);
+    if (q <= 0) continue;
+    if (l.unit === null) return null;
+    cost += q * l.unit; need -= q;
+  }
+  if (need > 1e-9) { if (fallback === null) return null; cost += need * fallback; }
+  return cost;
+}
 export type CostRecipe = {
   label: CostItem | null;
   components: { qty: unknown; per: "PIECE" | "CARTON"; component: CostItem }[];
@@ -31,8 +49,10 @@ export function productCost(p: CostRecipe, pieces: number): ProductCost {
   const parts: CostPart[] = needsFor(recipe, n).map((need) => {
     const it = items.get(need.componentId)!;
     const u = it.costIqd === null || it.costIqd === undefined ? null : Number(it.costIqd);
-    const cost = u === null || need.missingWeight ? null : need.qty * u;
-    return { id: it.id, code: it.code, name: it.name, unit: it.unit, qty: need.qty, unitCost: u, cost, why: why.get(it.id)! };
+    const cost = need.missingWeight ? null : fifoTake(it.lots, u, need.qty);
+    // shown per unit: the average of the batches used (the same as the cost per unit when one batch covers it)
+    const unitCost = cost !== null && need.qty > 0 ? cost / need.qty : u;
+    return { id: it.id, code: it.code, name: it.name, unit: it.unit, qty: need.qty, unitCost, cost, why: why.get(it.id)! };
   });
   const missing = parts.filter((x) => x.cost === null);
   const total = r2(parts.reduce((s, x) => s + (x.cost ?? 0), 0));

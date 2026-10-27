@@ -34,7 +34,8 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   ]);
   const payers = await db.user.findMany({ where: { id: { in: [...new Set(payments.map((p) => p.createdById))] } }, select: { id: true, fullName: true } });
   // Prices, totals, payments and the receipt only for people who buy, sell or see the safe (M3).
-  const money = !!d.currency && canSeeMoney(me);
+  const money = !!d.currency && (d.type === "BUY" || d.type === "SELL") && canSeeMoney(me);
+  const costed = d.type === "INPUT" && !!d.currency && canSeeMoney(me); // an Input with a cost per line (batches)
   // The stored total is what payments are checked against; older documents fall back to the lines.
   const total = d.total !== null ? Number(d.total) : docTotal(d.lines.map((l) => ({ qty: Math.abs(Number(l.qty)), price: Number(l.unitPrice ?? 0) })));
   const sell = d.type === "SELL";
@@ -62,7 +63,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
           {money && d.phone && <div><dt className="text-xs text-muted">{t("sd.phone")}</dt><dd dir="ltr">{d.phone}</dd></div>}
           {d.invoiceNo && <div><dt className="text-xs text-muted">{t(d.type === "BUY" ? "sd.purchaseNo" : "sd.invoice")}</dt><dd dir="ltr">{d.invoiceNo}</dd></div>}
           {d.supplierRef && <div><dt className="text-xs text-muted">{t("sd.supplierRef")}</dt><dd dir="ltr">{d.supplierRef}</dd></div>}
-          {money && d.rate && <div><dt className="text-xs text-muted">{t("sd.buyRate")}</dt><dd dir="ltr">1 {d.currency} = {Number(d.rate).toLocaleString("en", { maximumFractionDigits: 6 })} IQD</dd></div>}
+          {(money || costed) && d.rate && <div><dt className="text-xs text-muted">{t("sd.buyRate")}</dt><dd dir="ltr">1 {d.currency} = {Number(d.rate).toLocaleString("en", { maximumFractionDigits: 6 })} IQD</dd></div>}
           {d.order && <div><dt className="text-xs text-muted">{t("sd.order")}</dt><dd><Link href={`/orders/${d.order.id}`} className="text-brand-600 hover:underline" dir="ltr">{d.order.number}</Link></dd></div>}
           {money && <div><dt className="text-xs text-muted">{t("sd.total")}</dt><dd className="text-lg font-bold" dir="ltr">{fmtMoney(total)} {d.currency}</dd>
             {d.rate && <dd className="text-xs text-muted" dir="ltr" data-testid="doc-iqd">{t("sd.iqdValue")}: {fmtMoney(Math.round(total * Number(d.rate) * 100) / 100)} IQD</dd>}</div>}
@@ -101,6 +102,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
               <tr>
                 <th className="px-4 py-2 text-start">{t("wh.item")}</th>
                 <th className="px-3 py-2 text-end">{t("order.quantity")}</th>
+                {costed && <th className="px-3 py-2 text-end">{t("lot.costPerUnit")}</th>}
                 {money && <><th className="px-3 py-2 text-end">{t("sd.unitPrice")}</th>{hasLineDisc && <th className="px-3 py-2 text-end">{t("sd.discount")}</th>}<th className="px-3 py-2 text-end">{t("sd.lineTotal")}</th></>}
                 <th className="px-4 py-2 text-end">{t("sd.stockNow")}</th>
               </tr>
@@ -112,6 +114,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
                   <tr key={l.id}>
                     <td className="px-4 py-2"><Link href={`/products/${l.product.id}`} className="font-medium hover:underline">{l.product.name}</Link><div className="text-xs text-muted" dir="ltr">{[l.product.code, l.product.name2].filter(Boolean).join(" · ")}</div></td>
                     <td className="px-3 py-2 text-end tabular-nums" dir="ltr">{Number(l.qty) < 0 ? "−" : "+"}{fmtQty(q)} {l.product.unit}</td>
+                    {costed && <td className="px-3 py-2 text-end tabular-nums" dir="ltr">{l.unitPrice === null ? <span className="text-xs text-muted">{t("lot.startingCost")}</span> : `${fmtPrice(Number(l.unitPrice))} ${d.currency}`}</td>}
                     {money && <><td className="px-3 py-2 text-end tabular-nums" dir="ltr">{fmtPrice(Number(l.unitPrice ?? 0))}</td>
                       {hasLineDisc && <td className="px-3 py-2 text-end tabular-nums" dir="ltr">{Number(l.discount ?? 0) > 0 ? `−${fmtMoney(Number(l.discount))}${l.discountKind === "PERCENT" ? ` (${Number(l.discountValue)}%)` : ""}` : ""}</td>}
                       <td className="px-3 py-2 text-end font-semibold tabular-nums" dir="ltr">{fmtMoney(lineTotal(q, Number(l.unitPrice ?? 0)) - Number(l.discount ?? 0))}</td></>}
