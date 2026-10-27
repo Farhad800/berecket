@@ -43,12 +43,12 @@ with sync_playwright() as p:
     # ── 1. product: Edit on the list opens the page with the same boxes as New product
     A.goto(B+"/products"); A.wait_for_load_state("networkidle"); A.get_by_role("link", name="Edit").first.click(); A.wait_for_url(re.compile(r".*/products/tbucket0001")); A.wait_for_load_state("networkidle")
     ck("Edit on the Products list opens the product page", "/products/tbucket0001" in A.url)
-    ck("…with the boxes of New product, filled in (code, name, second name, mold, QC)", A.get_by_label("Product code").input_value()=="B-01" and A.get_by_label("Product name").input_value()=="Bucket 8 kg" and A.get_by_label("Second name (Turkish / English)").count()==1 and A.locator("[id=moldId]").count()==1 and A.get_by_text("QC checks this product").count()+A.locator("input[type=checkbox]").count()>=1)
-    A.get_by_label("Product code").fill("B-08"); A.get_by_label("Second name (Turkish / English)").fill("Kova 8 kg")
+    ck("…with the boxes of New product, filled in (code, name, second name, mold, QC)", A.get_by_label("Product code *").input_value()=="B-01" and A.get_by_label("Product name").input_value()=="Bucket 8 kg" and A.get_by_label("Second name (Turkish / English)").count()==1 and A.locator("[id=moldId]").count()==1 and A.get_by_text("QC checks this product").count()+A.locator("input[type=checkbox]").count()>=1)
+    A.get_by_label("Product code *").fill("B-08"); A.get_by_label("Second name (Turkish / English)").fill("Kova 8 kg")
     A.locator("[id=moldId]").click(); A.keyboard.type("M-07"); A.wait_for_timeout(250); A.keyboard.press("Enter")
     A.get_by_role("button", name="Save made of & packaging").click(); A.wait_for_timeout(1500)
     ck("product saved: code B-08, second name, mold M-07, recipe kept", sql(f"SELECT code||'|'||name2||'|'||coalesce({Q('\"moldId\"')},'') FROM {P} WHERE id='tbucket0001'")=="B-08|Kova 8 kg|tmold000001" and sql(f"SELECT count(*) FROM {Q('\"ProductComponent\"')} WHERE {Q('\"productId\"')}='tbucket0001'")=="1")
-    A.goto(B+"/products/tbucket0001"); A.get_by_label("Product code").fill("PP-01"); A.get_by_role("button", name="Save made of & packaging").click(); A.wait_for_timeout(1200)
+    A.goto(B+"/products/tbucket0001"); A.get_by_label("Product code *").fill("PP-01"); A.get_by_role("button", name="Save made of & packaging").click(); A.wait_for_timeout(1200)
     ck("a code already used by another item is refused", "already used" in A.inner_text("main") and sql(f"SELECT code FROM {P} WHERE id='tbucket0001'")=="B-08")
 
     # ── 2. item: the same boxes as New item

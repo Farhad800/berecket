@@ -117,7 +117,7 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
                 </>
               )}
               {labelId && all.get(labelId) && <p className="text-sm sm:col-span-2">{t("rc.nameWillBe")} <b>{all.get(labelId)!.name.replace(/اتيكيت|إتيكيت/g, " ").replace(/\s+/g, " ").trim()}</b></p>}
-              <label className="text-sm font-medium">{t("md.productCode")} *<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" required aria-label={t("md.productCode")} /></label>
+              <label className="text-sm font-medium">{t("md.productCode")} *<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" required /></label>
               <div className="text-sm font-medium">{t("md.mold")}<div className="mt-1"><Combobox name="moldId" options={[{ value: "", label: "—" }, ...(molds ?? []).map((m) => ({ value: m.id, label: m.code, hint: m.name }))]} defaultValue={moldId} onChange={setMoldId} /></div></div>
               <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={qc} onChange={(e) => setQc(e.target.checked)} className="size-5 accent-brand-600" /> {t("md.qcRequired")}</label>
             </div>
