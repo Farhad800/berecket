@@ -254,3 +254,100 @@ export async function deleteSafeAction(input: unknown) {
     safeDone();
   });
 }
+
+const editSchema = z.object({
+  id: z.string().min(1).max(40),
+  reason: z.string().trim().min(3, "Write why it is changed").max(500),
+  amount: AMOUNT.optional(), // one-sided entries; transfer: both sides
+  safeId: SAFE,
+  categoryId: z.string().max(40).optional(),
+  party: z.string().trim().max(160).optional(),
+  note: z.string().trim().max(1000).optional(),
+  fromAmount: AMOUNT.optional(), // exchange
+  toAmount: AMOUNT.optional(),
+  rate: z.coerce.number().positive().max(10_000_000).optional(),
+});
+
+/** Who may change which kind of entry: the same people who may make it. */
+function mayEdit(me: Awaited<ReturnType<typeof requireUser>>, kind: string) {
+  if (kind === "DEPOSIT") return can(me, "cash:in");
+  if (kind === "EXPENSE") return can(me, "cash:out");
+  if (kind === "SALE") return can(me, "cash:in") || can(me, "stock:sell");
+  if (kind === "PURCHASE") return can(me, "cash:out") || can(me, "stock:buy");
+  if (kind === "EXCHANGE") return can(me, "cash:exchange");
+  if (kind === "TRANSFER") return can(me, "cash:transfer");
+  return false;
+}
+
+/**
+ * Changes a saved money entry in place (same number): amount, safe, note, what it was spent on / where it came from;
+ * an exchange its two amounts and rate; a transfer its amount. A safe can't go below zero, and money paid on a
+ * receipt can't be more than its total. Who changed what, before and after, goes to the history with the reason.
+ */
+export async function editCashAction(input: unknown) {
+  return run(async () => {
+    const v = editSchema.parse(input);
+    const me = await requireUser();
+    const r = await db.$transaction(async (tx) => {
+      const e = await tx.cashEntry.findUnique({ where: { id: v.id }, include: { safe: { select: { name: true } }, category: { select: { name: true } } } });
+      if (!e) throw new UserError("That entry no longer exists. Reload the page.");
+      if (!mayEdit(me, e.kind)) throw new UserError("You don't have permission to do this.");
+      const group = e.kind === "EXCHANGE" || e.kind === "TRANSFER"
+        ? await tx.cashEntry.findMany({ where: { number: e.number }, include: { safe: { select: { name: true } } }, orderBy: { amount: "asc" } })
+        : [e];
+      const touched = new Set(group.map((g) => `${g.safeId}|${g.currency}`));
+      const before = group.map((g) => `${g.safe.name}: ${fmt(Number(g.amount), g.currency)}`);
+      const beforeMeta = { note: e.note, party: e.party, category: e.category?.name ?? null, rate: e.rate === null ? null : Number(e.rate) };
+      let afterMeta: Record<string, unknown> = {};
+
+      if (e.kind === "EXCHANGE") {
+        const [out, inn] = group; // out has the negative amount
+        await tx.cashEntry.update({ where: { id: out.id }, data: { amount: -(v.fromAmount ?? -Number(out.amount)), rate: v.rate ?? out.rate, note: v.note ?? out.note } });
+        await tx.cashEntry.update({ where: { id: inn.id }, data: { amount: v.toAmount ?? Number(inn.amount), rate: v.rate ?? inn.rate, note: v.note ?? inn.note } });
+        afterMeta = { note: v.note ?? e.note, rate: v.rate ?? beforeMeta.rate };
+      } else if (e.kind === "TRANSFER") {
+        for (const g of group) await tx.cashEntry.update({ where: { id: g.id }, data: { amount: Math.sign(Number(g.amount)) * (v.amount ?? Math.abs(Number(g.amount))), note: v.note ?? g.note } });
+        afterMeta = { note: v.note ?? e.note };
+      } else {
+        const sign = Number(e.amount) < 0 ? -1 : 1;
+        const safe = v.safeId ? await pickSafe(tx, v.safeId, e.currency as Cur) : { id: e.safeId, name: e.safe.name };
+        let categoryId = e.categoryId;
+        if (e.kind === "EXPENSE" && v.categoryId && v.categoryId !== e.categoryId) {
+          const cat = await tx.expenseCategory.findFirst({ where: { id: v.categoryId }, select: { id: true } });
+          if (!cat) throw new UserError("That category no longer exists. Reload the page.");
+          categoryId = cat.id;
+        }
+        await tx.cashEntry.update({ where: { id: e.id }, data: {
+          amount: sign * (v.amount ?? Math.abs(Number(e.amount))), safeId: safe.id, categoryId,
+          ...(e.kind === "DEPOSIT" || e.kind === "EXPENSE" ? { party: v.party === undefined ? e.party : v.party || null } : {}),
+          note: v.note === undefined ? e.note : v.note || null,
+        } });
+        touched.add(`${safe.id}|${e.currency}`);
+        if (e.stockDocId) {
+          const d = await tx.stockDoc.findUnique({ where: { id: e.stockDocId }, select: { number: true, total: true, currency: true } });
+          const paid = (await paidFor([e.stockDocId], tx)).get(e.stockDocId) ?? 0;
+          if (d && d.total !== null && paid > Number(d.total) + 1e-9) throw new UserError(`Paid on ${d.number} would be ${fmt(paid, d.currency ?? "")} — more than its total ${fmt(Number(d.total), d.currency ?? "")}.`);
+        }
+        const cat = categoryId !== e.categoryId && categoryId ? await tx.expenseCategory.findUnique({ where: { id: categoryId }, select: { name: true } }) : null;
+        afterMeta = { note: v.note === undefined ? e.note : v.note || null, party: e.kind === "DEPOSIT" || e.kind === "EXPENSE" ? (v.party === undefined ? e.party : v.party || null) : e.party, category: cat?.name ?? beforeMeta.category, safe: safe.name };
+      }
+      // No safe may go below zero because of the change.
+      for (const k of touched) {
+        const [safeId, cur] = k.split("|");
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"cash:" + safeId + ":" + cur}))`;
+        const s = await tx.cashEntry.aggregate({ where: { safeId, currency: cur as Cur }, _sum: { amount: true } });
+        if (Number(s._sum.amount ?? 0) < -0.004) {
+          const name = (await tx.safe.findUnique({ where: { id: safeId }, select: { name: true } }))?.name ?? "";
+          throw new UserError(`"${name}" would go below zero in ${cur}. Lower the amount taken out, or put money in first.`);
+        }
+      }
+      const now = await tx.cashEntry.findMany({ where: { id: { in: group.map((g) => g.id) } }, include: { safe: { select: { name: true } } }, orderBy: { amount: "asc" } });
+      await audit({ userId: me.id, action: "cash.edit", entityType: "CashEntry", entityId: e.id, reason: v.reason,
+        before: { number: e.number, sides: before, ...beforeMeta }, after: { number: e.number, sides: now.map((g) => `${g.safe.name}: ${fmt(Number(g.amount), g.currency)}`), ...afterMeta } }, tx);
+      await notify({ type: "cash.edited", data: { number: e.number, by: me.fullName, reason: v.reason }, link: `/cash/${e.id}`, toPermission: "cash:view", exceptUserId: me.id }, tx);
+      return { id: e.id, number: e.number, customerId: e.customerId, docId: e.stockDocId };
+    });
+    done([`/cash/${r.id}`, ...(r.customerId ? [`/customers/${r.customerId}`] : []), ...(r.docId ? [`/stock/${r.docId}`] : [])]);
+    return { number: r.number };
+  });
+}

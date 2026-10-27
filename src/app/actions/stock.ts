@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
+import { db, type Tx } from "@/lib/db";
 import { MONEY_PERMS, canSeeMoney, requirePermission } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 import { audit } from "@/lib/audit";
@@ -48,6 +48,9 @@ const schema = z.object({
   delivery: z.string().trim().max(300).optional(),
   discount,
   note: z.string().trim().max(1000).optional(),
+  /** Editing a saved document (same number): its id and why it is changed. */
+  editId: z.string().min(1).max(40).optional(),
+  editReason: z.string().trim().max(500).optional(),
   lines: z.array(z.object({
     itemId: z.string().min(1, "Choose the item").max(40),
     qty: z.coerce.number().positive("Quantity must be more than 0").max(50_000_000),
@@ -59,11 +62,21 @@ const schema = z.object({
 
 export type DocResult = { id: string; number: string; shortages: Shortage[] };
 
+/** A saved document with its lines and payments, held (row lock) until the edit is saved. */
+async function lockedDoc(tx: Tx, id: string) {
+  await tx.$queryRaw`SELECT id FROM "StockDoc" WHERE id = ${id} FOR UPDATE`;
+  const d = await tx.stockDoc.findUnique({ where: { id }, include: { lines: { include: { product: { select: { code: true } } } }, payments: { select: { amount: true } } } });
+  if (!d) throw new UserError("That receipt no longer exists. Reload the page.");
+  return d;
+}
+
 export async function saveStockDocAction(input: unknown) {
   return run(async (): Promise<DocResult> => {
     const raw = schema.parse(input);
     const me = await requirePermission(PERM[raw.type]);
     const t = raw.type;
+    const editing = !!raw.editId;
+    if (editing && (raw.editReason ?? "").length < 3) throw new UserError("Write why the receipt is changed.");
     if (!money(t) && !raw.reason) throw new UserError("Choose the reason.");
     if (money(t) && !raw.customerId) throw new UserError("Choose the customer.");
     if (!money(t) && (raw.discount || raw.lines.some((l) => l.discount?.value))) throw new UserError("Discounts are only for purchases and sales.");
@@ -91,11 +104,16 @@ export async function saveStockDocAction(input: unknown) {
       const p = discountProblem(sale.subtotal, raw.discount); if (p) throw new UserError(`Invoice discount: ${p}`);
     }
     const total = sale ? sale.total : money(t) ? docTotal(raw.lines.map((l) => ({ qty: l.qty, price: l.unitPrice ?? 0 }))) : null;
-    const paid = money(t) ? Math.round((raw.paid ?? 0) * 100) / 100 : 0;
+    const paid = money(t) && !editing ? Math.round((raw.paid ?? 0) * 100) / 100 : 0; // editing: payments stay as they are
     if (total !== null && paid > total + 1e-9) throw new UserError("Paid now can't be more than the total.");
 
     const result = await db.$transaction(async (tx) => {
-      const items = await tx.product.findMany({ where: { id: { in: ids }, archivedAt: null }, select: { id: true, code: true, unit: true } });
+      // Editing: the saved document, held so two edits (or an edit and a payment) go one after the other.
+      const old = editing ? await lockedDoc(tx, raw.editId!) : null;
+      if (old && old.type !== t) throw new UserError("A receipt keeps its type. Make a new one instead.");
+      if (old && !canSeeMoney(me) && old.lines.some((l) => l.unitPrice !== null)) throw new UserError("This receipt has prices; only people who see money can change it.");
+      const keep = new Set(old?.lines.map((l) => l.productId) ?? []); // items already on it may be archived since
+      const items = await tx.product.findMany({ where: { id: { in: ids }, OR: [{ archivedAt: null }, { id: { in: [...keep] } }] }, select: { id: true, code: true, unit: true } });
       if (items.length !== ids.length) throw new UserError("One of the items no longer exists. Reload the page.");
       const item = (id: string) => items.find((i) => i.id === id)!;
       for (const l of raw.lines) {
@@ -108,29 +126,44 @@ export async function saveStockDocAction(input: unknown) {
       // Buy / Sell: booked to a customer account; the name/phone are copied so the document keeps them as they were.
       let party = raw.party || null, phone = money(t) ? raw.phone || null : null, invoiceNo = raw.invoiceNo || null;
       if (money(t)) {
-        const c = await tx.customer.findFirst({ where: { id: raw.customerId, archivedAt: null } });
+        const c = await tx.customer.findFirst({ where: { id: raw.customerId, ...(old?.customerId === raw.customerId ? {} : { archivedAt: null }) } });
         if (!c) throw new UserError("That customer no longer exists. Reload the page.");
         party = c.name; phone = raw.phone || c.phone;
-        // automatic numbers: purchase PUR-2026-0001 · sale invoice INV-2026-0001
-        invoiceNo = await nextNumber(t === "BUY" ? "purchaseInvoice" : "salesInvoice", tx);
+        // automatic numbers: purchase PUR-2026-0001 · sale invoice INV-2026-0001 (an edited receipt keeps its own)
+        invoiceNo = old ? old.invoiceNo : await nextNumber(t === "BUY" ? "purchaseInvoice" : "salesInvoice", tx);
       }
-      const number = await nextNumber(NUM[t], tx);
-      const doc = await tx.stockDoc.create({
-        data: {
-          number, type: t, reason: money(t) ? null : raw.reason!, party, phone, invoiceNo,
-          currency: money(t) || costed ? raw.currency! : null, ...(costed && raw.currency !== "IQD" ? { rate: raw.rate! } : {}), orderId: raw.orderId || null, note: raw.note || null, total, createdById: me.id,
-          ...(money(t) ? { customerId: raw.customerId! } : {}),
-          ...(t === "BUY" ? { supplierRef: raw.supplierRef || raw.invoiceNo || null, rate: raw.currency !== "IQD" ? raw.rate! : null } : {}),
-          ...(sale ? {
-            ...(t === "SELL" ? { delivery: raw.delivery || null } : {}), subtotal: sale.subtotal,
-            discountKind: raw.discount?.value ? raw.discount.kind : null, discountValue: raw.discount?.value ? raw.discount.value : null, discount: sale.discount || null,
-          } : {}),
-        },
-      });
+      if (old && money(t)) {
+        const paidSoFar = Math.round(old.payments.reduce((x, p) => x + Math.abs(Number(p.amount)), 0) * 100) / 100;
+        if (old.payments.length && raw.currency !== old.currency) throw new UserError(`Money was already paid on this receipt in ${old.currency}, so its currency can't change.`);
+        if (total! + 1e-9 < paidSoFar) throw new UserError(`${paidSoFar.toLocaleString("en")} ${old.currency} was already paid on this receipt — the new total can't be less than that.`);
+      }
+      const number = old ? old.number : await nextNumber(NUM[t], tx);
+      // Every field is written, so an edit also clears what no longer applies.
+      const fields = {
+        type: t, reason: money(t) ? null : raw.reason!, party, phone, invoiceNo,
+        currency: money(t) || costed ? raw.currency! : null,
+        rate: (t === "BUY" || costed) && raw.currency && raw.currency !== "IQD" ? raw.rate! : null,
+        orderId: raw.orderId || null, note: raw.note || null, total,
+        customerId: money(t) ? raw.customerId! : null,
+        supplierRef: t === "BUY" ? raw.supplierRef || raw.invoiceNo || null : null,
+        delivery: t === "SELL" ? raw.delivery || null : null,
+        subtotal: sale ? sale.subtotal : null,
+        discountKind: sale && raw.discount?.value ? raw.discount.kind : null,
+        discountValue: sale && raw.discount?.value ? raw.discount.value : null,
+        discount: sale ? sale.discount || null : null,
+      };
+      const doc = old
+        ? await tx.stockDoc.update({ where: { id: old.id }, data: fields })
+        : await tx.stockDoc.create({ data: { number, ...fields, createdById: me.id } });
+      if (old) {
+        // Same number, new lines: the old lines are replaced (stock, batches and balances follow), kept at the receipt's time.
+        await tx.stockMovement.deleteMany({ where: { docId: old.id } });
+        if (money(t)) await tx.cashEntry.updateMany({ where: { stockDocId: old.id }, data: { customerId: raw.customerId!, party } });
+      }
       await tx.stockMovement.createMany({
         data: raw.lines.map((l, i) => ({
-          productId: l.itemId, type: t, qty: isIn(t) ? l.qty : -l.qty, docId: doc.id, reference: number,
-          unitPrice: money(t) ? l.unitPrice! : costed ? l.unitPrice ?? null : null, reason: raw.note || null, createdById: me.id,
+          productId: l.itemId, type: t, qty: isIn(t) ? l.qty : -l.qty, docId: doc.id, reference: number, ...(old ? { createdAt: old.createdAt } : {}),
+          unitPrice: money(t) ? l.unitPrice! : costed ? l.unitPrice ?? null : null, reason: raw.note || null, createdById: old ? old.createdById : me.id,
           ...(sale && l.discount?.value ? { discountKind: l.discount.kind, discountValue: l.discount.value, discount: sale.lines[i].discount } : {}),
         })),
       });
@@ -141,6 +174,19 @@ export async function saveStockDocAction(input: unknown) {
           data: { number: await nextNumber(t === "SELL" ? "cashReceive" : "cashPay", tx), kind: t === "SELL" ? "SALE" : "PURCHASE", safeId: safe.id, currency: raw.currency!,
             amount: t === "SELL" ? paid : -paid, stockDocId: doc.id, customerId: raw.customerId!, party, createdById: me.id },
         });
+      }
+      const lineText = (code: string, qty: number, price: unknown) => `${code} × ${Math.abs(qty)}${price !== null && price !== undefined && price !== "" ? ` @ ${Number(price)}` : ""}`;
+      if (old) {
+        await audit({
+          userId: me.id, action: "stock.edit", entityType: "StockDoc", entityId: doc.id, reason: raw.editReason!,
+          before: { number, party: old.party, currency: old.currency, rate: old.rate === null ? null : Number(old.rate), total: old.total === null ? null : Number(old.total), discount: old.discount === null ? null : Number(old.discount), reason: old.reason, note: old.note, lines: old.lines.map((l) => lineText(l.product.code, Number(l.qty), l.unitPrice)) },
+          after: { number, party, currency: fields.currency, rate: fields.rate, total, discount: fields.discount, reason: fields.reason, note: fields.note, lines: raw.lines.map((l) => lineText(item(l.itemId).code, l.qty, l.unitPrice)) },
+        }, tx);
+        await notify({
+          type: "stock.edited", data: { number, by: me.fullName, reason: raw.editReason! },
+          link: `/stock/${doc.id}`, toPermission: "stock:view", exceptUserId: me.id,
+        }, tx);
+        return { id: doc.id, number, shortages: isIn(t) ? [] : await shortages(ids, tx) };
       }
       await audit({
         userId: me.id, action: `stock.${t.toLowerCase()}`, entityType: "StockDoc", entityId: doc.id, reason: raw.note ?? null,

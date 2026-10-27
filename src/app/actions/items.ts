@@ -97,3 +97,36 @@ export async function saveItemCostAction(input: unknown) {
     revalidatePath(`/products/${v.id}`);
   });
 }
+
+const editSchema = itemSchema.omit({ cost: true }).extend({ id: z.string().min(1).max(40) });
+
+/**
+ * Changes a label / raw material / packaging item with the same boxes as when it was added:
+ * section, name, second name, code, unit and weight per bag. (The cost has its own box on the page.)
+ * The unit can't change once the item has stock history, and the section can't change while a product uses it.
+ */
+export async function updateItemAction(input: unknown) {
+  return run(async () => {
+    const v = editSchema.parse(input);
+    const me = await costUser("products:edit");
+    await db.$transaction(async (tx) => {
+      const before = await tx.product.findUnique({ where: { id: v.id }, select: { code: true, kind: true, name: true, name2: true, unit: true, unitWeightKg: true, _count: { select: { stockMovements: true, usedIn: true, labelledProducts: true } } } });
+      if (!before) throw new UserError("That item no longer exists.");
+      if (before.kind === "PRODUCT") throw new UserError("Edit products on the product page.");
+      if (v.unit !== before.unit && before._count.stockMovements > 0) throw new UserError("This item already has stock in or out, so its unit can't change.");
+      if (v.kind !== before.kind && (before._count.usedIn > 0 || before._count.labelledProducts > 0)) throw new UserError("Products use this item, so its section can't change. Take it out of their recipes first.");
+      if (await tx.product.findFirst({ where: { id: { not: v.id }, kind: v.kind, archivedAt: null, name: { equals: v.name, mode: "insensitive" } } })) throw new UserError("An item with this name already exists in this section.");
+      const code = v.code ? v.code.toUpperCase() : before.code;
+      if (code !== before.code && (await tx.product.count({ where: { code } }))) throw new UserError(`The code ${code} is already used.`);
+      const data = { code, kind: v.kind, name: v.name, name2: v.name2 || null, unit: v.unit, unitWeightKg: v.unit === "kg" ? v.unitWeightKg ?? before.unitWeightKg : null };
+      await tx.product.update({ where: { id: v.id }, data });
+      const b = { code: before.code, kind: before.kind, name: before.name, name2: before.name2, unit: before.unit, unitWeightKg: before.unitWeightKg === null ? null : Number(before.unitWeightKg) };
+      const a = { ...data, unitWeightKg: data.unitWeightKg === null || data.unitWeightKg === undefined ? null : Number(data.unitWeightKg) };
+      const changed = Object.fromEntries(Object.keys(a).filter((k) => (a as Record<string, unknown>)[k] !== (b as Record<string, unknown>)[k]).map((k) => [k, true]));
+      if (Object.keys(changed).length) await audit({ userId: me.id, action: "product.update", entityType: "Product", entityId: v.id,
+        before: Object.fromEntries(Object.keys(changed).map((k) => [k, (b as Record<string, unknown>)[k]])), after: Object.fromEntries(Object.keys(changed).map((k) => [k, (a as Record<string, unknown>)[k]])) }, tx);
+    });
+    for (const p of ["/products", "/inventory", "/stock/new"]) revalidatePath(p);
+    revalidatePath(`/products/${v.id}`);
+  });
+}

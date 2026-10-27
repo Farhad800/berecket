@@ -94,6 +94,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           archived: !!p.archivedAt,
           badges: p.qcRequired ? [{ label: t("md.qcRequiredShort"), tone: "amber" as const }] : [],
           links: [{ href: `/products/${p.id}`, label: t("md.recipeLink") }],
+          editHref: `/products/${p.id}#edit`,
           facts: [
             { label: t("md.label"), value: p.label ? `${p.label.code} · ${p.label.name}` : t("md.noLabel") },
             ...(p._count.components ? [{ label: t("md.recipe"), value: t("md.recipeLines", { n: p._count.components }) }] : []),

@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { can, canSeeMoney, pageUser } from "@/lib/auth";
 import { productCosts } from "@/lib/product-costs";
 import Batches from "./batches";
+import ItemDetails from "./item-details";
 import { formatDateTime } from "@/lib/time";
 import { getLocale } from "next-intl/server";
 import ItemCost from "./item-cost";
@@ -52,6 +53,8 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
               <div><dt className="text-xs text-muted">{t("md.kindLabel")}</dt><dd><Badge>{kindLabel}</Badge></dd></div>
               <div><dt className="text-xs text-muted">{t("order.inStock")}</dt><dd className={stock < 0 ? "font-bold text-red-600" : "font-bold"} dir="ltr">{stock.toLocaleString("en", { maximumFractionDigits: 3 })} {p.unit}</dd></div>
             </dl>
+            <ItemDetails id={p.id} canEdit={can(me, "products:edit")} unitLocked={(await db.stockMovement.count({ where: { productId: p.id } })) > 0}
+              value={{ kind: p.kind as "STICKER" | "MATERIAL" | "PACKAGING", name: p.name, name2: p.name2 ?? "", code: p.code, unit: p.unit.toLowerCase() === "kg" ? "kg" : "pcs", bag: p.unitWeightKg ? String(Number(p.unitWeightKg)) : "" }} />
             {p.unit.toLowerCase() === "kg" && (
               <div className="mt-4"><UnitWeight itemId={p.id} value={p.unitWeightKg ? Number(p.unitWeightKg) : null} canEdit={can(me, "products:edit")} /></div>
             )}
@@ -83,10 +86,11 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
     return <ProductCostCard recipe={recipe} initialPieces={c.pieces} fromProduction={c.fromProduction} />;
   }
 
-  const [labels, made, packs] = await Promise.all([
+  const [labels, made, packs, molds] = await Promise.all([
     db.product.findMany({ where: { archivedAt: null, kind: "STICKER" }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, name2: true, unit: true, unitWeightKg: true, kind: true } }),
     db.product.findMany({ where: { archivedAt: null, OR: [{ kind: "MATERIAL" }, { kind: "PRODUCT", id: { not: p.id } }] }, orderBy: [{ kind: "asc" }, { name: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, unitWeightKg: true, kind: true } }),
     db.product.findMany({ where: { archivedAt: null, kind: "PACKAGING" }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, name2: true, unit: true, unitWeightKg: true, kind: true } }),
+    db.mold.findMany({ where: { archivedAt: null }, orderBy: { code: "asc" }, select: { id: true, code: true, name: true } }),
   ]);
   const ids = [...new Set([...labels, ...made, ...packs].map((i) => i.id))];
   const stock = await getStock(ids);
@@ -105,6 +109,8 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
         labels={labels.map(item)}
         madeOf={made.map(item)}
         packaging={packs.map(item)}
+        molds={molds}
+        details={{ code: p.code, name: p.name, name2: p.name2 ?? "", moldId: p.moldId ?? "", qcRequired: p.qcRequired }}
         initial={{
           labelId: p.labelId,
           lines: p.components.map((c) => ({ componentId: c.componentId, qty: Number(c.qty), per: c.per })),

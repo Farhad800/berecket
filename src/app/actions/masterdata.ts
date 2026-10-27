@@ -315,19 +315,45 @@ async function writeRecipe(tx: Prisma.TransactionClient, productId: string, labe
   }, tx);
 }
 
-/** Changes the label, made-of and packaging of an existing product. */
-export async function saveRecipeAction(input: unknown) {
+/**
+ * Saves the product page: label, made-of and packaging, and (when sent) the same details as when it was added —
+ * code, typed name / second name (no label), mold and QC.
+ */
+export async function saveProductPageAction(input: unknown) {
   return run(async () => {
     const me = await requirePermission("products:edit");
-    const v = z.object({ productId: z.string().min(1).max(40), labelId: z.string().max(40).optional(), lines: linesSchema }).parse(input);
+    const v = z.object({
+      productId: z.string().min(1).max(40), labelId: z.string().max(40).optional(), lines: linesSchema,
+      code: code.optional(), name: z.string().trim().max(160).optional(), name2: z.string().trim().max(160).optional(),
+      moldId: z.string().max(40).optional(), qcRequired: z.boolean().optional(),
+    }).parse(input);
     checkLines(v.lines, v.productId);
     await db.$transaction(async (tx) => {
-      const p = await tx.product.findUniqueOrThrow({ where: { id: v.productId }, select: { kind: true, labelId: true } });
+      const p = await tx.product.findUniqueOrThrow({ where: { id: v.productId }, select: { kind: true, labelId: true, code: true, name: true, name2: true, moldId: true, qcRequired: true } });
       if (p.kind !== "PRODUCT") throw new UserError("Only products have a recipe.");
-      // A newly chosen label renames the product, as when it was created.
-      if (v.labelId && v.labelId !== p.labelId) {
-        const label = await tx.product.findFirst({ where: { id: v.labelId, kind: "STICKER" }, select: { name: true, name2: true } });
-        if (label) await tx.product.update({ where: { id: v.productId }, data: nameFromLabel(label) });
+      const data: Prisma.ProductUpdateInput = {};
+      if (v.code !== undefined) {
+        const c = v.code.toUpperCase();
+        if (c !== p.code && (await tx.product.count({ where: { code: c, id: { not: v.productId } } }))) throw new UserError(`The code ${c} is already used by another item.`);
+        data.code = c;
+        data.mold = v.moldId ? { connect: { id: v.moldId } } : { disconnect: true };
+        if (v.qcRequired !== undefined) data.qcRequired = v.qcRequired;
+      }
+      // A product with a label takes its name from the label (owner's rule); without a label the name is typed.
+      if (v.labelId) {
+        if (v.labelId !== p.labelId) {
+          const label = await tx.product.findFirst({ where: { id: v.labelId, kind: "STICKER" }, select: { name: true, name2: true } });
+          if (label) Object.assign(data, nameFromLabel(label));
+        }
+      } else if (v.code !== undefined) {
+        if (!v.name || v.name.length < 2) throw new UserError("Choose the product's label, or type a name if it has no label.");
+        data.name = v.name; data.name2 = v.name2 || null;
+      }
+      if (Object.keys(data).length) {
+        await tx.product.update({ where: { id: v.productId }, data });
+        const after = await tx.product.findUniqueOrThrow({ where: { id: v.productId }, select: { code: true, name: true, name2: true, moldId: true, qcRequired: true } });
+        const d = diff({ code: p.code, name: p.name, name2: p.name2, moldId: p.moldId, qcRequired: p.qcRequired } as never, after as never);
+        if (d.changed) await audit({ userId: me.id, action: "product.update", entityType: "Product", entityId: v.productId, before: d.before, after: d.after }, tx);
       }
       await writeRecipe(tx, v.productId, v.labelId ?? null, v.lines, me.id);
     });

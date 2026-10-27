@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Box, Plus, Save, Tag, Trash2 } from "lucide-react";
 import Combobox from "@/components/combobox";
 import { Alert, Button, Card, Input, cn } from "@/components/ui";
-import { createProductAction, saveRecipeAction } from "@/app/actions/masterdata";
+import { createProductAction, saveProductPageAction } from "@/app/actions/masterdata";
 import { needsFor } from "@/lib/recipe-math";
 
 export type Item = { id: string; code: string; name: string; name2: string | null; unit: string; kind: string; unitWeightKg: number | null; stock: number };
@@ -14,19 +14,26 @@ type Line = { key: number; componentId: string; qty: string; per: "PIECE" | "CAR
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
 const isKg = (u: string) => u.toLowerCase() === "kg";
 
-/** Label, "made of" (per piece) and packaging (per carton) of one product, with a live preview of what N pieces use. */
-export default function RecipeEditor({ productId, canEdit, labels, madeOf, packaging, initial, molds }: {
+export type Details = { code: string; name: string; name2: string; moldId: string; qcRequired: boolean };
+
+/**
+ * A product's details (label or typed name, second name, code, mold, QC), "made of" (per piece) and packaging
+ * (per carton), with a live preview of what N pieces use. The same boxes when adding and when editing a product.
+ */
+export default function RecipeEditor({ productId, canEdit, labels, madeOf, packaging, initial, molds, details }: {
   productId?: string; canEdit: boolean; labels: Item[]; madeOf: Item[]; packaging: Item[];
   initial: { labelId: string | null; lines: { componentId: string; qty: number; per: "PIECE" | "CARTON" }[] };
-  /** Given = "new product" mode: code, name (when no label), mold and QC are asked here too. */
   molds?: { id: string; code: string; name: string }[];
+  /** Editing: the product's current details (shown in the same boxes as when it was added). */
+  details?: Details;
 }) {
   const creating = !productId;
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [name2, setName2] = useState("");
-  const [moldId, setMoldId] = useState("");
-  const [qc, setQc] = useState(false);
+  const [code, setCode] = useState(details?.code ?? "");
+  const [name, setName] = useState(details?.name ?? "");
+  const [name2, setName2] = useState(details?.name2 ?? "");
+  const [moldId, setMoldId] = useState(details?.moldId ?? "");
+  const [qc, setQc] = useState(details?.qcRequired ?? false);
+  const showDetails = creating || (!!details && canEdit);
   const t = useTranslations();
   const [labelId, setLabelId] = useState(initial.labelId ?? "");
   // Keys are per editor (not module-wide), so server and browser HTML match.
@@ -60,7 +67,7 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
     const payloadLines = lines.filter((l) => l.componentId || l.qty).map((l) => ({ componentId: l.componentId, qty: l.qty, per: l.per }));
     const r = creating
       ? await createProductAction({ code, labelId: labelId || undefined, name: name || undefined, name2: name2 || undefined, moldId: moldId || undefined, qcRequired: qc, lines: payloadLines })
-      : await saveRecipeAction({ productId, labelId: labelId || undefined, lines: payloadLines });
+      : await saveProductPageAction({ productId, labelId: labelId || undefined, lines: payloadLines, ...(details ? { code, name: name || undefined, name2: name2 || undefined, moldId: moldId || undefined, qcRequired: qc } : {}) });
     if (r && !r.ok) setMsg({ ok: false, text: r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error });
     else setMsg({ ok: true, text: t("rc.saved") });
   });
@@ -101,17 +108,17 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
             <Combobox name="labelId" options={[{ value: "", label: t("md.noLabel") }, ...opt(labels)]} defaultValue={labelId} onChange={setLabelId} placeholder={t("md.noLabel")} />
           ) : <p className="text-sm">{all.get(labelId)?.name ?? t("md.noLabel")}</p>}
           {labelId && all.get(labelId) && <p className="mt-1 text-xs text-muted" dir="ltr">{all.get(labelId)!.code} · {t("order.inStock")}: {fmt(all.get(labelId)!.stock)}</p>}
-          {creating && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {showDetails && (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2" id="edit">
               {!labelId && (
                 <>
-                  <label className="text-sm font-medium">{t("md.productName")}<Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" /><span className="text-xs font-normal text-muted">{t("rc.nameNoLabel")}</span></label>
-                  <label className="text-sm font-medium">{t("md.name2")}<Input value={name2} onChange={(e) => setName2(e.target.value)} className="mt-1" dir="ltr" /></label>
+                  <label className="text-sm font-medium">{t("md.productName")}<Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" aria-label={t("md.productName")} /><span className="text-xs font-normal text-muted">{t("rc.nameNoLabel")}</span></label>
+                  <label className="text-sm font-medium">{t("md.name2")}<Input value={name2} onChange={(e) => setName2(e.target.value)} className="mt-1" dir="ltr" aria-label={t("md.name2")} /></label>
                 </>
               )}
               {labelId && all.get(labelId) && <p className="text-sm sm:col-span-2">{t("rc.nameWillBe")} <b>{all.get(labelId)!.name.replace(/اتيكيت|إتيكيت/g, " ").replace(/\s+/g, " ").trim()}</b></p>}
-              <label className="text-sm font-medium">{t("md.productCode")} *<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" required /></label>
-              <div className="text-sm font-medium">{t("md.mold")}<div className="mt-1"><Combobox name="moldId" options={[{ value: "", label: "—" }, ...(molds ?? []).map((m) => ({ value: m.id, label: m.code, hint: m.name }))]} defaultValue="" onChange={setMoldId} /></div></div>
+              <label className="text-sm font-medium">{t("md.productCode")} *<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" required aria-label={t("md.productCode")} /></label>
+              <div className="text-sm font-medium">{t("md.mold")}<div className="mt-1"><Combobox name="moldId" options={[{ value: "", label: "—" }, ...(molds ?? []).map((m) => ({ value: m.id, label: m.code, hint: m.name }))]} defaultValue={moldId} onChange={setMoldId} /></div></div>
               <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={qc} onChange={(e) => setQc(e.target.checked)} className="size-5 accent-brand-600" /> {t("md.qcRequired")}</label>
             </div>
           )}

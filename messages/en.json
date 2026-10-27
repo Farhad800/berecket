@@ -486,7 +486,8 @@
       "input": "Stock input",
       "output": "Stock output",
       "buy": "Purchase",
-      "sell": "Sale"
+      "sell": "Sale",
+      "edit": "Receipt changed"
     },
     "shipment": {
       "create": "Shipment drafted, stock reserved",
@@ -578,7 +579,8 @@
       "transfer": "Money moved between safes",
       "safeCreate": "Safe added",
       "safeUpdate": "Safe changed",
-      "safeDelete": "Safe deleted"
+      "safeDelete": "Safe deleted",
+      "edit": "Money entry changed"
     },
     "receipt": {
       "layoutCreate": "Receipt layout created",
@@ -1650,6 +1652,10 @@
       "docSELLPlain": {
         "title": "Sale {number}: {n} items",
         "body": "by {by}"
+      },
+      "edited": {
+        "title": "{number} was changed",
+        "body": "by {by}: {reason}"
       }
     },
     "product": {
@@ -1778,6 +1784,10 @@
       "transfer": {
         "title": "Transfer {number}: {amount}",
         "body": "{from} → {to} · by {by}"
+      },
+      "edited": {
+        "title": "{number} was changed",
+        "body": "by {by}: {reason}"
       }
     }
   },
@@ -1889,7 +1899,13 @@
     "purchaseNo": "Purchase no.",
     "buyRate": "Rate of the day",
     "buyRateHint": "Typed by you. The customer's balance is in {cur}; the IQD value is for the records.",
-    "iqdValue": "Value in IQD"
+    "iqdValue": "Value in IQD",
+    "edit": "Edit",
+    "editTitle": "Edit {number}",
+    "editing": "You are changing {number}. It keeps its number; stock, the customer's balance and batches follow the new values.",
+    "editReason": "Why is it changed?",
+    "editPaidHint": "Money already paid stays as it is; change a payment on its own page.",
+    "saveChanges": "Save changes"
   },
   "cash": {
     "intro": "Money in each safe, per currency. Sales and money put in add to a safe; purchases and expenses take from it.",
@@ -1984,7 +2000,13 @@
       "TRANSPORT": "Transport",
       "FOOD": "Food",
       "OTHER": "Other"
-    }
+    },
+    "edit": "Edit entry",
+    "editAmount": "New amount",
+    "editSafe": "Safe",
+    "editNote": "Note on the entry",
+    "editFrom": "Given ({cur})",
+    "editTo": "Received ({cur})"
   },
   "rc2": {
     "intro": "Saved layouts for printing sales, purchases and payment receipts. Print from a sale or purchase with the Print receipt button.",
@@ -2168,7 +2190,9 @@
     "save": "Save item",
     "created": "{code} saved. It is now in the warehouse and can be used in products, buying and stock movements.",
     "section": "Section",
-    "allSections": "All"
+    "allSections": "All",
+    "edit": "Edit item",
+    "unitLocked": "Stock already moved in or out, so the unit can't change."
   },
   "cost": {
     "title": "Starting cost",
