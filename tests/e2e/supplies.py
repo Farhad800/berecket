@@ -54,7 +54,9 @@ with sync_playwright() as p:
     ck("pieces items refuse decimals", stock(pcs)==0)
     A.goto(B+"/inventory?tab=movements"); ck("movements list shows Bought / Output", "Bought" in A.inner_text("main") and "Output" in A.inner_text("main"))
     A.goto(B+"/inventory"); ck("products tab doesn't list stickers/materials", "S-0001" not in A.inner_text("main"))
-    A.goto(B+"/search?q=S-0001"); ck("search opens the label", "/products/" in A.url and "اتيكيت" in A.inner_text("main"))
+    A.goto(B+"/search?q=S-0001")  # also the code of the supplier made by the purchase above → a list with both
+    if "/products/" not in A.url: A.locator("main a[href^='/products/']").first.click(); A.wait_for_load_state("networkidle")
+    ck("search finds the label", "/products/" in A.url and "اتيكيت" in A.inner_text("main"))
 
     # 5. re-import same file → no copies
     A.goto(B+"/import"); A.set_input_files("input[name=file]", F); A.get_by_role("button", name="Check file").click(); A.wait_for_selector("text=Nothing new to import", timeout=120000)
