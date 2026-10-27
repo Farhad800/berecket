@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Pencil, Printer } from "lucide-react";
 import { can, canSeeMoney, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getStock } from "@/lib/stock";
 import { formatDateTime } from "@/lib/time";
 import { Alert, Badge, Card, LinkButton, PageHeader } from "@/components/ui";
-import { DOC_TONE, fmtMoney, fmtQty } from "../types";
+import { DOC_PERM, DOC_TONE, fmtMoney, fmtQty, type DocType } from "../types";
 import { docTotal, fmtPrice, lineTotal } from "@/lib/money";
 import PayForm from "./pay-form";
 import { customerBalance } from "@/lib/customers";
@@ -42,13 +42,18 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   const owed = Math.round((total - paid) * 100) / 100;
   const mayPay = sell ? can(me, "stock:sell") || can(me, "cash:in") : can(me, "stock:buy") || can(me, "cash:out");
   const balance = money && d.currency && d.customerId ? (await customerBalance(d.customerId))[d.currency] : null;
+  // Whoever may make this type of receipt may change it; a priced one only by people who see money.
+  const mayEdit = can(me, DOC_PERM[d.type as DocType]) && (canSeeMoney(me) || !d.lines.some((l) => l.unitPrice !== null));
   const hasLineDisc = d.lines.some((l) => Number(l.discount ?? 0) > 0);
   const minus = d.lines.filter((l) => (stock.get(l.productId) ?? 0) < 0);
 
   return (
     <>
       <Link href="/stock" className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.stock")}</Link>
-      <PageHeader title={d.number} actions={money ? <LinkButton href={`/print/receipt/doc/${d.id}`} target="_blank"><Printer className="size-4" /> {t("rc2.printReceipt")}</LinkButton> : undefined} subtitle={<span className="flex flex-wrap items-center gap-2"><Badge tone={DOC_TONE[d.type]}>{t(`sd.type.${d.type}`)}</Badge>{formatDateTime(d.createdAt, locale)} · {by?.fullName ?? "—"}</span>} />
+      <PageHeader title={d.number} actions={(money || mayEdit) ? <>
+        {mayEdit && <LinkButton href={`/stock/new?edit=${d.id}`} variant="secondary"><Pencil className="size-4" /> {t("sd.edit")}</LinkButton>}
+        {money && <LinkButton href={`/print/receipt/doc/${d.id}`} target="_blank"><Printer className="size-4" /> {t("rc2.printReceipt")}</LinkButton>}
+      </> : undefined} subtitle={<span className="flex flex-wrap items-center gap-2"><Badge tone={DOC_TONE[d.type]}>{t(`sd.type.${d.type}`)}</Badge>{formatDateTime(d.createdAt, locale)} · {by?.fullName ?? "—"}</span>} />
       {saved && <div className="mb-3"><Alert tone="green">{t("sd.saved", { number: d.number })}</Alert></div>}
       {minus.length > 0 && <div className="mb-3"><Alert tone="amber">{t("sd.minusNow", { items: minus.map((l) => `${l.product.code} (${fmtQty(stock.get(l.productId) ?? 0)} ${l.product.unit})`).join(", ") })}</Alert></div>}
       <Card className="mb-4">

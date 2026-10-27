@@ -16,44 +16,52 @@ type Item = { id: string; code: string; name: string; name2: string | null; unit
 type Order = { id: string; number: string; lines: { productId: string; quantity: number }[] };
 type Line = { key: number; itemId: string; qty: string; price: string; discKind: "PERCENT" | "AMOUNT"; disc: string };
 type Cur = "IQD" | "USD" | "EUR";
+/** A saved receipt opened for editing (same number). */
+export type EditDoc = {
+  id: string; number: string; type: DocType; reason: string; customerId: string; phone: string; supplierRef: string; delivery: string;
+  currency: Cur; rate: string; orderId: string; note: string; invKind: "PERCENT" | "AMOUNT"; invDisc: string; paid: number;
+  lines: { itemId: string; qty: string; price: string; discKind: "PERCENT" | "AMOUNT"; disc: string }[];
+};
 export type CustomerOpt = { id: string; code: string; name: string; phone: string | null; address: string | null; balance: Record<Cur, number> };
 const disc = (kind: "PERCENT" | "AMOUNT", v: string): Discount => (Number(v) > 0 ? { kind, value: Number(v) } : null);
 const REASONS = ["RETURN", "TRANSFER", "COUNT", "DAMAGE", "SAMPLE", "OTHER"] as const;
 
 /** One Input / Output / Buy / Sell document with any number of lines. */
-export default function DocForm({ allowed, initialType, initialOrder, items, orders, customers = [], initialCustomer = "", safes = [], canCost = false }: {
+export default function DocForm({ allowed, initialType, initialOrder, items, orders, customers = [], initialCustomer = "", safes = [], canCost = false, edit }: {
   allowed: DocType[]; initialType: DocType; initialOrder: string; items: Item[]; orders: Order[];
   customers?: CustomerOpt[];
   initialCustomer?: string;
   safes?: SafeOpt[];
   /** Money roles: an Input can carry a cost per line (that batch's cost). */
   canCost?: boolean;
+  edit?: EditDoc;
 }) {
   const t = useTranslations();
   const router = useRouter();
-  const [type, setType] = useState<DocType>(initialType);
-  const [reason, setReason] = useState("");
-  const [invoiceNo, setInvoiceNo] = useState("");
-  const [phone, setPhone] = useState(() => customers.find((c) => c.id === initialCustomer)?.phone ?? "");
-  const [currency, setCurrency] = useState<"IQD" | "USD" | "EUR">("IQD");
+  const [type, setType] = useState<DocType>(edit?.type ?? initialType);
+  const [reason, setReason] = useState(edit?.reason ?? "");
+  const [invoiceNo, setInvoiceNo] = useState(edit?.supplierRef ?? "");
+  const [phone, setPhone] = useState(() => edit?.phone ?? customers.find((c) => c.id === initialCustomer)?.phone ?? "");
+  const [currency, setCurrency] = useState<"IQD" | "USD" | "EUR">(edit?.currency ?? "IQD");
+  const [editReason, setEditReason] = useState("");
   // "Paid now" starts at 0 on every purchase and sale; the accountant types what was really paid (or "Paid in full").
   const [paidText, setPaidText] = useState("0");
-  const [rate, setRate] = useState("");
-  const [orderId, setOrderId] = useState(initialOrder);
+  const [rate, setRate] = useState(edit?.rate ?? "");
+  const [orderId, setOrderId] = useState(edit?.orderId ?? initialOrder);
   const [safeChoice, setSafeChoice] = useState("");
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(edit?.note ?? "");
   // Buy / Sell: customer account — bought from or sold to (or a new one made right here); Sell: delivery place; discounts.
   const [custList, setCustList] = useState(customers);
-  const [customerId, setCustomerId] = useState(initialCustomer);
+  const [customerId, setCustomerId] = useState(edit?.customerId ?? initialCustomer);
   const [adding, setAdding] = useState(false);
   const [newCust, setNewCust] = useState({ name: "", phone: "", address: "" });
-  const [delivery, setDelivery] = useState("");
-  const [invKind, setInvKind] = useState<"PERCENT" | "AMOUNT">("PERCENT");
-  const [invDisc, setInvDisc] = useState("");
+  const [delivery, setDelivery] = useState(edit?.delivery ?? "");
+  const [invKind, setInvKind] = useState<"PERCENT" | "AMOUNT">(edit?.invKind ?? "PERCENT");
+  const [invDisc, setInvDisc] = useState(edit?.invDisc ?? "");
   // Keys start at 0 on every render tree, so server and browser HTML match (hydration).
-  const seq = useRef(0);
+  const seq = useRef(edit ? edit.lines.length : 0);
   const blank = (): Line => ({ key: ++seq.current, itemId: "", qty: "", price: "", discKind: "PERCENT", disc: "" });
-  const [lines, setLines] = useState<Line[]>(() => [{ key: 0, itemId: "", qty: "", price: "", discKind: "PERCENT", disc: "" }]);
+  const [lines, setLines] = useState<Line[]>(() => edit?.lines.length ? edit.lines.map((l, i) => ({ key: i, ...l })) : [{ key: 0, itemId: "", qty: "", price: "", discKind: "PERCENT", disc: "" }]);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
@@ -106,23 +114,25 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
       rate: (type === "BUY" || costIn) && currency !== "IQD" && rate ? rate : undefined,
       discount: money ? disc(invKind, invDisc) ?? undefined : undefined,
       currency: priced ? currency : undefined, paid: money ? paidNow : undefined, safeId: money && paidNow > 0 && safeId ? safeId : undefined, orderId: sell && orderId ? orderId : undefined, note: note || undefined,
+      ...(edit ? { editId: edit.id, editReason } : {}),
       lines: filled.map((l) => ({ itemId: l.itemId, qty: l.qty, unitPrice: priced ? (l.price === "" ? undefined : l.price) : undefined, discount: money ? disc(l.discKind, l.disc) ?? undefined : undefined })),
     });
     if (!r.ok) { setError(r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error); return; }
     router.push(`/stock/${r.data.id}?saved=1`);
+    router.refresh();
   });
 
   return (
     <div className="space-y-4 pb-24">
       <div className="inline-flex flex-wrap rounded-lg border border-line bg-surface p-0.5" role="tablist">
-        {allowed.map((d) => (
+        {(edit ? [edit.type] : allowed).map((d) => (
           <button key={d} type="button" role="tab" aria-selected={type === d} onClick={() => setType(d)}
             className={cn("min-h-10 rounded-md px-4 text-sm font-semibold", type === d ? "bg-brand-600 text-white" : "text-muted hover:text-ink")}>
             {t(`sd.type.${d}`)}
           </button>
         ))}
       </div>
-      <p className="text-sm text-muted">{t(`sd.help.${type}`)}</p>
+      {edit ? <Alert tone="amber">{t("sd.editing", { number: edit.number })}</Alert> : <p className="text-sm text-muted">{t(`sd.help.${type}`)}</p>}
 
       <Card>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -304,7 +314,21 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
         </Card>
       )}
 
-      {money && (
+      {money && edit && (
+        <Card>
+          <p className="text-sm">{t("sd.total")}: <b dir="ltr" data-testid="edit-total">{fmtMoney(total)} {currency}</b> · {t(sell ? "cash.received" : "cash.paid")}: <b dir="ltr">{fmtMoney(edit.paid)} {currency}</b></p>
+          <p className="text-xs text-muted">{t("sd.editPaidHint")}</p>
+          {iqdValue !== null && <p className="mt-2 text-sm" data-testid="buy-iqd">{t("sd.iqdValue")}: <b dir="ltr">{fmtMoney(iqdValue)} IQD</b></p>}
+        </Card>
+      )}
+      {edit && (
+        <Card>
+          <label className="text-sm font-medium">{t("sd.editReason")} *
+            <Input value={editReason} onChange={(e) => setEditReason(e.target.value)} className="mt-1" aria-label={t("sd.editReason")} maxLength={500} />
+          </label>
+        </Card>
+      )}
+      {money && !edit && (
         <Card>
           <div className="grid gap-3 sm:grid-cols-3 sm:items-end">
             <label className="text-sm font-medium">{t(type === "SELL" ? "cash.receivedNow" : "cash.paidNow")}
@@ -332,7 +356,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 px-3 py-3 backdrop-blur lg:start-64" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <p className="text-sm">{t("sd.linesN", { n: filled.length })}{money && <> · <b dir="ltr">{fmtMoney(total)} {currency}</b></>}</p>
-          <Button onClick={save} disabled={pending || filled.length === 0}><Save className="size-4" /> {pending ? t("common.saving") : t(`sd.save.${type}`)}</Button>
+          <Button onClick={save} disabled={pending || filled.length === 0 || (!!edit && editReason.trim().length < 3)}><Save className="size-4" /> {pending ? t("common.saving") : edit ? t("sd.saveChanges") : t(`sd.save.${type}`)}</Button>
         </div>
       </div>
     </div>

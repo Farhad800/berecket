@@ -18,6 +18,8 @@ export type MasterRow = {
   links?: { href: string; label: string }[];
   archived?: boolean;
   initial: Record<string, unknown>;
+  /** Edit on its own page (e.g. a product: same boxes as when it was added) instead of the small form here. */
+  editHref?: string;
 };
 
 type Result = { ok: boolean; error?: string; fieldErrors?: Record<string, string> };
@@ -112,11 +114,15 @@ export default function MasterList({
                 )}
                 {(canEdit || canArchive) && (
                   <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
-                    {canEdit && !r.archived && (
+                    {canEdit && !r.archived && (r.editHref ? (
+                      <Link href={r.editHref} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-semibold hover:bg-surface-2">
+                        <Pencil className="size-3.5" /> {t("edit")}
+                      </Link>
+                    ) : (
                       <Button size="sm" variant="secondary" onClick={() => setMode(r.id)} disabled={pending}>
                         <Pencil className="size-3.5" /> {t("edit")}
                       </Button>
-                    )}
+                    ))}
                     {canArchive && (
                       <Button size="sm" variant="ghost" onClick={() => toggleArchive(r)} disabled={pending}>
                         {r.archived ? <ArchiveRestore className="size-3.5" /> : <Archive className="size-3.5" />}

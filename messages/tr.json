@@ -486,7 +486,8 @@
       "input": "Stok girişi",
       "output": "Stok çıkışı",
       "buy": "Alış",
-      "sell": "Satış"
+      "sell": "Satış",
+      "edit": "Fiş değiştirildi"
     },
     "shipment": {
       "create": "Sevkiyat taslağı, stok ayrıldı",
@@ -578,7 +579,8 @@
       "transfer": "Kasalar arası para taşındı",
       "safeCreate": "Kasa eklendi",
       "safeUpdate": "Kasa değiştirildi",
-      "safeDelete": "Kasa silindi"
+      "safeDelete": "Kasa silindi",
+      "edit": "Para kaydı değiştirildi"
     },
     "receipt": {
       "layoutCreate": "Makbuz düzeni oluşturuldu",
@@ -1650,6 +1652,10 @@
       "docSELLPlain": {
         "title": "Satış {number}: {n} kalem",
         "body": "{by}"
+      },
+      "edited": {
+        "title": "{number} değiştirildi",
+        "body": "{by}: {reason}"
       }
     },
     "product": {
@@ -1778,6 +1784,10 @@
       "transfer": {
         "title": "Transfer {number}: {amount}",
         "body": "{from} → {to} · {by}"
+      },
+      "edited": {
+        "title": "{number} değiştirildi",
+        "body": "{by}: {reason}"
       }
     }
   },
@@ -1889,7 +1899,13 @@
     "purchaseNo": "Alış no",
     "buyRate": "Günün kuru",
     "buyRateHint": "Sizin yazdığınız. Müşteri bakiyesi {cur} cinsinden; IQD değeri kayıt içindir.",
-    "iqdValue": "IQD değeri"
+    "iqdValue": "IQD değeri",
+    "edit": "Düzenle",
+    "editTitle": "{number} düzenle",
+    "editing": "{number} belgesini değiştiriyorsunuz. Numarası aynı kalır; stok, müşteri bakiyesi ve partiler yeni değerleri izler.",
+    "editReason": "Neden değiştiriliyor?",
+    "editPaidHint": "Ödenmiş para olduğu gibi kalır; bir ödemeyi kendi sayfasından değiştirin.",
+    "saveChanges": "Değişiklikleri kaydet"
   },
   "cash": {
     "intro": "Her kasadaki para, para birimine göre. Satışlar ve yatırılan para kasaya eklenir; alımlar ve giderler kasadan çıkar.",
@@ -1984,7 +2000,13 @@
       "TRANSPORT": "Nakliye",
       "FOOD": "Yemek",
       "OTHER": "Diğer"
-    }
+    },
+    "edit": "Kaydı düzenle",
+    "editAmount": "Yeni tutar",
+    "editSafe": "Kasa",
+    "editNote": "Kayıt notu",
+    "editFrom": "Verilen ({cur})",
+    "editTo": "Alınan ({cur})"
   },
   "rc2": {
     "intro": "Satış, alış ve tahsilat makbuzları için kayıtlı düzenler. Satış veya alıştan Makbuz yazdır düğmesiyle yazdırın.",
@@ -2168,7 +2190,9 @@
     "save": "Kalemi kaydet",
     "created": "{code} kaydedildi. Artık depoda; ürünlerde, alımlarda ve stok hareketlerinde kullanılabilir.",
     "section": "Bölüm",
-    "allSections": "Tümü"
+    "allSections": "Tümü",
+    "edit": "Malzemeyi düzenle",
+    "unitLocked": "Stok zaten hareket etti, birim değiştirilemez."
   },
   "cost": {
     "title": "Başlangıç maliyeti",
