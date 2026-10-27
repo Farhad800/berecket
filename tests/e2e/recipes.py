@@ -33,13 +33,13 @@ with sync_playwright() as p:
         A.locator("[id^='c_'], [aria-haspopup]").nth(i)  # placeholder
     A.locator("text=No label").first.click(); A.keyboard.type("بركة كاسة اتيكيت 700"); A.wait_for_timeout(300); A.keyboard.press("Enter")
     A.get_by_role("button", name=re.compile("^Add material")).click(); A.get_by_text("Choose item…").last.click(); A.keyboard.type(RAW); A.wait_for_timeout(300); A.keyboard.press("Enter")
-    A.locator("input[type=number]").nth(0).fill("45")
+    A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(0).fill("45")
     A.get_by_role("button", name=re.compile("^Add material")).click(); A.get_by_text("Choose item…").last.click(); A.keyboard.type("صبغ اسود"); A.wait_for_timeout(300); A.keyboard.press("Enter")
-    A.locator("input[type=number]").nth(1).fill("0.9")
+    A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(1).fill("0.9")
     A.get_by_role("button", name="Add carton / nylon").click(); A.get_by_text("Choose item…").last.click(); A.keyboard.type(CART); A.wait_for_timeout(300); A.keyboard.press("Enter")
-    A.locator("input[type=number]").nth(2).fill("1800")   # one carton holds 1,800
+    A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(2).fill("1800")   # one carton holds 1,800
     A.get_by_role("button", name="Add carton / nylon").click(); A.get_by_text("Choose item…").last.click(); A.keyboard.type(NYL); A.wait_for_timeout(300); A.keyboard.press("Enter")
-    A.locator("input[type=number]").nth(3).fill("60")     # one nylon bag holds 60
+    A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(3).fill("60")     # one nylon bag holds 60
     A.locator("input[aria-label='pieces']").fill("2000"); A.wait_for_timeout(300)
     prev=A.inner_text("main"); A.screenshot(path=O+"recipe.png", full_page=True)
     ck("preview for 2,000 pcs: 2,000 labels, 90 kg, 1.8 kg dye, 2 cartons, 0.408 kg nylon (34 bags)", all(x in prev for x in ["2,000 pcs","90 kg","1.8 kg","2 pcs","0.408 kg"]))
@@ -74,9 +74,9 @@ with sync_playwright() as p:
     ck("name preview comes from the label", "دريا كاسة 1600 غم" in A.inner_text("main"))
     A.get_by_label("Product code *").fill("TEST-1")
     A.get_by_role("button", name=re.compile("^Add material")).click(); A.get_by_text("Choose item…").last.click(); A.keyboard.type(RAW); A.wait_for_timeout(300); A.keyboard.press("Enter")
-    A.locator("input[type=number]").nth(0).fill("60")
+    A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(0).fill("60")
     A.get_by_role("button", name="Add carton / nylon").click(); A.get_by_text("Choose item…").last.click(); A.keyboard.type(CART); A.wait_for_timeout(300); A.keyboard.press("Enter")
-    A.locator("input[type=number]").nth(1).fill("1200")
+    A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(1).fill("1200")
     A.get_by_role("button", name="Create product").click(); A.wait_for_url(re.compile(r".*/products/c[a-z0-9]+\?created=1"), wait_until="commit"); A.wait_for_load_state("networkidle")
     t1=pid("TEST-1")
     ck("new product created with its label name, label link and 2 lines", sql("SELECT name||' | '||name2 FROM \\\"Product\\\" WHERE code='TEST-1'")=="دريا كاسة 1600 غم | 1600 GR DERYA KASE"
