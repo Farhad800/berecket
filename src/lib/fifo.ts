@@ -41,6 +41,8 @@ export type FifoState = {
   remaining: (itemId: string) => Lot[];
   /** Cost of the latest batch (or the starting cost): what stock taken beyond the batches costs. */
   lastUnit: (itemId: string) => number | null;
+  /** Some of the stock (or, with none, the latest cost) has a cost with items missing (a product whose recipe has items without a cost). */
+  partial: (itemId: string) => boolean;
   /** Value of the stock on hand (Σ left × cost); null part = batches without a cost. */
   value: (itemId: string) => { value: number; noCost: number; qty: number };
 };
@@ -48,7 +50,7 @@ export type FifoState = {
 type StartCost = (itemId: string) => number | null;
 
 /** Rebuilds all batches. `startCost` gives the starting cost of each item (opening stock and fallback). */
-export async function buildFifo(startCost: StartCost, tx: Tx = db): Promise<FifoState> {
+export async function buildFifo(startCost: StartCost, tx: Tx = db, startPartial: Set<string> = new Set()): Promise<FifoState> {
   const [opening, moves] = await Promise.all([
     tx.stockMovement.groupBy({ by: ["productId"], where: { createdAt: { lt: FIFO_START } }, _sum: { qty: true } }),
     tx.stockMovement.findMany({
@@ -213,7 +215,17 @@ export async function buildFifo(startCost: StartCost, tx: Tx = db): Promise<Fifo
   }
 
   const remaining = (itemId: string) => (lots.get(itemId) ?? []).filter((l) => l.left > EPS);
+  const lotPartial = (l: Lot): boolean => {
+    if (l.source === "PRODUCTION" && l.entryId) { const c = costOfEntry(l.entryId); return !!c && c.pieces > EPS ? !c.complete : startPartial.has(l.itemId); }
+    return l.price === null && startPartial.has(l.itemId);
+  };
   return {
+    partial(itemId) {
+      const open = remaining(itemId);
+      if (open.length) return open.some(lotPartial);
+      const all = lots.get(itemId) ?? [];
+      return all.length ? lotPartial(all[all.length - 1]) : startPartial.has(itemId);
+    },
     lots,
     entryCost: costOfEntry,
     remaining,
@@ -245,11 +257,13 @@ export const fifoState = cache(async () => {
     productCosts(undefined, db, { starting: true }),
   ]);
   const start = new Map<string, number | null>();
+  const partial = new Set<string>(); // products whose recipe has items without a cost: cost shown without them, marked *
   for (const it of items) {
     if (it.kind === "PRODUCT") {
       const c = recipes.get(it.id);
-      start.set(it.id, c && !c.cost.noRecipe && c.cost.missing.length === 0 ? c.cost.perPiece : null);
+      start.set(it.id, c && !c.cost.noRecipe ? c.cost.perPiece : null);
+      if (c && !c.cost.noRecipe && c.cost.missing.length) partial.add(it.id);
     } else start.set(it.id, it.costIqd === null ? null : Number(it.costIqd));
   }
-  return buildFifo((id) => start.get(id) ?? null);
+  return buildFifo((id) => start.get(id) ?? null, db, partial);
 });

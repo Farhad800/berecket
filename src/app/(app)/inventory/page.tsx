@@ -19,8 +19,8 @@ const TYPES: StockMoveType[] = ["PRODUCTION", "USE", "QC_REJECT", "INPUT", "OUTP
 /** Average cost per unit of what is in stock (Σ batch left × its cost ÷ stock); with no stock, the latest cost. */
 function unitCost(f: Awaited<ReturnType<typeof fifoState>>, id: string) {
   const v = f.value(id);
-  if (v.qty > 0.0005 && v.noCost < v.qty) return { unit: v.value / (v.qty - v.noCost), partial: v.noCost > 0 };
-  return { unit: f.lastUnit(id), partial: false };
+  if (v.qty > 0.0005 && v.noCost < v.qty) return { unit: v.value / (v.qty - v.noCost), partial: v.noCost > 0 || f.partial(id) };
+  return { unit: f.lastUnit(id), partial: f.partial(id) };
 }
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
 

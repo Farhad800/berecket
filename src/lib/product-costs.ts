@@ -34,7 +34,9 @@ export async function productCosts(ids?: string[], tx: Tx = db, opts: { starting
   ]);
   if (fifo) {
     // Batches: each part is costed from its oldest batches still in stock, then at its latest cost.
-    const withLots = <T extends { id: string; costIqd: unknown }>(c: T) => ({ ...c, costIqd: fifo.lastUnit(c.id), lots: fifo.remaining(c.id).map((l) => ({ left: l.left, unit: l.unit() })) });
+    // A part whose own cost is incomplete (a handle with items missing) counts as an item without a cost.
+    const withLots = <T extends { id: string; costIqd: unknown }>(c: T) => (fifo.partial(c.id) ? { ...c, costIqd: null, lots: [] }
+      : { ...c, costIqd: fifo.lastUnit(c.id), lots: fifo.remaining(c.id).map((l) => ({ left: l.left, unit: l.unit() })) });
     const out = new Map<string, Entry>();
     for (const p of list) {
       if (ids && !ids.includes(p.id)) continue;
