@@ -2158,8 +2158,8 @@
     "set": "Set cost",
     "change": "Change cost",
     "save": "Save cost",
-    "productTitle": "Cost of one piece",
-    "productHint": "Label + what it is made of + packaging, in IQD, from each item's cost. It changes when an item's cost changes.",
+    "productTitle": "Product cost",
+    "productHint": "For the number of pieces made: the same amounts production takes from stock — full cartons and bags (a started one counts), nylon by its kg — times each item's cost in IQD.",
     "missing": "No cost yet for: {items} — the total doesn't include them.",
     "noRecipe": "Nothing is set yet for what this product is made of and packed in, so its cost can't be worked out.",
     "perPiece": "Per piece",
@@ -2169,11 +2169,17 @@
     "colUnit": "Cost / unit",
     "partial": "Some items have no cost yet",
     "stockValue": "Stock value",
-    "tableHint": "Cost per piece = label + materials + packaging, in IQD. * = some of its items have no cost yet.",
+    "tableHint": "Cost per piece of each product's last production (or one full carton if not made yet): label + materials + full cartons and bags, in IQD. * = some of its items have no cost yet.",
     "why": {
       "label": "label",
       "made": "made of",
       "pack": "packaging"
-    }
+    },
+    "piecesMade": "Pieces made",
+    "lastProduction": "Last production of this product",
+    "typeQty": "Type any quantity",
+    "used": "Used for {n} pcs",
+    "runTotal": "Total for {n} pieces (IQD)",
+    "onePieceCost": "Cost of one piece"
   }
 }

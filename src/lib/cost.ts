@@ -1,44 +1,51 @@
 /**
- * Product cost (accountant, 26 Oct 2026): what one piece costs in IQD, from its label (1 per piece),
- * what it is made of (grams / pieces per piece) and its packaging (one carton / bag holds N pieces).
- * Uses the same quantities as the stock use on production (recipe-math.ts), but per piece and without
- * rounding up cartons. Item costs are kept per unit (1 pc or 1 kg) in IQD.
+ * Product cost (accountant, 26–27 Oct 2026), always in IQD, worked out the way the accountant does it:
+ * for a number of pieces made, take the SAME quantities production takes out of stock
+ * (recipe-math.ts: label 1 per piece, grams per piece, cartons and bags rounded up to whole ones,
+ * nylon by the kg of the bags used), multiply each by its cost per unit, add up, and divide by the pieces.
+ * Example: 1,000 pieces, 880 in a carton → 2 full cartons are charged, not 1.14.
  */
+import { needsFor, type Recipe } from "./recipe-math";
+
 export type CostItem = { id: string; code: string; name: string; unit: string; unitWeightKg: unknown; costIqd: unknown };
 export type CostRecipe = {
   label: CostItem | null;
   components: { qty: unknown; per: "PIECE" | "CARTON"; component: CostItem }[];
 };
-export type CostPart = { id: string; code: string; name: string; unit: string; perPiece: number; unitCost: number | null; cost: number | null; why: "label" | "made" | "pack" };
-export type ProductCost = { parts: CostPart[]; total: number; missing: CostPart[]; noRecipe: boolean };
+export type CostPart = { id: string; code: string; name: string; unit: string; qty: number; unitCost: number | null; cost: number | null; why: "label" | "made" | "pack" };
+export type ProductCost = { pieces: number; parts: CostPart[]; total: number; perPiece: number; missing: CostPart[]; noRecipe: boolean };
 
-const isKg = (u: string) => u.toLowerCase() === "kg";
-const unitCost = (c: CostItem) => (c.costIqd === null || c.costIqd === undefined ? null : Number(c.costIqd));
+const r2 = (n: number) => Math.round(n * 100) / 100;
 
-export function productCost(p: CostRecipe): ProductCost {
-  const parts: CostPart[] = [];
-  const add = (c: CostItem, perPiece: number, why: CostPart["why"]) => {
-    const u = unitCost(c);
-    parts.push({ id: c.id, code: c.code, name: c.name, unit: c.unit, perPiece, unitCost: u, cost: u === null ? null : perPiece * u, why });
-  };
-  if (p.label) add(p.label, 1, "label");
-  for (const line of p.components) {
-    const q = Number(line.qty), c = line.component;
-    if (!(q > 0)) continue;
-    if (line.per === "PIECE") add(c, isKg(c.unit) ? q / 1000 : q, "made"); // grams → kg, or pieces per piece
-    else {
-      // one of this item holds q pieces → 1/q of it per piece (kg items: weight of one bag / q)
-      if (isKg(c.unit)) {
-        const w = Number(c.unitWeightKg ?? 0);
-        add(c, w > 0 ? w / q : 0, "pack");
-        if (!(w > 0)) parts[parts.length - 1].cost = null;
-      } else add(c, 1 / q, "pack");
-    }
+/** Cost of making `pieces` pieces, and of one piece of that run. */
+export function productCost(p: CostRecipe, pieces: number): ProductCost {
+  const items = new Map<string, CostItem>();
+  const why = new Map<string, CostPart["why"]>();
+  if (p.label) { items.set(p.label.id, p.label); why.set(p.label.id, "label"); }
+  for (const l of p.components) {
+    items.set(l.component.id, l.component);
+    if (!why.has(l.component.id)) why.set(l.component.id, l.per === "PIECE" ? "made" : "pack");
   }
+  const n = Math.max(0, Math.floor(pieces));
+  const recipe = { labelId: p.label?.id ?? null, label: p.label, components: p.components } as unknown as Recipe;
+  const parts: CostPart[] = needsFor(recipe, n).map((need) => {
+    const it = items.get(need.componentId)!;
+    const u = it.costIqd === null || it.costIqd === undefined ? null : Number(it.costIqd);
+    const cost = u === null || need.missingWeight ? null : need.qty * u;
+    return { id: it.id, code: it.code, name: it.name, unit: it.unit, qty: need.qty, unitCost: u, cost, why: why.get(it.id)! };
+  });
   const missing = parts.filter((x) => x.cost === null);
-  const total = Math.round(parts.reduce((s, x) => s + (x.cost ?? 0), 0) * 1e6) / 1e6;
-  return { parts, total, missing, noRecipe: parts.length === 0 };
+  const total = r2(parts.reduce((s, x) => s + (x.cost ?? 0), 0));
+  return { pieces: n, parts, total, perPiece: n > 0 ? total / n : 0, missing, noRecipe: p.label === null && p.components.length === 0 };
 }
 
-/** IQD with up to 2 decimals for small costs (a label costs 15.25 IQD), whole dinars for big ones. */
-export const fmtIqd = (n: number) => n.toLocaleString("en", { maximumFractionDigits: Math.abs(n) >= 1000 ? 0 : Math.abs(n) >= 1 ? 2 : 4 });
+/** The quantity a cost is shown for when none is typed: the last production entry, else one full carton. */
+export function defaultPieces(p: CostRecipe, lastMade: number | null | undefined) {
+  if (lastMade && lastMade > 0) return lastMade;
+  const carton = p.components.find((c) => c.per === "CARTON" && c.component.unit.toLowerCase() !== "kg");
+  const pack = carton ?? p.components.find((c) => c.per === "CARTON");
+  return pack ? Math.max(1, Math.round(Number(pack.qty))) : 1000;
+}
+
+/** IQD with up to 2 decimals (153,100.5 · 29.53), more only for amounts below 1 IQD. */
+export const fmtIqd = (n: number) => n.toLocaleString("en", { maximumFractionDigits: Math.abs(n) >= 1 || n === 0 ? 2 : 4 });

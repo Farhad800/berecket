@@ -68,8 +68,11 @@ with sync_playwright() as p:
     for comp,qty,per in [("MAT-0001",2.1,"PIECE"),("PKG-0001",1800,"CARTON"),("PKG-0002",60,"CARTON")]:
         sql(f"INSERT INTO {Q('\"ProductComponent\"')} (id,{Q('\"productId\"')},{Q('\"componentId\"')},qty,per) VALUES ('pc{comp}','tpbowl000001','{pid(comp)}',{qty},'{per}')")
     A.goto(B+"/products/tpbowl000001"); A.wait_for_load_state("networkidle")
-    ck("product page: one piece costs 29.53 IQD (25 + 3.654 + 0.278 + 0.6)", A.get_by_test_id("product-cost").inner_text()=="29.53 IQD")
-    txt=A.inner_text("main"); ck("…with each line (label, made of, packaging)", all(x in txt for x in ["Zakho label","PP granules","Carton 1800","Nylon bag","2.1 g","1/1,800"]))
+    ck("not made yet → cost for one full carton (1,800 pcs)", A.get_by_test_id("cost-pieces").input_value()=="1800")
+    ck("1,800 pcs cost 53,157.2 → one piece 29.53 IQD", A.get_by_test_id("run-cost").inner_text()=="53,157.2" and A.get_by_test_id("product-cost").inner_text()=="29.53 IQD")
+    txt=A.inner_text("main"); ck("…each line with what production takes (1,800 labels, 3.78 kg, 1 carton, 0.36 kg nylon)", all(x in txt for x in ["Zakho label","PP granules","Carton 1800","Nylon bag","1,800 pcs","3.78 kg","1 pcs","0.36 kg"]))
+    A.get_by_test_id("cost-pieces").fill("1000")
+    ck("1,000 pcs: a full carton and 17 whole bags are charged → 29,766 → 29.77 a piece", A.get_by_test_id("run-cost").inner_text()=="29,766" and A.get_by_test_id("product-cost").inner_text()=="29.77 IQD" and "0.204 kg" in A.inner_text("main"))
     A.goto(B+"/inventory"); A.wait_for_load_state("networkidle")
     ck("warehouse products: cost per piece 29.53", A.get_by_test_id("cost-P-100").inner_text().split("\n")[0]=="29.53")
     A.goto(B+"/inventory?tab=materials"); ck("warehouse raw materials: 1,740 IQD per kg", A.get_by_test_id("cost-MAT-0001").inner_text().split("\n")[0]=="1,740")

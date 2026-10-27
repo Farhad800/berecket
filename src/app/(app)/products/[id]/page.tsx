@@ -72,6 +72,15 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
     );
   }
 
+  /** Plain numbers only go to the browser (and only for money roles). */
+  async function costCard() {
+    const c = (await productCosts([p!.id])).get(p!.id)!;
+    const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+    const it = (i: { id: string; code: string; name: string; unit: string; unitWeightKg: unknown; costIqd: unknown }) => ({ id: i.id, code: i.code, name: i.name, unit: i.unit, unitWeightKg: num(i.unitWeightKg), costIqd: num(i.costIqd) });
+    const recipe = { label: c.recipe.label ? it(c.recipe.label) : null, components: c.recipe.components.map((l) => ({ qty: Number(l.qty), per: l.per, component: it(l.component) })) };
+    return <ProductCostCard recipe={recipe} initialPieces={c.pieces} fromProduction={c.fromProduction} />;
+  }
+
   const [labels, made, packs] = await Promise.all([
     db.product.findMany({ where: { archivedAt: null, kind: "STICKER" }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, name2: true, unit: true, unitWeightKg: true, kind: true } }),
     db.product.findMany({ where: { archivedAt: null, OR: [{ kind: "MATERIAL" }, { kind: "PRODUCT", id: { not: p.id } }] }, orderBy: [{ kind: "asc" }, { name: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, unitWeightKg: true, kind: true } }),
@@ -86,7 +95,7 @@ export default async function ProductPage({ params, searchParams }: { params: Pr
       <Link href={back} className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:underline"><ArrowLeft className="size-4 rtl:rotate-180" /> {t("nav.products")}</Link>
       <PageHeader title={p.name} subtitle={<span dir="ltr">{[p.name2, p.code, p.mold && `${t("md.mold")}: ${p.mold.code}`].filter(Boolean).join(" · ")}</span>} />
       {created && <div className="mb-4"><Alert tone="green">{t("rc.created")}</Alert></div>}
-      {money && <ProductCostCard cost={(await productCosts([p.id])).get(p.id)!} />}
+      {money && await costCard()}
       <RecipeEditor
         productId={p.id}
         canEdit={can(me, "products:edit")}

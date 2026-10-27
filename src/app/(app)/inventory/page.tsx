@@ -54,7 +54,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     ]);
     const rows = products.map((p) => {
       const c = costs?.get(p.id);
-      return { id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0, cost: c && !c.noRecipe ? c.total : null, costPartial: !!c?.missing.length };
+      return { id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0, cost: c && !c.cost.noRecipe ? c.cost.perPiece : null, costPartial: !!c?.cost.missing.length };
     });
     const value = rows.reduce((s, r) => s + (r.cost && r.stock > 0 ? r.cost * r.stock : 0), 0);
     const total = rows.reduce((s, r) => s + r.stock, 0);

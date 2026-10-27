@@ -2158,8 +2158,8 @@
     "set": "Maliyet gir",
     "change": "Maliyeti değiştir",
     "save": "Maliyeti kaydet",
-    "productTitle": "Bir adetin maliyeti",
-    "productHint": "Etiket + içerik + ambalaj, IQD olarak, her kalemin maliyetinden. Bir kalemin maliyeti değişince değişir.",
+    "productTitle": "Ürün maliyeti",
+    "productHint": "Üretilen adet için: üretimin stoktan aldığı miktarlar — tam koli ve torbalar (başlanan sayılır), naylon kg olarak — her kalemin IQD maliyetiyle çarpılır.",
     "missing": "Henüz maliyeti olmayanlar: {items} — toplama dahil değil.",
     "noRecipe": "Bu ürünün henüz etiketi, içeriği veya ambalajı yok; maliyeti hesaplanamaz.",
     "perPiece": "Adet başına",
@@ -2169,11 +2169,17 @@
     "colUnit": "Maliyet / birim",
     "partial": "Bazı kalemlerin henüz maliyeti yok",
     "stockValue": "Stok değeri",
-    "tableHint": "Adet maliyeti = etiket + içerik + ambalaj, IQD. * = bazı kalemlerinin henüz maliyeti yok.",
+    "tableHint": "Her ürünün son üretimine göre adet maliyeti (henüz üretilmediyse bir tam koli): etiket + malzeme + tam koli ve torbalar, IQD. * = bazı kalemlerinin henüz maliyeti yok.",
     "why": {
       "label": "etiket",
       "made": "içerik",
       "pack": "ambalaj"
-    }
+    },
+    "piecesMade": "Üretilen adet",
+    "lastProduction": "Bu ürünün son üretimi",
+    "typeQty": "Herhangi bir miktar yazın",
+    "used": "{n} adet için kullanılan",
+    "runTotal": "{n} adet toplamı (IQD)",
+    "onePieceCost": "Bir adetin maliyeti"
   }
 }
