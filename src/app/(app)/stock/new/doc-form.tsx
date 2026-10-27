@@ -8,7 +8,6 @@ import Combobox from "@/components/combobox";
 import { Alert, Button, Card, Input, Select, Textarea, cn } from "@/components/ui";
 import { saveStockDocAction } from "@/app/actions/stock";
 import { createCustomerAction } from "@/app/actions/customers";
-import { createSupplierAction } from "@/app/actions/suppliers";
 import { fmtMoney, fmtQty, type DocType } from "../types";
 import { docTotal, lineTotal, saleTotals, type Discount } from "@/lib/money";
 import SafeSelect, { fitSafe, type SafeOpt } from "../../cash/safe-select";
@@ -22,12 +21,10 @@ const disc = (kind: "PERCENT" | "AMOUNT", v: string): Discount => (Number(v) > 0
 const REASONS = ["RETURN", "TRANSFER", "COUNT", "DAMAGE", "SAMPLE", "OTHER"] as const;
 
 /** One Input / Output / Buy / Sell document with any number of lines. */
-export default function DocForm({ allowed, initialType, initialOrder, items, orders, customers = [], initialCustomer = "", suppliers = [], initialSupplier = "", safes = [], canCost = false }: {
+export default function DocForm({ allowed, initialType, initialOrder, items, orders, customers = [], initialCustomer = "", safes = [], canCost = false }: {
   allowed: DocType[]; initialType: DocType; initialOrder: string; items: Item[]; orders: Order[];
   customers?: CustomerOpt[];
   initialCustomer?: string;
-  suppliers?: CustomerOpt[];
-  initialSupplier?: string;
   safes?: SafeOpt[];
   /** Money roles: an Input can carry a cost per line (that batch's cost). */
   canCost?: boolean;
@@ -37,7 +34,7 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const [type, setType] = useState<DocType>(initialType);
   const [reason, setReason] = useState("");
   const [invoiceNo, setInvoiceNo] = useState("");
-  const [phone, setPhone] = useState(() => (initialType === "BUY" ? suppliers.find((c) => c.id === initialSupplier) : customers.find((c) => c.id === initialCustomer))?.phone ?? "");
+  const [phone, setPhone] = useState(() => customers.find((c) => c.id === initialCustomer)?.phone ?? "");
   const [currency, setCurrency] = useState<"IQD" | "USD" | "EUR">("IQD");
   // "Paid now" starts at 0 on every purchase and sale; the accountant types what was really paid (or "Paid in full").
   const [paidText, setPaidText] = useState("0");
@@ -45,11 +42,9 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   const [orderId, setOrderId] = useState(initialOrder);
   const [safeChoice, setSafeChoice] = useState("");
   const [note, setNote] = useState("");
-  // Sell: customer account (or a new one made right here), delivery place, invoice discount.
+  // Buy / Sell: customer account — bought from or sold to (or a new one made right here); Sell: delivery place; discounts.
   const [custList, setCustList] = useState(customers);
   const [customerId, setCustomerId] = useState(initialCustomer);
-  const [suppList, setSuppList] = useState(suppliers);
-  const [supplierId, setSupplierId] = useState(initialSupplier);
   const [adding, setAdding] = useState(false);
   const [newCust, setNewCust] = useState({ name: "", phone: "", address: "" });
   const [delivery, setDelivery] = useState("");
@@ -76,12 +71,12 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
   // Buy and Sell both have line + invoice discounts (on a purchase they only lower what is owed to the supplier).
   const sale = saleTotals(lines.map((l) => ({ qty: Number(l.qty) || 0, price: Number(l.price) || 0, discount: money ? disc(l.discKind, l.disc) : null })), money ? disc(invKind, invDisc) : null);
   const total = money ? sale.total : docTotal(lines.map((l) => ({ qty: Number(l.qty) || 0, price: Number(l.price) || 0 })));
-  // The account the document is booked to: a customer (Sell) or a supplier (Buy).
-  const accList = sell ? custList : suppList;
-  const accId = sell ? customerId : supplierId;
-  const setAccId = (v: string) => (sell ? setCustomerId(v) : setSupplierId(v));
+  // The customer account the document is booked to (the same list for buying and selling).
+  const accList = custList;
+  const accId = customerId;
+  const setAccId = setCustomerId;
   const cust = money ? accList.find((c) => c.id === accId) : undefined;
-  const ns = sell ? "cust" : "supp";
+  const ns = "cust";
   const filled = lines.filter((l) => l.itemId);
   const round2 = (n: number) => Math.round(n * 100) / 100;
   const paidNow = Number(paidText) || 0;
@@ -97,10 +92,9 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
 
   const addCustomer = () => start(async () => {
     setError(null);
-    const add = sell ? createCustomerAction : createSupplierAction;
-    const r = await add({ name: newCust.name, phone: newCust.phone || undefined, address: newCust.address || undefined });
+    const r = await createCustomerAction({ name: newCust.name, phone: newCust.phone || undefined, address: newCust.address || undefined });
     if (!r.ok) { setError(r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error); return; }
-    (sell ? setCustList : setSuppList)((l) => [...l, { ...r.data, address: newCust.address || null, balance: { IQD: 0, USD: 0, EUR: 0 } }]);
+    setCustList((l) => [...l, { ...r.data, address: newCust.address || null, balance: { IQD: 0, USD: 0, EUR: 0 } }]);
     setAccId(r.data.id); setPhone(r.data.phone ?? ""); setAdding(false); setNewCust({ name: "", phone: "", address: "" });
   });
 
@@ -108,8 +102,8 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
     setError(null);
     const r = await saveStockDocAction({
       type, reason: money ? undefined : reason || undefined, phone: money ? phone || undefined : undefined,
-      supplierRef: type === "BUY" && invoiceNo ? invoiceNo : undefined, customerId: sell ? customerId || undefined : undefined, delivery: sell ? delivery || undefined : undefined,
-      supplierId: type === "BUY" ? supplierId || undefined : undefined, rate: (type === "BUY" || costIn) && currency !== "IQD" && rate ? rate : undefined,
+      supplierRef: type === "BUY" && invoiceNo ? invoiceNo : undefined, customerId: money ? customerId || undefined : undefined, delivery: sell ? delivery || undefined : undefined,
+      rate: (type === "BUY" || costIn) && currency !== "IQD" && rate ? rate : undefined,
       discount: money ? disc(invKind, invDisc) ?? undefined : undefined,
       currency: priced ? currency : undefined, paid: money ? paidNow : undefined, safeId: money && paidNow > 0 && safeId ? safeId : undefined, orderId: sell && orderId ? orderId : undefined, note: note || undefined,
       lines: filled.map((l) => ({ itemId: l.itemId, qty: l.qty, unitPrice: priced ? (l.price === "" ? undefined : l.price) : undefined, discount: money ? disc(l.discKind, l.disc) ?? undefined : undefined })),
@@ -142,10 +136,10 @@ export default function DocForm({ allowed, initialType, initialOrder, items, ord
           )}
           {money && (
             <>
-              <div className="text-sm font-medium sm:col-span-2">{t(sell ? "sd.customer" : "sd.supplier")} *
+              <div className="text-sm font-medium sm:col-span-2">{t("sd.customer")} *
                 <div className="mt-1 flex gap-2">
                   <div className="min-w-0 flex-1">
-                    <Combobox key={`${type}-${accId || "none"}`} name={sell ? "customerId" : "supplierId"} options={accList.map((c) => ({ value: c.id, label: c.name, hint: [c.code, c.phone].filter(Boolean).join(" · ") }))}
+                    <Combobox key={`${type}-${accId || "none"}`} name="customerId" options={accList.map((c) => ({ value: c.id, label: c.name, hint: [c.code, c.phone].filter(Boolean).join(" · ") }))}
                       defaultValue={accId} placeholder={t(`${ns}.choose`)} onChange={(v) => { setAccId(v); const c = accList.find((x) => x.id === v); setPhone(c?.phone ?? ""); }} />
                   </div>
                   <Button type="button" variant="secondary" onClick={() => setAdding((a) => !a)} title={t(`${ns}.new`)}><UserPlus className="size-4" /> <span className="hidden sm:inline">{t(`${ns}.new`)}</span></Button>

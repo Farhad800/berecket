@@ -1,8 +1,8 @@
 """Shared helper: fill and save one Stock Movements document (Input / Output / Buy / Sell) through the UI."""
 import re
 def pick_account(pg, kind, name, phone=None):
-    """Sell: the customer account / Buy: the supplier account — chosen by name, or added with the New … box."""
-    who = "customer" if kind == "SELL" else "supplier"
+    """Buy / Sell: the customer account (bought from or sold to) — chosen by name, or added with the New customer box."""
+    who = "customer"
     pg.locator(f"[id={who}Id]").click(); pg.keyboard.type(name); pg.wait_for_timeout(250)
     hit = pg.locator("[role=option]").filter(has=pg.locator("span.flex-1").get_by_text(name, exact=True))
     if hit.count(): hit.first.click(); return
@@ -22,7 +22,7 @@ def stock_doc(pg, B, typ, lines, reason=None, party=None, currency=None, invoice
     if reason: pg.get_by_label("Reason").select_option(reason)
     if party and typ in ("SELL", "BUY"): pick_account(pg, typ, party, phone)
     if delivery: pg.get_by_label("Delivery place").fill(delivery)
-    if invoice: pg.get_by_label("Supplier's invoice no.").fill(invoice)
+    if invoice: pg.get_by_label("Their invoice no.").fill(invoice)
     if currency: pg.get_by_label("Currency").select_option(currency)
     if typ == "BUY" and currency in ("USD", "EUR"): pg.get_by_label("Rate of the day").fill(str(rate or (1450 if currency == "USD" else 1600)))
     if order: pg.get_by_label("Order (optional)").select_option(label=order)

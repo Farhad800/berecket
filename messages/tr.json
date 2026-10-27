@@ -31,8 +31,7 @@
     "stock": "Stok Hareketleri",
     "cash": "Kasa",
     "receipts": "Makbuzlar",
-    "customers": "Müşteriler",
-    "suppliers": "Tedarikçiler"
+    "customers": "Müşteriler"
   },
   "common": {
     "save": "Kaydet",
@@ -157,8 +156,7 @@
       "audit": "Denetim kaydı",
       "stock": "Stok hareketleri",
       "cash": "Kasa (para)",
-      "receipts": "Makbuzlar (baskı düzenleri)",
-      "suppliers": "Tedarikçiler (hesaplar)"
+      "receipts": "Makbuzlar (baskı düzenleri)"
     },
     "actions": {
       "view": "Görüntüle",
@@ -1365,8 +1363,7 @@
       "shipments": "Sevkiyatlar",
       "receipts": "Depo kabulleri",
       "stockDocs": "Stok hareketleri",
-      "cashEntries": "Kasa",
-      "suppliers": "Tedarikçiler"
+      "cashEntries": "Kasa"
     }
   },
   "ui": {
@@ -1867,7 +1864,7 @@
     "help": {
       "INPUT": "Parasız giren kalemler: iadeler, transferler, sayım düzeltmeleri.",
       "OUTPUT": "Parasız çıkan kalemler: hasar, numune, transfer, sayım düzeltmeleri.",
-      "BUY": "Bir tedarikçi hesabından alınan kalemler, IQD, USD veya EUR fiyatla. İndirim yalnızca tedarikçiye olan borcu düşürür.",
+      "BUY": "Bir müşteri hesabından IQD, USD veya EUR fiyatla alınan malzemeler. İndirim yalnızca ona olan borcu düşürür.",
       "SELL": "Müşteriye satılan kalemler, IQD, USD veya EUR fiyatla. Varsa bir siparişe bağlayın."
     },
     "reason": {
@@ -1887,11 +1884,11 @@
     "subtotal": "Ara toplam",
     "invoiceDiscount": "Faturanın tamamına indirim",
     "invoiceDiscountKind": "Fatura indirimi türü",
-    "supplierRef": "Tedarikçi fatura no",
+    "supplierRef": "Onların fatura no",
     "purchaseAuto": "Alış numaramız (PUR-…) otomatik verilir.",
     "purchaseNo": "Alış no",
     "buyRate": "Günün kuru",
-    "buyRateHint": "Sizin yazdığınız. Tedarikçiye {cur} borçlanılır; IQD değeri kayıt içindir.",
+    "buyRateHint": "Sizin yazdığınız. Müşteri bakiyesi {cur} cinsinden; IQD değeri kayıt içindir.",
     "iqdValue": "IQD değeri"
   },
   "cash": {
@@ -1934,7 +1931,7 @@
     "showIn": "Göster",
     "totalValue": "Toplam",
     "owedToUs": "Müşterilerin borcu",
-    "weOwe": "Tedarikçilere borcumuz",
+    "weOwe": "Fabrikanın borcu",
     "nothingOwed": "Borç yok.",
     "newCategory": "Yeni kategori adı",
     "addCategory": "Ekle",
@@ -2076,7 +2073,7 @@
     }
   },
   "cust": {
-    "intro": "Müşteri hesapları: her satış bakiyeyi düşürür (müşteri borçlu, − ile gösterilir), her ödeme artırır.",
+    "intro": "Müşteri hesapları — fabrika onlara satar ve onlardan alır. Satış veya onlara ödenen para bakiyeyi düşürür; onlardan alış veya alınan para artırır. − = fabrikaya borçlu, + = fabrika ona borçlu.",
     "choose": "Müşteriyi seçin…",
     "new": "Yeni müşteri",
     "add": "Müşteriyi ekle",
@@ -2088,13 +2085,13 @@
     "balanceNow": "Şu anki bakiye",
     "prevBalance": "Önceki bakiye",
     "newBalance": "Sonraki bakiye",
-    "signHint": "− = müşteri fabrikaya borçlu",
+    "signHint": "− = müşteri fabrikaya borçlu · + = fabrika ona borçlu",
     "totalOwed": "Müşterilerin borcu ({cur})",
     "search": "Kod, ad, telefon veya adres…",
     "all": "Tüm müşteriler",
     "owing": "Bize borçlu",
     "none": "Henüz müşteri yok.",
-    "salesN": "{n} satış",
+    "salesN": "{n} satış ve alış",
     "newSale": "Yeni satış",
     "saved": "Müşteri kaydedildi.",
     "balance": "Bakiye ({cur})",
@@ -2116,8 +2113,20 @@
     "edit": "Müşteriyi düzenle",
     "kind": {
       "sale": "Satış",
-      "payment": "Ödeme"
-    }
+      "payment": "Alınan para",
+      "purchase": "Alış",
+      "paid": "Ona ödenen"
+    },
+    "totalWeOwe": "Fabrikanın borcu ({cur})",
+    "weOweFilter": "Fabrika onlara borçlu",
+    "newPurchase": "Yeni alış",
+    "pay": "Müşteriye öde",
+    "payHint": "Bu müşteriye ödenen para (ör. ondan alınanlar için) seçilen kasadan çıkar ve bakiyeyi düşürür.",
+    "payCurrency": "Ödeme para birimi",
+    "payAmount": "Ödenen tutar",
+    "payNote": "Ödenen para notu",
+    "paySave": "Ödenen parayı kaydet",
+    "paid": "{number} kaydedildi. Para kasadan çıktı."
   },
   "safe": {
     "safe": "Kasa",
@@ -2233,47 +2242,6 @@
       "RECIPE": "İçerik ve ambalaj"
     },
     "choose": "Doldurulmuş dosyayı seçin (.xlsx)"
-  },
-  "supp": {
-    "intro": "Tedarikçi hesapları: her alış bakiyeyi düşürür (fabrika tedarikçiye borçlu, − ile gösterilir), tedarikçiye her ödeme artırır.",
-    "choose": "Tedarikçiyi seçin…",
-    "new": "Yeni tedarikçi",
-    "add": "Tedarikçiyi ekle",
-    "name": "Tedarikçi adı",
-    "newPhone": "Yeni tedarikçinin telefonu",
-    "address": "Adres",
-    "code": "Tedarikçi kodu",
-    "codeAuto": "Kod (boş = otomatik S-0001)",
-    "totalOwed": "Tedarikçilere borcumuz ({cur})",
-    "search": "Kod, ad, telefon veya adres…",
-    "all": "Tüm tedarikçiler",
-    "owing": "Borçlu olduklarımız",
-    "none": "Henüz tedarikçi yok.",
-    "salesN": "{n} alış",
-    "newSale": "Yeni alış",
-    "saved": "Tedarikçi kaydedildi.",
-    "balance": "Bakiye ({cur})",
-    "owesUs": "Fabrika tedarikçiye borçlu",
-    "weOwe": "Peşin ödendi",
-    "settled": "Borç yok",
-    "statement": "Hesap ekstresi",
-    "noMoves": "Henüz alış veya ödeme yok.",
-    "when": "Ne zaman",
-    "what": "Belge",
-    "amount": "Tutar",
-    "runBalance": "Bakiye",
-    "pay": "Tedarikçiye öde",
-    "payHint": "Bu tedarikçiye ödenen para seçilen kasadan çıkar ve bakiyeyi artırır. Borçtan fazlası olabilir — bu peşin ödemedir (+).",
-    "payAmount": "Ödenen tutar",
-    "payNote": "Ödeme notu",
-    "paySave": "Ödemeyi kaydet",
-    "paid": "{number} kaydedildi. Para kasadan çıktı.",
-    "edit": "Tedarikçiyi düzenle",
-    "kind": {
-      "sale": "Alış",
-      "payment": "Ödeme"
-    },
-    "signHint": "− = fabrika tedarikçiye borçlu"
   },
   "lot": {
     "title": "Partiler (önce en eski kullanılır)",

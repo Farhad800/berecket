@@ -5,26 +5,26 @@ import type { ColumnKey, ReceiptData, ReceiptLang, ReceiptSettings } from "@/lib
 /** Printed words in each receipt language (kept here so a receipt can differ from the screen language). */
 const L = {
   ar: { SELL: "فاتورة بيع", BUY: "فاتورة شراء", PAYMENT: "وصل قبض", number: "رقم", date: "التاريخ", time: "الوقت", invoice: "رقم الفاتورة", order: "رقم الطلب",
-    customer: "اسم الزبون", supplier: "اسم المورد", phone: "رقم الهاتف", by: "المحاسب", note: "ملاحظات", no: "ت", code: "الرمز", name: "اسم المادة", name2: "الاسم الثاني",
+    customer: "اسم الزبون", phone: "رقم الهاتف", by: "المحاسب", note: "ملاحظات", no: "ت", code: "الرمز", name: "اسم المادة", name2: "الاسم الثاني",
     qty: "الكمية", unit: "الوحدة", price: "السعر", total: "المجموع", grand: "المجموع الكلي", paid: "المدفوع", owed: "المتبقي", received: "المبلغ المستلم",
     forDoc: "عن فاتورة", docTotal: "مبلغ الفاتورة", paidSoFar: "المدفوع حتى الآن", sign1: "توقيع المستلم", sign2: "توقيع المحاسب", pcs: "قطعة", kg: "كغم",
     customerCode: "رمز الزبون", delivery: "مكان التسليم", discount: "الخصم", subtotal: "المجموع قبل الخصم", invDiscount: "خصم الفاتورة",
-    prevBalance: "الرصيد السابق", paidNow: "المدفوع الآن", newBalance: "الرصيد الحالي", signHint: "(−) يعني أن الزبون مدين للمعمل",
-    supplierCode: "رمز المورد", signHintBuy: "(−) يعني أن المعمل مدين للمورد", supplierRef: "رقم فاتورة المورد" },
+    prevBalance: "الرصيد السابق", paidNow: "المدفوع الآن", newBalance: "الرصيد الحالي", signHint: "(−) يعني أن الزبون مدين للمعمل · (+) المعمل مدين له",
+    supplierRef: "رقم فاتورة المورد" },
   en: { SELL: "Sales invoice", BUY: "Purchase invoice", PAYMENT: "Payment receipt", number: "No.", date: "Date", time: "Time", invoice: "Invoice no.", order: "Order no.",
-    customer: "Customer", supplier: "Supplier", phone: "Phone", by: "Accountant", note: "Notes", no: "#", code: "Code", name: "Item", name2: "Second name",
+    customer: "Customer", phone: "Phone", by: "Accountant", note: "Notes", no: "#", code: "Code", name: "Item", name2: "Second name",
     qty: "Qty", unit: "Unit", price: "Price", total: "Total", grand: "Grand total", paid: "Paid", owed: "Remaining", received: "Amount received",
     forDoc: "For invoice", docTotal: "Invoice total", paidSoFar: "Paid so far", sign1: "Receiver's signature", sign2: "Accountant's signature", pcs: "pcs", kg: "kg",
     customerCode: "Customer code", delivery: "Delivery place", discount: "Discount", subtotal: "Subtotal", invDiscount: "Invoice discount",
-    prevBalance: "Previous balance", paidNow: "Paid now", newBalance: "New balance", signHint: "(−) = the customer owes the factory",
-    supplierCode: "Supplier code", signHintBuy: "(−) = the factory owes the supplier", supplierRef: "Supplier's invoice no." },
+    prevBalance: "Previous balance", paidNow: "Paid now", newBalance: "New balance", signHint: "(−) = the customer owes the factory · (+) = the factory owes them",
+    supplierRef: "Supplier's invoice no." },
   tr: { SELL: "Satış faturası", BUY: "Alış faturası", PAYMENT: "Tahsilat makbuzu", number: "No", date: "Tarih", time: "Saat", invoice: "Fatura no", order: "Sipariş no",
-    customer: "Müşteri", supplier: "Tedarikçi", phone: "Telefon", by: "Muhasebeci", note: "Notlar", no: "#", code: "Kod", name: "Ürün", name2: "İkinci ad",
+    customer: "Müşteri", phone: "Telefon", by: "Muhasebeci", note: "Notlar", no: "#", code: "Kod", name: "Ürün", name2: "İkinci ad",
     qty: "Miktar", unit: "Birim", price: "Fiyat", total: "Tutar", grand: "Genel toplam", paid: "Ödenen", owed: "Kalan", received: "Alınan tutar",
     forDoc: "Fatura", docTotal: "Fatura tutarı", paidSoFar: "Şimdiye kadar ödenen", sign1: "Teslim alan imza", sign2: "Muhasebeci imza", pcs: "adet", kg: "kg",
     customerCode: "Müşteri kodu", delivery: "Teslim yeri", discount: "İndirim", subtotal: "Ara toplam", invDiscount: "Fatura indirimi",
-    prevBalance: "Önceki bakiye", paidNow: "Şimdi ödenen", newBalance: "Yeni bakiye", signHint: "(−) = müşteri fabrikaya borçlu",
-    supplierCode: "Tedarikçi kodu", signHintBuy: "(−) = fabrika tedarikçiye borçlu", supplierRef: "Tedarikçi fatura no" },
+    prevBalance: "Önceki bakiye", paidNow: "Şimdi ödenen", newBalance: "Yeni bakiye", signHint: "(−) = müşteri fabrikaya borçlu · (+) = fabrika ona borçlu",
+    supplierRef: "Tedarikçi fatura no" },
 };
 type Key = keyof typeof L.en;
 const money = (n: number) => n.toLocaleString("en", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -42,7 +42,7 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
   const { date, time } = d;
   const hasLineDisc = d.lines.some((l) => (l.discount ?? 0) > 0);
   const cols = s.columns.filter((c) => c.show && (c.key !== "discount" || hasLineDisc));
-  const partyLabel = d.kind === "BUY" ? lb("supplier") : lb("customer");
+  const partyLabel = lb("customer"); // bought from or sold to: one customer account
   const wordsLang: WordsLang[] = lang === "ar-en" ? ["ar", "en"] : [lang];
   const wordsAmount = d.payment ? d.payment.amount : d.total;
   const w = { A4: 210, A5: 148 }[s.paper], h = { A4: 297, A5: 210 }[s.paper];
@@ -68,7 +68,7 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
     [lb("invoice"), f.invoice ? d.invoiceNo : null, true],
     [lb("order"), f.order ? d.orderNo : null, true],
     [partyLabel, f.customer ? d.party : null],
-    [lb(d.kind === "BUY" ? "supplierCode" : "customerCode"), f.customerCode ? d.customerCode : null, true],
+    [lb("customerCode"), f.customerCode ? d.customerCode : null, true],
     [lb("supplierRef"), d.kind === "BUY" && f.invoice ? d.supplierRef ?? null : null, true],
     [lb("delivery"), f.delivery ? d.delivery : null],
     [lb("phone"), f.phone ? d.phone : null, true],
@@ -140,7 +140,7 @@ export default function Receipt({ settings: s, banner, lang, data: d }: { settin
               {/* Customer account: what was owed before, this invoice, paid now, and what is owed now (− = customer owes) */}
               <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("prevBalance")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">{money(d.balance.before)} {d.currency}</td>}</tr>
               {f.paid && <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("paidNow")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">{money(d.balance.paidNow)} {d.currency}</td>}</tr>}
-              <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "2mm", fontWeight: 700, textAlign: "end" }}>{lb("newBalance")} <span style={{ fontWeight: 400, fontSize: "0.8em", color: "#555" }}>{lb(d.kind === "BUY" ? "signHintBuy" : "signHint")}</span></td>{cols.length > 1 && <td style={{ border, padding: "2mm", textAlign: "center", fontWeight: 700, fontSize: "1.1em", color: d.balance.after < 0 ? "#b91c1c" : undefined }} dir="ltr" data-testid="receipt-new-balance">{money(d.balance.after)} {d.currency}</td>}</tr>
+              <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "2mm", fontWeight: 700, textAlign: "end" }}>{lb("newBalance")} <span style={{ fontWeight: 400, fontSize: "0.8em", color: "#555" }}>{lb("signHint")}</span></td>{cols.length > 1 && <td style={{ border, padding: "2mm", textAlign: "center", fontWeight: 700, fontSize: "1.1em", color: d.balance.after < 0 ? "#b91c1c" : undefined }} dir="ltr" data-testid="receipt-new-balance">{money(d.balance.after)} {d.currency}</td>}</tr>
             </> : <>
             {f.paid && <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("paid")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center" }} dir="ltr">{money(d.paid)} {d.currency}</td>}</tr>}
             {f.owed && <tr><td colSpan={Math.max(cols.length - 1, 1)} style={{ border, padding: "1.5mm 2mm", textAlign: "end" }}>{lb("owed")}</td>{cols.length > 1 && <td style={{ border, padding: "1.5mm 2mm", textAlign: "center", fontWeight: 700 }} dir="ltr">{money(d.owed)} {d.currency}</td>}</tr>}

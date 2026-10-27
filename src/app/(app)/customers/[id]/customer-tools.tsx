@@ -3,23 +3,26 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Archive, ArchiveRestore, HandCoins, Pencil, Save } from "lucide-react";
+import { Archive, ArchiveRestore, Banknote, HandCoins, Pencil, Save } from "lucide-react";
 import { Alert, Button, Card, Input, Select } from "@/components/ui";
-import { archiveCustomerAction, receiveFromCustomerAction, updateCustomerAction } from "@/app/actions/customers";
+import { archiveCustomerAction, payToCustomerAction, receiveFromCustomerAction, updateCustomerAction } from "@/app/actions/customers";
 import SafeSelect, { fitSafe, type SafeOpt } from "../../cash/safe-select";
 import type { CurCode } from "../../cash/types";
 
 type C = { id: string; code: string; name: string; phone: string; address: string; note: string; archived: boolean };
 const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}-x`);
 
-/** Edit the customer, archive it, and receive money from it (into the safe). */
-export default function CustomerTools({ customer, canEdit, canReceive, safes = [] }: { customer: C; canEdit: boolean; canReceive: boolean; safes?: SafeOpt[] }) {
+/** Edit the customer, archive it, receive money from it (into the safe) or pay money to it (out of the safe). */
+export default function CustomerTools({ customer, canEdit, canReceive, canPay = false, safes = [] }: { customer: C; canEdit: boolean; canReceive: boolean; canPay?: boolean; safes?: SafeOpt[] }) {
   const t = useTranslations();
   const router = useRouter();
   const [edit, setEdit] = useState(false);
   const [v, setV] = useState(customer);
   const [pay, setPay] = useState({ currency: "IQD", amount: "", note: "", safe: "" });
   const safeId = fitSafe(safes, pay.currency as CurCode, pay.safe);
+  const [out, setOut] = useState({ currency: "IQD", amount: "", note: "", safe: "" });
+  const outSafeId = fitSafe(safes, out.currency as CurCode, out.safe);
+  const outKey = useRef<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [pending, start] = useTransition();
   const key = useRef<string | null>(null);
@@ -43,6 +46,14 @@ export default function CustomerTools({ customer, canEdit, canReceive, safes = [
     setPay({ ...pay, amount: "", note: "" }); setMsg({ ok: true, text: t("cust.received", { number: r.data.number }) }); router.refresh();
   });
 
+  const payOut = () => start(async () => {
+    outKey.current ??= newId();
+    const r = await payToCustomerAction({ customerId: v.id, currency: out.currency, safeId: outSafeId || undefined, amount: out.amount, note: out.note || undefined, submissionId: outKey.current });
+    if (!r.ok) return fail(r);
+    outKey.current = null;
+    setOut({ ...out, amount: "", note: "" }); setMsg({ ok: true, text: t("cust.paid", { number: r.data.number }) }); router.refresh();
+  });
+
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {canReceive && !customer.archived && (
@@ -56,6 +67,19 @@ export default function CustomerTools({ customer, canEdit, canReceive, safes = [
             <Input value={pay.note} onChange={(e) => setPay({ ...pay, note: e.target.value })} placeholder={t("sd.note")} aria-label={t("cust.receiveNote")} className="sm:col-span-2" />
           </div>
           <Button className="mt-2" onClick={receive} disabled={pending || !(Number(pay.amount) > 0)}><HandCoins className="size-4" /> {t("cust.receiveSave")}</Button>
+        </Card>
+      )}
+      {canPay && !customer.archived && (
+        <Card>
+          <h2 className="mb-2 flex items-center gap-2 font-semibold"><Banknote className="size-4" /> {t("cust.pay")}</h2>
+          <p className="mb-2 text-xs text-muted">{t("cust.payHint")}</p>
+          <div className="grid gap-2 sm:grid-cols-[7rem_1fr]">
+            <Select value={out.currency} onChange={(e) => setOut({ ...out, currency: e.target.value })} aria-label={t("cust.payCurrency")}><option>IQD</option><option>USD</option><option>EUR</option></Select>
+            <Input type="number" inputMode="decimal" min={0} step="any" value={out.amount} onChange={(e) => setOut({ ...out, amount: e.target.value })} placeholder={t("cash.amount")} aria-label={t("cust.payAmount")} dir="ltr" className="text-end" />
+            {safes.length > 0 && <div className="sm:col-span-2"><SafeSelect safes={safes} currency={out.currency as CurCode} value={outSafeId} onChange={(id) => setOut({ ...out, safe: id })} label={t("safe.outOfSafe")} /></div>}
+            <Input value={out.note} onChange={(e) => setOut({ ...out, note: e.target.value })} placeholder={t("sd.note")} aria-label={t("cust.payNote")} className="sm:col-span-2" />
+          </div>
+          <Button className="mt-2" onClick={payOut} disabled={pending || !(Number(out.amount) > 0)}><Banknote className="size-4" /> {t("cust.paySave")}</Button>
         </Card>
       )}
       {canEdit && (

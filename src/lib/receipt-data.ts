@@ -4,7 +4,6 @@ import { FACTORY_TZ } from "./time";
 import type { ReceiptData } from "./receipt-layout";
 import { docTotal, lineTotal } from "./money";
 import { customerBalance } from "./customers";
-import { supplierBalance } from "./suppliers";
 const pctLabel = (kind: string | null, v: unknown) => (kind === "PERCENT" && v !== null ? `${Number(v)}%` : undefined);
 /** Payments made together with the sale (same save) count as "paid now" on its receipt. */
 const SAME_SAVE_MS = 10_000;
@@ -20,7 +19,7 @@ function stamp(d: Date) {
 export async function docReceipt(id: string): Promise<ReceiptData | null> {
   const d = await db.stockDoc.findUnique({
     where: { id },
-    include: { order: { select: { number: true } }, customer: { select: { code: true } }, supplier: { select: { code: true } }, payments: { select: { amount: true, createdAt: true } }, lines: { orderBy: { createdAt: "asc" }, include: { product: { select: { code: true, name: true, name2: true, unit: true } } } } },
+    include: { order: { select: { number: true } }, customer: { select: { code: true } }, payments: { select: { amount: true, createdAt: true } }, lines: { orderBy: { createdAt: "asc" }, include: { product: { select: { code: true, name: true, name2: true, unit: true } } } } },
   });
   if (!d || (d.type !== "BUY" && d.type !== "SELL") || !d.currency) return null;
   const by = await db.user.findUnique({ where: { id: d.createdById }, select: { fullName: true } });
@@ -39,16 +38,16 @@ export async function docReceipt(id: string): Promise<ReceiptData | null> {
     const paidNow = r2(d.payments.filter((p) => p.createdAt.getTime() - d.createdAt.getTime() < SAME_SAVE_MS).reduce((s, p) => s + Number(p.amount), 0));
     balance = { before, paidNow, after: r2(before - total + paidNow) };
   }
-  // Supplier account: the same, from the factory's side (purchase −, paid +).
-  if (d.type === "BUY" && d.supplierId) {
-    const before = (await supplierBalance(d.supplierId, { before: d.createdAt, excludeDocId: d.id }))[d.currency];
+  // Bought from a customer: the purchase raises their balance (+ = the factory owes them), money paid to them lowers it.
+  if (d.type === "BUY" && d.customerId) {
+    const before = (await customerBalance(d.customerId, { before: d.createdAt, excludeDocId: d.id }))[d.currency];
     const paidNow = r2(d.payments.filter((p) => p.createdAt.getTime() - d.createdAt.getTime() < SAME_SAVE_MS).reduce((s, p) => s + Math.abs(Number(p.amount)), 0));
-    balance = { before, paidNow, after: r2(before - total + paidNow) };
+    balance = { before, paidNow, after: r2(before + total - paidNow) };
   }
   return {
     kind: d.type, number: d.number, ...stamp(d.createdAt), invoiceNo: d.invoiceNo, orderNo: d.order?.number ?? null, party: d.party, phone: d.phone,
     by: by?.fullName ?? null, note: d.note, currency: d.currency, lines, total, paid, owed: r2(Math.max(total - paid, 0)),
-    customerCode: d.customer?.code ?? d.supplier?.code ?? null, delivery: d.delivery, supplierRef: d.supplierRef,
+    customerCode: d.customer?.code ?? null, delivery: d.delivery, supplierRef: d.supplierRef,
     ...(d.discount !== null && Number(d.discount) > 0 ? { subtotal: Number(d.subtotal), discount: Number(d.discount), discountLabel: pctLabel(d.discountKind, d.discountValue) } : {}),
     balance,
   };

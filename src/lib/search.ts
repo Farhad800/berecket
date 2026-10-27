@@ -81,9 +81,6 @@ export async function globalSearch(raw: string, me: CurrentUser): Promise<Search
     ["customers", !(may("customers:view") && (may("stock:buy") || may("stock:sell") || may("cash:view"))) ? skip : db.customer.findMany({
       where: { OR: [{ code: ci(q) }, { name: ci(q) }, { phone: { contains: q } }] }, orderBy: { code: "asc" }, take: TAKE, select: { id: true, code: true, name: true, phone: true },
     }).then((r) => r.map((c) => ({ title: `${c.code} · ${c.name}`, sub: c.phone ?? "", href: `/customers/${c.id}`, exact: same(c.code, q) })))],
-    ["suppliers", !(may("suppliers:view") && (may("stock:buy") || may("stock:sell") || may("cash:view"))) ? skip : db.supplier.findMany({
-      where: { OR: [{ code: ci(q) }, { name: ci(q) }, { phone: { contains: q } }] }, orderBy: { code: "asc" }, take: TAKE, select: { id: true, code: true, name: true, phone: true },
-    }).then((r) => r.map((c) => ({ title: `${c.code} · ${c.name}`, sub: c.phone ?? "", href: `/suppliers/${c.id}`, exact: same(c.code, q) })))],
     ["cashEntries", !may("cash:view") ? skip : db.cashEntry.findMany({
       where: { OR: [{ number: ci(q) }, { party: ci(q) }, { note: ci(q) }] }, orderBy: [{ number: "desc" }, { amount: "asc" }], distinct: ["number"], take: TAKE, // an exchange is two entries with one number select: { id: true, number: true, party: true, note: true, amount: true, currency: true },
     }).then((r) => r.map((e) => ({ title: e.number, sub: [`${Number(e.amount).toLocaleString("en", { maximumFractionDigits: 2 })} ${e.currency}`, e.party, e.note].filter(Boolean).join(" · "), href: `/cash/${e.id}`, exact: same(e.number, q) })))],

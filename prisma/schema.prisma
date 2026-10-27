@@ -490,16 +490,14 @@ model StockDoc {
   number        String          @unique // IN-2026-0001, OUT-…, BUY-…, SAL-…
   type          StockDocType
   reason        String? // Input/Output: RETURN, TRANSFER, COUNT, DAMAGE, SAMPLE, OTHER
-  party         String? // Buy: supplier · Sell: customer (typed)
+  party         String? // the customer's name as it was (Buy: bought from · Sell: sold to)
   phone         String? // customer / supplier phone, printed on the receipt
   invoiceNo     String? // Sell: automatic INV-2026-0001 · Buy: the supplier's invoice number (typed)
   currency      Currency?
   orderId       String?
   order         Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  customerId    String? // Sell: the customer account the sale is booked to
+  customerId    String? // Buy / Sell: the customer account it is booked to (bought from or sold to)
   customer      Customer?       @relation(fields: [customerId], references: [id])
-  supplierId    String? // Buy: the supplier account the purchase is booked to
-  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
   supplierRef   String? // Buy: the supplier's own invoice number (typed); invoiceNo is our automatic PUR-2026-0001
   rate          Decimal?        @db.Decimal(18, 6) // Buy in USD/EUR: 1 USD/EUR = rate IQD on that day (the purchase's IQD value)
   delivery      String? // Sell: where the goods are delivered
@@ -517,7 +515,6 @@ model StockDoc {
   @@index([type, createdAt])
   @@index([orderId])
   @@index([customerId])
-  @@index([supplierId])
 }
 
 enum DiscountKind {
@@ -525,26 +522,8 @@ enum DiscountKind {
   AMOUNT
 }
 
-/// A supplier account (accountant, 27 Oct 2026): purchases are booked to it and payments made to it.
-/// Balance per currency = paid to the supplier − purchase totals (negative = the factory owes the supplier).
-model Supplier {
-  id         String      @id @default(cuid())
-  code       String      @unique // S-0001 (automatic, can be changed)
-  name       String
-  phone      String?
-  address    String?
-  note       String?
-  archivedAt DateTime?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  purchases  StockDoc[]
-  payments   CashEntry[]
-
-  @@index([name])
-}
-
-/// A customer account (accountant, 26 Oct 2026): sales are booked to it and payments received from it.
-/// Balance per currency = payments received − sales totals (negative = the customer owes the factory).
+/// A customer account (26–27 Oct 2026): the factory sells to it and buys from it (suppliers are customers too).
+/// Balance per currency = money received − money paid to them − sales + purchases (negative = they owe the factory).
 model Customer {
   id         String      @id @default(cuid())
   code       String      @unique // C-0001 (automatic, can be changed)
@@ -719,10 +698,8 @@ model CashEntry {
   category    ExpenseCategory? @relation(fields: [categoryId], references: [id])
   stockDocId  String?
   stockDoc    StockDoc?        @relation(fields: [stockDocId], references: [id], onDelete: SetNull)
-  customerId  String? // money received from (or paid back to) a customer account
+  customerId  String? // money received from, or paid to, a customer account
   customer    Customer?        @relation(fields: [customerId], references: [id])
-  supplierId  String? // money paid to (or back from) a supplier account
-  supplier    Supplier?        @relation(fields: [supplierId], references: [id])
   party       String?
   note        String?
   createdById String
@@ -733,7 +710,6 @@ model CashEntry {
   @@index([number])
   @@index([stockDocId])
   @@index([customerId])
-  @@index([supplierId])
   @@index([createdAt])
 }
 
