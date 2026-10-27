@@ -90,20 +90,22 @@ for bi, p in enumerate(by["PRODUCT"]):
         dvs[k].add(f"D{r}"); dvper.add(f"G{r}")
         rec[f"E{r}"] = f'=IF(D{r}="","",IFERROR(VLOOKUP(D{r},{RANGES[k][1]},2,FALSE),"?"))'
         rec[f"H{r}"] = f'=IF(D{r}="","",IFERROR(VLOOKUP(D{r},{RANGES[k][1]},3,FALSE),""))'
-        rec[f"I{r}"] = f'=IF(E{r}="","",{cost_of(f"E{r}")})'
+        where = {"STICKER": "Labels", "MATERIAL": "Raw materials", "PACKAGING": "Packaging"}[k]
+        rec[f"I{r}"] = f'=IF(E{r}="","",IF({cost_of(f"E{r}")}="","→ {where}: cost? · السعر؟",{cost_of(f"E{r}")}))'
         if k == "STICKER":
-            rec[f"J{r}"] = f'=IF(OR(I{r}="",I{r}="rate?"),"",I{r})'
+            rec[f"J{r}"] = f'=IF(ISNUMBER(I{r}),I{r},"")'
         elif k == "PACKAGING":
-            rec[f"J{r}"] = f'=IF(OR(I{r}="",I{r}="rate?",F{r}=""),"",IF(H{r}="kg",IFERROR(I{r}*VLOOKUP(E{r},Packaging!$A:$E,5,FALSE)/F{r},""),I{r}/F{r}))'
+            rec[f"J{r}"] = f'=IF(OR(NOT(ISNUMBER(I{r})),F{r}=""),"",IF(H{r}="kg",IF(N(VLOOKUP(E{r},Packaging!$A:$E,5,FALSE))>0,I{r}*VLOOKUP(E{r},Packaging!$A:$E,5,FALSE)/F{r},"bag weight? · وزن الكيس؟"),I{r}/F{r}))'
         else:
-            rec[f"J{r}"] = f'=IF(OR(I{r}="",I{r}="rate?",F{r}=""),"",IF(H{r}="kg",F{r}/1000*I{r},F{r}*I{r}))'
+            rec[f"J{r}"] = f'=IF(OR(NOT(ISNUMBER(I{r})),F{r}=""),"",IF(H{r}="kg",F{r}/1000*I{r},F{r}*I{r}))'
         for c in range(1, 12):
             cell = rec.cell(r, c)
             if c in (2, 3, 5, 8, 9, 10, 11): cell.fill = INFO
             elif bi % 2: cell.fill = BAND
             cell.border = Border(top=thick if j == 0 else None, left=thin, right=thin, bottom=thin)
         r += 1
-    rec[f"K{top}"] = f'=IF(COUNT(J{top}:J{r - 1})=0,"",ROUND(SUM(J{top}:J{r - 1}),2))'; rec[f"K{top}"].font = Font(bold=True)
+    rng_e, rng_j = f"E{top}:E{r - 1}", f"J{top}:J{r - 1}"
+    rec[f"K{top}"] = f'=IF(SUMPRODUCT(--({rng_e}<>""))=0,"",IF(SUMPRODUCT(--({rng_e}<>""))>COUNT({rng_j}),"costs missing · تكاليف ناقصة",ROUND(SUM({rng_j}),2)))'; rec[f"K{top}"].font = Font(bold=True)
 
 # ── how to use (last)
 h = wb.create_sheet("How to use"); h.column_dimensions["A"].width = 125
