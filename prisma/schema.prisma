@@ -498,6 +498,10 @@ model StockDoc {
   order         Order?          @relation(fields: [orderId], references: [id], onDelete: SetNull)
   customerId    String? // Sell: the customer account the sale is booked to
   customer      Customer?       @relation(fields: [customerId], references: [id])
+  supplierId    String? // Buy: the supplier account the purchase is booked to
+  supplier      Supplier?       @relation(fields: [supplierId], references: [id])
+  supplierRef   String? // Buy: the supplier's own invoice number (typed); invoiceNo is our automatic PUR-2026-0001
+  rate          Decimal?        @db.Decimal(18, 6) // Buy in USD/EUR: 1 USD/EUR = rate IQD on that day (the purchase's IQD value)
   delivery      String? // Sell: where the goods are delivered
   note          String?
   subtotal      Decimal?        @db.Decimal(16, 2) // Sell: sum of the lines after line discounts
@@ -513,11 +517,30 @@ model StockDoc {
   @@index([type, createdAt])
   @@index([orderId])
   @@index([customerId])
+  @@index([supplierId])
 }
 
 enum DiscountKind {
   PERCENT
   AMOUNT
+}
+
+/// A supplier account (accountant, 27 Oct 2026): purchases are booked to it and payments made to it.
+/// Balance per currency = paid to the supplier − purchase totals (negative = the factory owes the supplier).
+model Supplier {
+  id         String      @id @default(cuid())
+  code       String      @unique // S-0001 (automatic, can be changed)
+  name       String
+  phone      String?
+  address    String?
+  note       String?
+  archivedAt DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  purchases  StockDoc[]
+  payments   CashEntry[]
+
+  @@index([name])
 }
 
 /// A customer account (accountant, 26 Oct 2026): sales are booked to it and payments received from it.
@@ -698,6 +721,8 @@ model CashEntry {
   stockDoc    StockDoc?        @relation(fields: [stockDocId], references: [id], onDelete: SetNull)
   customerId  String? // money received from (or paid back to) a customer account
   customer    Customer?        @relation(fields: [customerId], references: [id])
+  supplierId  String? // money paid to (or back from) a supplier account
+  supplier    Supplier?        @relation(fields: [supplierId], references: [id])
   party       String?
   note        String?
   createdById String
@@ -708,6 +733,7 @@ model CashEntry {
   @@index([number])
   @@index([stockDocId])
   @@index([customerId])
+  @@index([supplierId])
   @@index([createdAt])
 }
 

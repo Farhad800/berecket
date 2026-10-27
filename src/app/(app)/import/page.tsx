@@ -28,6 +28,7 @@ export default async function ImportPage() {
             <li>{t("imp.tip3")}</li>
             <li>{t("imp.tip4")}</li>
           </ul>
+          {can(me, "products:create") && can(me, "products:edit") && <p className="mt-4 rounded-lg bg-surface-2 p-3 text-sm">{t("iw.fromImport")} <a href="/import/items" className="font-semibold text-brand-600 underline">{t("iw.button")}</a></p>}
         </Card>
       </div>
     </>

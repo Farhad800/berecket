@@ -31,7 +31,8 @@
     "stock": "Stock Movements",
     "cash": "Safe",
     "receipts": "Receipts",
-    "customers": "Customers"
+    "customers": "Customers",
+    "suppliers": "Suppliers"
   },
   "common": {
     "save": "Save",
@@ -156,7 +157,8 @@
       "audit": "Audit log",
       "stock": "Stock movements",
       "cash": "Safe (money)",
-      "receipts": "Receipts (print layouts)"
+      "receipts": "Receipts (print layouts)",
+      "suppliers": "Suppliers (accounts)"
     },
     "actions": {
       "view": "View",
@@ -585,6 +587,16 @@
       "layoutEdit": "Receipt layout changed",
       "layoutDelete": "Receipt layout deleted",
       "print": "Receipt printed"
+    },
+    "items": {
+      "import": "Items workbook uploaded",
+      "workbookDownload": "Items workbook downloaded"
+    },
+    "supplier": {
+      "create": "Supplier added",
+      "update": "Supplier changed",
+      "archive": "Supplier archived",
+      "restore": "Supplier restored"
     }
   },
   "sched": {
@@ -1353,7 +1365,8 @@
       "shipments": "Shipments",
       "receipts": "Warehouse receipts",
       "stockDocs": "Stock movements",
-      "cashEntries": "Safe"
+      "cashEntries": "Safe",
+      "suppliers": "Suppliers"
     }
   },
   "ui": {
@@ -1399,7 +1412,8 @@
       "ExpenseCategory": "Expense category",
       "ReceiptLayout": "Receipt layout",
       "Customer": "Customer",
-      "Safe": "Safe"
+      "Safe": "Safe",
+      "Supplier": "Supplier"
     }
   },
   "sys": {
@@ -1853,7 +1867,7 @@
     "help": {
       "INPUT": "Items coming in without money: returns, transfers, count corrections.",
       "OUTPUT": "Items going out without money: damage, samples, transfers, count corrections.",
-      "BUY": "Items bought from a supplier, with the price in IQD, USD or EUR.",
+      "BUY": "Items bought from a supplier account, with the price in IQD, USD or EUR. A discount only lowers what is owed to the supplier.",
       "SELL": "Items sold to a customer, with the price in IQD, USD or EUR. Link it to an order if there is one."
     },
     "reason": {
@@ -1872,7 +1886,13 @@
     "discountKind": "discount type",
     "subtotal": "Subtotal",
     "invoiceDiscount": "Discount on the whole invoice",
-    "invoiceDiscountKind": "Invoice discount type"
+    "invoiceDiscountKind": "Invoice discount type",
+    "supplierRef": "Supplier's invoice no.",
+    "purchaseAuto": "Our purchase number (PUR-…) is given automatically.",
+    "purchaseNo": "Purchase no.",
+    "buyRate": "Rate of the day",
+    "buyRateHint": "Typed by you. The supplier is owed in {cur}; the IQD value is for the records.",
+    "iqdValue": "Value in IQD"
   },
   "cash": {
     "intro": "Money in each safe, per currency. Sales and money put in add to a safe; purchases and expenses take from it.",
@@ -1899,8 +1919,8 @@
     "forDoc": "For document",
     "paidNow": "Paid now",
     "receivedNow": "Received now",
-    "paidHint": "Taken from the safe. Leave the rest to pay later.",
-    "receivedHint": "Goes into the safe. The rest stays as owed by the customer.",
+    "paidHint": "Taken from the safe. Starts at 0 — type what was really paid, or press Paid in full.",
+    "receivedHint": "Goes into the safe. Starts at 0 — type what was really received, or press Paid in full.",
     "stillOwed": "Still owed",
     "payAll": "Paid in full",
     "paidTitle": "Payment to the supplier",
@@ -2185,5 +2205,73 @@
     "valueOf": "Show the value of",
     "valueHint": "In IQD: what is in stock × its cost. {n} items in stock.",
     "valueNoCost": "{n} of them have no cost yet and are not counted"
+  },
+  "iw": {
+    "button": "Items workbook (Excel)",
+    "title": "Items workbook",
+    "subtitle": "All labels, raw materials, packaging and products in one Excel file: fill in what is missing, upload it back.",
+    "step1": "1. Download the workbook",
+    "step1Hint": "It already lists every item in the system with what is known about it, its stock now and its cost.",
+    "download": "Download items workbook",
+    "step2": "2. Upload the filled workbook",
+    "tip1": "Sheets: Labels, Raw materials, Packaging, Products, Made of & packaging. Add new items in new rows; leave Code empty for an automatic code.",
+    "tip2": "Rows are matched on their code. Empty cells never delete anything; grey columns are not read.",
+    "tip3": "Cost: price of 1 piece or 1 kg + currency; for USD / EUR also today's rate to IQD.",
+    "tipNoCost": "Costs are left out: your role doesn't see money.",
+    "tip4": "Counted stock: what is on the shelf now. The stock is set to it with one Input / Output count document. Empty = stock unchanged.",
+    "tip5": "Check file shows what will change and any mistakes by row before anything is saved.",
+    "costs": "Costs set or changed: {n}",
+    "stock": "Stock count: {up} items go up, {down} go down",
+    "save": "Save everything",
+    "done": "Saved.",
+    "fromImport": "To fill in labels, raw materials, packaging, costs and stock for items already in the system, use the",
+    "sheet": {
+      "STICKER": "Labels",
+      "MATERIAL": "Raw materials",
+      "PACKAGING": "Packaging",
+      "PRODUCT": "Products",
+      "RECIPE": "Made of & packaging"
+    },
+    "choose": "Choose the filled workbook (.xlsx)"
+  },
+  "supp": {
+    "intro": "Supplier accounts: each purchase lowers the balance (the factory owes the supplier, shown with −), each payment to the supplier raises it.",
+    "choose": "Choose the supplier…",
+    "new": "New supplier",
+    "add": "Add supplier",
+    "name": "Supplier name",
+    "newPhone": "New supplier's phone",
+    "address": "Address",
+    "code": "Supplier code",
+    "codeAuto": "Code (empty = automatic S-0001)",
+    "totalOwed": "We owe suppliers ({cur})",
+    "search": "Code, name, phone or address…",
+    "all": "All suppliers",
+    "owing": "We owe them",
+    "none": "No suppliers yet.",
+    "salesN": "{n} purchases",
+    "newSale": "New purchase",
+    "saved": "Supplier saved.",
+    "balance": "Balance ({cur})",
+    "owesUs": "The factory owes the supplier",
+    "weOwe": "Paid in advance",
+    "settled": "Nothing owed",
+    "statement": "Account statement",
+    "noMoves": "No purchases or payments yet.",
+    "when": "When",
+    "what": "Document",
+    "amount": "Amount",
+    "runBalance": "Balance",
+    "pay": "Pay the supplier",
+    "payHint": "Money paid to this supplier leaves the chosen safe and raises the balance. More than owed is allowed — that is money paid in advance (+).",
+    "payAmount": "Amount paid",
+    "payNote": "Payment note",
+    "paySave": "Save payment",
+    "paid": "{number} saved. The money left the safe.",
+    "edit": "Edit supplier",
+    "kind": {
+      "sale": "Purchase",
+      "payment": "Payment"
+    }
   }
 }

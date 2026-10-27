@@ -42,6 +42,10 @@ const schema = z.object({
   orderId: z.string().max(40).optional(),
   /** Sell: the customer account, where the goods go, and a discount on the whole invoice. */
   customerId: z.string().max(40).optional(),
+  /** Buy: the supplier account, the supplier's own invoice number, and (USD/EUR) the day's rate to IQD. */
+  supplierId: z.string().max(40).optional(),
+  supplierRef: z.string().trim().max(80).optional(),
+  rate: z.coerce.number().positive("Type the rate: 1 USD/EUR = how many IQD").max(10_000_000).refine((n) => maxDecimals(n, 6), "At most 6 decimals in the rate").optional(),
   delivery: z.string().trim().max(300).optional(),
   discount,
   note: z.string().trim().max(1000).optional(),
@@ -63,18 +67,20 @@ export async function saveStockDocAction(input: unknown) {
     const t = raw.type;
     if (!money(t) && !raw.reason) throw new UserError("Choose the reason.");
     if (t === "SELL" && !raw.customerId) throw new UserError("Choose the customer.");
-    if (t !== "SELL" && (raw.discount || raw.lines.some((l) => l.discount?.value))) throw new UserError("Discounts are only for sales.");
+    if (t === "BUY" && !raw.supplierId) throw new UserError("Choose the supplier.");
+    if (!money(t) && (raw.discount || raw.lines.some((l) => l.discount?.value))) throw new UserError("Discounts are only for purchases and sales.");
     if (money(t)) {
-      if (t === "BUY" && !raw.party) throw new UserError("Type the supplier's name.");
       if (!raw.currency) throw new UserError("Choose the currency (IQD, USD or EUR).");
+      if (t === "BUY" && raw.currency !== "IQD" && !raw.rate) throw new UserError(`Type today's rate: 1 ${raw.currency} = how many IQD?`);
       if (raw.lines.some((l) => l.unitPrice === undefined)) throw new UserError("Enter the price for every line.");
     }
     if (raw.orderId && t !== "SELL") throw new UserError("Only a sale can be linked to an order.");
     const ids = raw.lines.map((l) => l.itemId);
     if (new Set(ids).size !== ids.length) throw new UserError("The same item is on two lines. Put it on one line.");
 
-    // Sell: line discounts, then the invoice discount (one rule shared with the form and the receipt).
-    const sale = t === "SELL" ? saleTotals(raw.lines.map((l) => ({ qty: l.qty, price: l.unitPrice ?? 0, discount: l.discount })), raw.discount) : null;
+    // Buy / Sell: line discounts, then the invoice discount (one rule shared with the form and the receipt).
+    // On a purchase the discount only lowers what is owed to the supplier; the line price stays the bought price.
+    const sale = money(t) ? saleTotals(raw.lines.map((l) => ({ qty: l.qty, price: l.unitPrice ?? 0, discount: l.discount })), raw.discount) : null;
     if (sale) {
       raw.lines.forEach((l, i) => { const p = discountProblem(sale.lines[i].gross, l.discount); if (p) throw new UserError(`Line ${i + 1}: ${p}`); });
       const p = discountProblem(sale.subtotal, raw.discount); if (p) throw new UserError(`Invoice discount: ${p}`);
@@ -96,6 +102,12 @@ export async function saveStockDocAction(input: unknown) {
       if (raw.orderId && !(await tx.order.count({ where: { id: raw.orderId } }))) throw new UserError("That order no longer exists.");
       // Sell: booked to a customer account; the name/phone are copied so the document keeps them as they were.
       let party = raw.party || null, phone = money(t) ? raw.phone || null : null, invoiceNo = raw.invoiceNo || null;
+      if (t === "BUY") {
+        const sp = await tx.supplier.findFirst({ where: { id: raw.supplierId, archivedAt: null } });
+        if (!sp) throw new UserError("That supplier no longer exists. Reload the page.");
+        party = sp.name; phone = raw.phone || sp.phone;
+        invoiceNo = await nextNumber("purchaseInvoice", tx); // automatic purchase number (PUR-2026-0001)
+      }
       if (t === "SELL") {
         const c = await tx.customer.findFirst({ where: { id: raw.customerId, archivedAt: null } });
         if (!c) throw new UserError("That customer no longer exists. Reload the page.");
@@ -107,8 +119,9 @@ export async function saveStockDocAction(input: unknown) {
         data: {
           number, type: t, reason: money(t) ? null : raw.reason!, party, phone, invoiceNo,
           currency: money(t) ? raw.currency! : null, orderId: raw.orderId || null, note: raw.note || null, total, createdById: me.id,
+          ...(t === "BUY" ? { supplierId: raw.supplierId!, supplierRef: raw.supplierRef || raw.invoiceNo || null, rate: raw.currency !== "IQD" ? raw.rate! : null } : {}),
           ...(sale ? {
-            customerId: raw.customerId!, delivery: raw.delivery || null, subtotal: sale.subtotal,
+            ...(t === "SELL" ? { customerId: raw.customerId!, delivery: raw.delivery || null } : {}), subtotal: sale.subtotal,
             discountKind: raw.discount?.value ? raw.discount.kind : null, discountValue: raw.discount?.value ? raw.discount.value : null, discount: sale.discount || null,
           } : {}),
         },
@@ -125,12 +138,12 @@ export async function saveStockDocAction(input: unknown) {
         if (t === "BUY") await takeOut(tx, safe, raw.currency as Cur, paid);
         await tx.cashEntry.create({
           data: { number: await nextNumber(t === "SELL" ? "cashReceive" : "cashPay", tx), kind: t === "SELL" ? "SALE" : "PURCHASE", safeId: safe.id, currency: raw.currency!,
-            amount: t === "SELL" ? paid : -paid, stockDocId: doc.id, customerId: t === "SELL" ? raw.customerId! : null, party, createdById: me.id },
+            amount: t === "SELL" ? paid : -paid, stockDocId: doc.id, customerId: t === "SELL" ? raw.customerId! : null, supplierId: t === "BUY" ? raw.supplierId! : null, party, createdById: me.id },
         });
       }
       await audit({
         userId: me.id, action: `stock.${t.toLowerCase()}`, entityType: "StockDoc", entityId: doc.id, reason: raw.note ?? null,
-        after: { number, party, invoice: invoiceNo, currency: raw.currency ?? null, ...(sale ? { subtotal: sale.subtotal, discount: sale.discount, delivery: raw.delivery ?? null } : {}), total, paid: money(t) ? paid : null, reason: raw.reason ?? null, lines: raw.lines.map((l) => `${item(l.itemId).code} × ${l.qty}${l.unitPrice !== undefined && money(t) ? ` @ ${l.unitPrice}` : ""}`) },
+        after: { number, party, invoice: invoiceNo, ...(t === "BUY" ? { supplierInvoice: raw.supplierRef ?? null, rate: raw.rate ?? null } : {}), currency: raw.currency ?? null, ...(sale ? { subtotal: sale.subtotal, discount: sale.discount, delivery: raw.delivery ?? null } : {}), total, paid: money(t) ? paid : null, reason: raw.reason ?? null, lines: raw.lines.map((l) => `${item(l.itemId).code} × ${l.qty}${l.unitPrice !== undefined && money(t) ? ` @ ${l.unitPrice}` : ""}`) },
       }, tx);
       const short = isIn(t) ? [] : await shortages(ids, tx);
       if (money(t)) {

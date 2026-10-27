@@ -31,7 +31,8 @@
     "stock": "Stok Hareketleri",
     "cash": "Kasa",
     "receipts": "Makbuzlar",
-    "customers": "Müşteriler"
+    "customers": "Müşteriler",
+    "suppliers": "Tedarikçiler"
   },
   "common": {
     "save": "Kaydet",
@@ -156,7 +157,8 @@
       "audit": "Denetim kaydı",
       "stock": "Stok hareketleri",
       "cash": "Kasa (para)",
-      "receipts": "Makbuzlar (baskı düzenleri)"
+      "receipts": "Makbuzlar (baskı düzenleri)",
+      "suppliers": "Tedarikçiler (hesaplar)"
     },
     "actions": {
       "view": "Görüntüle",
@@ -585,6 +587,16 @@
       "layoutEdit": "Makbuz düzeni değiştirildi",
       "layoutDelete": "Makbuz düzeni silindi",
       "print": "Makbuz yazdırıldı"
+    },
+    "items": {
+      "import": "Kalem dosyası yüklendi",
+      "workbookDownload": "Kalem dosyası indirildi"
+    },
+    "supplier": {
+      "create": "Tedarikçi eklendi",
+      "update": "Tedarikçi değiştirildi",
+      "archive": "Tedarikçi arşivlendi",
+      "restore": "Tedarikçi geri alındı"
     }
   },
   "sched": {
@@ -1353,7 +1365,8 @@
       "shipments": "Sevkiyatlar",
       "receipts": "Depo kabulleri",
       "stockDocs": "Stok hareketleri",
-      "cashEntries": "Kasa"
+      "cashEntries": "Kasa",
+      "suppliers": "Tedarikçiler"
     }
   },
   "ui": {
@@ -1399,7 +1412,8 @@
       "ExpenseCategory": "Gider kategorisi",
       "ReceiptLayout": "Makbuz düzeni",
       "Customer": "Müşteri",
-      "Safe": "Kasa"
+      "Safe": "Kasa",
+      "Supplier": "Tedarikçi"
     }
   },
   "sys": {
@@ -1853,7 +1867,7 @@
     "help": {
       "INPUT": "Parasız giren kalemler: iadeler, transferler, sayım düzeltmeleri.",
       "OUTPUT": "Parasız çıkan kalemler: hasar, numune, transfer, sayım düzeltmeleri.",
-      "BUY": "Tedarikçiden alınan kalemler, IQD, USD veya EUR fiyatla.",
+      "BUY": "Bir tedarikçi hesabından alınan kalemler, IQD, USD veya EUR fiyatla. İndirim yalnızca tedarikçiye olan borcu düşürür.",
       "SELL": "Müşteriye satılan kalemler, IQD, USD veya EUR fiyatla. Varsa bir siparişe bağlayın."
     },
     "reason": {
@@ -1872,7 +1886,13 @@
     "discountKind": "indirim türü",
     "subtotal": "Ara toplam",
     "invoiceDiscount": "Faturanın tamamına indirim",
-    "invoiceDiscountKind": "Fatura indirimi türü"
+    "invoiceDiscountKind": "Fatura indirimi türü",
+    "supplierRef": "Tedarikçi fatura no",
+    "purchaseAuto": "Alış numaramız (PUR-…) otomatik verilir.",
+    "purchaseNo": "Alış no",
+    "buyRate": "Günün kuru",
+    "buyRateHint": "Sizin yazdığınız. Tedarikçiye {cur} borçlanılır; IQD değeri kayıt içindir.",
+    "iqdValue": "IQD değeri"
   },
   "cash": {
     "intro": "Her kasadaki para, para birimine göre. Satışlar ve yatırılan para kasaya eklenir; alımlar ve giderler kasadan çıkar.",
@@ -1899,8 +1919,8 @@
     "forDoc": "Belge",
     "paidNow": "Şimdi ödenen",
     "receivedNow": "Şimdi alınan",
-    "paidHint": "Kasadan alınır. Kalanı sonra ödeyin.",
-    "receivedHint": "Kasaya girer. Kalanı müşterinin borcu olarak kalır.",
+    "paidHint": "Kasadan alınır. 0'dan başlar — gerçekten ödeneni yazın veya Tamamı ödendi'ye basın.",
+    "receivedHint": "Kasaya girer. 0'dan başlar — gerçekten alınanı yazın veya Tamamı ödendi'ye basın.",
     "stillOwed": "Kalan borç",
     "payAll": "Tamamı ödendi",
     "paidTitle": "Tedarikçiye ödeme",
@@ -2185,5 +2205,73 @@
     "valueOf": "Değerini göster",
     "valueHint": "IQD olarak: stoktaki miktar × maliyeti. Stokta {n} kalem.",
     "valueNoCost": "{n} tanesinin henüz maliyeti yok, sayılmadı"
+  },
+  "iw": {
+    "button": "Kalem çalışma kitabı (Excel)",
+    "title": "Kalem çalışma kitabı",
+    "subtitle": "Tüm etiketler, hammaddeler, ambalaj ve ürünler tek bir Excel dosyasında: eksikleri doldurun, geri yükleyin.",
+    "step1": "1. Dosyayı indirin",
+    "step1Hint": "Sistemdeki her kalemi bilgileri, şu anki stoku ve maliyetiyle birlikte içerir.",
+    "download": "Kalem dosyasını indir",
+    "step2": "2. Doldurulmuş dosyayı yükleyin",
+    "tip1": "Sayfalar: Etiketler, Hammaddeler, Ambalaj, Ürünler, İçerik ve ambalaj. Yeni kalemleri yeni satırlara ekleyin; otomatik kod için Kodu boş bırakın.",
+    "tip2": "Satırlar koduna göre eşleşir. Boş hücreler hiçbir şeyi silmez; gri sütunlar okunmaz.",
+    "tip3": "Maliyet: 1 adet veya 1 kg fiyatı + para birimi; USD / EUR için bugünkü IQD kuru da.",
+    "tipNoCost": "Maliyetler yok: rolünüz parayı göremez.",
+    "tip4": "Sayılan stok: rafta şu an olan. Stok, bir Giriş / Çıkış sayım belgesiyle buna ayarlanır. Boş = değişmez.",
+    "tip5": "Dosyayı kontrol et, kaydetmeden önce neyin değişeceğini ve satır satır hataları gösterir.",
+    "costs": "Belirlenen veya değişen maliyet: {n}",
+    "stock": "Sayım: {up} kalem artar, {down} azalır",
+    "save": "Hepsini kaydet",
+    "done": "Kaydedildi.",
+    "fromImport": "Sistemdeki kalemlerin etiket, hammadde, ambalaj, maliyet ve stoklarını doldurmak için kullanın:",
+    "sheet": {
+      "STICKER": "Etiketler",
+      "MATERIAL": "Hammaddeler",
+      "PACKAGING": "Ambalaj",
+      "PRODUCT": "Ürünler",
+      "RECIPE": "İçerik ve ambalaj"
+    },
+    "choose": "Doldurulmuş dosyayı seçin (.xlsx)"
+  },
+  "supp": {
+    "intro": "Tedarikçi hesapları: her alış bakiyeyi düşürür (fabrika tedarikçiye borçlu, − ile gösterilir), tedarikçiye her ödeme artırır.",
+    "choose": "Tedarikçiyi seçin…",
+    "new": "Yeni tedarikçi",
+    "add": "Tedarikçiyi ekle",
+    "name": "Tedarikçi adı",
+    "newPhone": "Yeni tedarikçinin telefonu",
+    "address": "Adres",
+    "code": "Tedarikçi kodu",
+    "codeAuto": "Kod (boş = otomatik S-0001)",
+    "totalOwed": "Tedarikçilere borcumuz ({cur})",
+    "search": "Kod, ad, telefon veya adres…",
+    "all": "Tüm tedarikçiler",
+    "owing": "Borçlu olduklarımız",
+    "none": "Henüz tedarikçi yok.",
+    "salesN": "{n} alış",
+    "newSale": "Yeni alış",
+    "saved": "Tedarikçi kaydedildi.",
+    "balance": "Bakiye ({cur})",
+    "owesUs": "Fabrika tedarikçiye borçlu",
+    "weOwe": "Peşin ödendi",
+    "settled": "Borç yok",
+    "statement": "Hesap ekstresi",
+    "noMoves": "Henüz alış veya ödeme yok.",
+    "when": "Ne zaman",
+    "what": "Belge",
+    "amount": "Tutar",
+    "runBalance": "Bakiye",
+    "pay": "Tedarikçiye öde",
+    "payHint": "Bu tedarikçiye ödenen para seçilen kasadan çıkar ve bakiyeyi artırır. Borçtan fazlası olabilir — bu peşin ödemedir (+).",
+    "payAmount": "Ödenen tutar",
+    "payNote": "Ödeme notu",
+    "paySave": "Ödemeyi kaydet",
+    "paid": "{number} kaydedildi. Para kasadan çıktı.",
+    "edit": "Tedarikçiyi düzenle",
+    "kind": {
+      "sale": "Alış",
+      "payment": "Ödeme"
+    }
   }
 }

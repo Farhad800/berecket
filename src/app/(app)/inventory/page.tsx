@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { formatDateTime, formatNumber } from "@/lib/time";
 import { getStock } from "@/lib/stock";
 import { MOVE_TONE } from "@/lib/tones";
-import { ArrowLeftRight, PackagePlus } from "lucide-react";
+import { ArrowLeftRight, FileSpreadsheet, PackagePlus } from "lucide-react";
 import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import StockTable from "./stock-table";
@@ -31,6 +31,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader title={t("nav.inventory")} subtitle={t("wh.readOnlyNote")} actions={<>
+        {can(me, "products:create") && can(me, "products:edit") && <LinkButton href="/import/items" variant="secondary"><FileSpreadsheet className="size-4" /> {t("iw.button")}</LinkButton>}
         {can(me, "products:create") && <LinkButton href={`/products/new-item${tab === "stickers" ? "?kind=STICKER" : tab === "materials" ? "?kind=MATERIAL" : tab === "packaging" ? "?kind=PACKAGING" : ""}`} variant="secondary"><PackagePlus className="size-4" /> {t("item.newButton")}</LinkButton>}
         {can(me, "stock:view") && <LinkButton href="/stock"><ArrowLeftRight className="size-4" /> {t("nav.stock")}</LinkButton>}
       </>} />
