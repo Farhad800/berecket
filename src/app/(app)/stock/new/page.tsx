@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
-import { can, pageUser } from "@/lib/auth";
+import { canSeeMoney, can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getStock } from "@/lib/stock";
 import { PageHeader } from "@/components/ui";
@@ -57,6 +57,7 @@ export default async function NewStockDocPage({ searchParams }: { searchParams: 
         suppliers={suppliers}
         initialSupplier={suppliers.some((c) => c.id === sp.supplier) ? sp.supplier! : ""}
         safes={safes}
+        canCost={canSeeMoney(me)}
       />
     </>
   );

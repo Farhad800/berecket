@@ -2162,8 +2162,8 @@
     "allSections": "Tümü"
   },
   "cost": {
-    "title": "Maliyet",
-    "hint": "Bir birimin fiyatı, ödenen para biriminde. USD veya EUR için bugünkü kuru da yazın — ürün maliyetleri her zaman IQD ile hesaplanır.",
+    "title": "Başlangıç maliyeti",
+    "hint": "Ödediğiniz para biriminde bir birimin fiyatı. USD veya EUR için günün kurunu da yazın. Partiler başlamadan önce depoda olan stokun ve parti kalmadığında alınan stokun maliyetidir. Her alış kendi fiyatı ve kuruyla kendi partisini oluşturur.",
     "onePiece": "1 adet",
     "price": "{per} fiyatı",
     "priceLabel": "Fiyat",
@@ -2179,7 +2179,7 @@
     "change": "Maliyeti değiştir",
     "save": "Maliyeti kaydet",
     "productTitle": "Ürün maliyeti",
-    "productHint": "Üretilen adet için: üretimin stoktan aldığı miktarlar — tam koli ve torbalar (başlanan sayılır), naylon kg olarak — her kalemin IQD maliyetiyle çarpılır.",
+    "productHint": "Üretilen adet için: üretimin stoktan aldığı aynı miktarlar — tam koliler ve torbalar (başlanan sayılır), naylon kg ile — stoktaki en eski partilerden (sonra son maliyetle) hesaplanır, IQD.",
     "missing": "Henüz maliyeti olmayanlar: {items} — toplama dahil değil.",
     "noRecipe": "Bu ürünün henüz etiketi, içeriği veya ambalajı yok; maliyeti hesaplanamaz.",
     "perPiece": "Adet başına",
@@ -2189,7 +2189,7 @@
     "colUnit": "Birim maliyet (IQD)",
     "partial": "Bazı kalemlerin henüz maliyeti yok",
     "stockValue": "Stok değeri",
-    "tableHint": "Her ürünün son üretimine göre adet maliyeti (henüz üretilmediyse bir tam koli): etiket + malzeme + tam koli ve torbalar, IQD. * = bazı kalemlerinin henüz maliyeti yok.",
+    "tableHint": "Birim maliyet = stokta kalan partiler (her biri kendi maliyetiyle) ÷ stok. Stok yoksa: son maliyet. * = bir kısmının henüz maliyeti yok.",
     "why": {
       "label": "etiket",
       "made": "içerik",
@@ -2272,6 +2272,40 @@
     "kind": {
       "sale": "Alış",
       "payment": "Ödeme"
+    },
+    "signHint": "− = fabrika tedarikçiye borçlu"
+  },
+  "lot": {
+    "title": "Partiler (önce en eski kullanılır)",
+    "hint": "Her alış, üretim partisi veya maliyetli giriş, IQD cinsinden kendi maliyetine sahip bir partidir (fiyat × o günün kuru). Üretim, satış ve diğer tüm çıkışlar önce en eski partiden alır.",
+    "inStock": "Stoktaki {qty} değeri",
+    "noCost": "{qty} maliyetsiz",
+    "none": "Henüz parti yok.",
+    "date": "Tarih",
+    "from": "Kaynak",
+    "qtyIn": "Gelen",
+    "left": "Kalan",
+    "price": "Fiyat × kur",
+    "unitCost": "Maliyet / {per} (IQD)",
+    "usedUp": "bitti",
+    "next": "sıradaki",
+    "opening": "{date} stoku (başlangıç maliyeti)",
+    "production": "Üretim {day} · vardiya {shift}",
+    "productionGone": "Üretim (kayıt silindi)",
+    "runCost": "Gerçek maliyet: {piece} IQD / adet · parti {run} IQD",
+    "inputCurrency": "Maliyet para birimi (isteğe bağlı)",
+    "inputHint": "Bir satıra maliyet yazarsanız o maliyetle bir parti olur; boş satırlar malzemenin başlangıç maliyetini kullanır.",
+    "costPerUnit": "Birim maliyet",
+    "startingPh": "başlangıç maliyeti",
+    "startingCost": "başlangıç maliyeti",
+    "src": {
+      "BUY": "Alış",
+      "INPUT": "Giriş",
+      "RETURN": "Üretimden iade",
+      "OTHER": "Eklendi (başlangıç maliyeti)",
+      "OPENING": "Açılış stoku",
+      "PRODUCTION": "Üretim",
+      "SHORT": "Stoksuz alındı"
     }
   }
 }

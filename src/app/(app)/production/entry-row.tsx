@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { fmtIqd } from "@/lib/cost";
 import { Pencil } from "lucide-react";
 import { useFormAction } from "@/components/use-form-action";
 import { Alert, Badge, Button, Input } from "@/components/ui";
 import { correctEntryAction } from "@/app/actions/production";
 
-type E = { id: string; day: string; shift: string; product: string; quantity: number; qcStatus: string; by: string; locked: boolean };
+type E = { id: string; day: string; shift: string; product: string; quantity: number; qcStatus: string; by: string; locked: boolean; cost?: { run: number; perPiece: number; complete: boolean } | null };
 const TONE = { NOT_INSPECTED: "gray", APPROVED: "green", REJECTED: "red" } as const;
 
 /** One production entry, with an inline "correct a typing mistake" form. */
@@ -23,6 +24,7 @@ export default function EntryRow({ e, showDay, canFix }: { e: E; showDay: boolea
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{e.product}</p>
           <p className="text-xs text-muted">{showDay && `${t("rep.col.shift")} ${e.shift} · `}{e.by}</p>
+          {e.cost && <p className="text-xs text-muted" data-testid="run-real-cost"><span dir="ltr">{t("lot.runCost", { piece: fmtIqd(e.cost.perPiece), run: fmtIqd(e.cost.run) })}</span>{!e.cost.complete && <span className="text-amber-600" title={t("cost.partial")}> *</span>}</p>}
         </div>
         <span className="text-end text-base font-bold tabular-nums">{e.quantity.toLocaleString("en")}</span>
         <span className="col-start-2 md:col-start-auto">

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
-import { can, pageUser } from "@/lib/auth";
+import { can, canSeeMoney, pageUser } from "@/lib/auth";
+import { fifoState } from "@/lib/fifo";
 import { db } from "@/lib/db";
 import { currentShift, formatDate, formatNumber } from "@/lib/time";
 import { dayValue, todayYmd } from "@/lib/production";
@@ -35,7 +36,13 @@ export default async function ProductionPage({ searchParams }: { searchParams: P
   const byShift = Object.fromEntries(SHIFTS.map((s) => [s, entries.filter((e) => e.shift === s).reduce((a, e) => a + e.quantity, 0)]));
   const shiftNow = currentShift();
   const canFix = can(me, "production:edit");
+  const fifo = canSeeMoney(me) ? await fifoState() : null; // the real cost of each run, from the batches it used
+  const runCost = (id: string) => {
+    const c = fifo?.entryCost(id);
+    return c && c.pieces > 0 ? { run: c.cost, perPiece: c.cost / c.pieces, complete: c.complete } : null;
+  };
   const row = (e: (typeof entries)[number]) => ({
+    cost: runCost(e.id),
     id: e.id, day: formatDate(e.day, locale), shift: e.shift, product: `${e.product.code} · ${e.product.name}`, quantity: e.quantity,
     qcStatus: e.qcStatus, by: who(e.createdById), locked: e._count.inspections > 0,
   });

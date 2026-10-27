@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
-import { MONEY_PERMS, requirePermission } from "@/lib/auth";
+import { MONEY_PERMS, canSeeMoney, requirePermission } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 import { audit } from "@/lib/audit";
 import { nextNumber } from "@/lib/numbering";
@@ -74,6 +74,13 @@ export async function saveStockDocAction(input: unknown) {
       if (t === "BUY" && raw.currency !== "IQD" && !raw.rate) throw new UserError(`Type today's rate: 1 ${raw.currency} = how many IQD?`);
       if (raw.lines.some((l) => l.unitPrice === undefined)) throw new UserError("Enter the price for every line.");
     }
+    // Input: an optional cost per line (price, currency, rate) — that batch's cost; empty = the item's starting cost.
+    const costed = t === "INPUT" && canSeeMoney(me) && raw.lines.some((l) => l.unitPrice !== undefined);
+    if (t === "INPUT" && !costed) raw.lines.forEach((l) => { l.unitPrice = undefined; });
+    if (costed) {
+      raw.currency ??= "IQD";
+      if (raw.currency !== "IQD" && !raw.rate) throw new UserError(`Type today's rate: 1 ${raw.currency} = how many IQD?`);
+    }
     if (raw.orderId && t !== "SELL") throw new UserError("Only a sale can be linked to an order.");
     const ids = raw.lines.map((l) => l.itemId);
     if (new Set(ids).size !== ids.length) throw new UserError("The same item is on two lines. Put it on one line.");
@@ -118,7 +125,7 @@ export async function saveStockDocAction(input: unknown) {
       const doc = await tx.stockDoc.create({
         data: {
           number, type: t, reason: money(t) ? null : raw.reason!, party, phone, invoiceNo,
-          currency: money(t) ? raw.currency! : null, orderId: raw.orderId || null, note: raw.note || null, total, createdById: me.id,
+          currency: money(t) || costed ? raw.currency! : null, ...(costed && raw.currency !== "IQD" ? { rate: raw.rate! } : {}), orderId: raw.orderId || null, note: raw.note || null, total, createdById: me.id,
           ...(t === "BUY" ? { supplierId: raw.supplierId!, supplierRef: raw.supplierRef || raw.invoiceNo || null, rate: raw.currency !== "IQD" ? raw.rate! : null } : {}),
           ...(sale ? {
             ...(t === "SELL" ? { customerId: raw.customerId!, delivery: raw.delivery || null } : {}), subtotal: sale.subtotal,
@@ -129,7 +136,7 @@ export async function saveStockDocAction(input: unknown) {
       await tx.stockMovement.createMany({
         data: raw.lines.map((l, i) => ({
           productId: l.itemId, type: t, qty: isIn(t) ? l.qty : -l.qty, docId: doc.id, reference: number,
-          unitPrice: money(t) ? l.unitPrice! : null, reason: raw.note || null, createdById: me.id,
+          unitPrice: money(t) ? l.unitPrice! : costed ? l.unitPrice ?? null : null, reason: raw.note || null, createdById: me.id,
           ...(sale && l.discount?.value ? { discountKind: l.discount.kind, discountValue: l.discount.value, discount: sale.lines[i].discount } : {}),
         })),
       });
