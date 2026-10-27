@@ -90,7 +90,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
               ))}
             </ul>
           )}
-          {balance !== null && <p className="mt-3 text-sm" data-testid="customer-balance">{t("cust.balanceNow")}: <b dir="ltr" className={balance < 0 ? "text-red-600" : ""}>{fmtMoney(balance)} {d.currency}</b> <span className="text-xs text-muted">({t("cust.signHint")})</span></p>}
+          {balance !== null && <p className="mt-3 text-sm" data-testid="customer-balance">{t("cust.balanceNow")}: <b dir="ltr" className={balance < 0 ? "text-red-600" : ""}>{fmtMoney(balance)} {d.currency}</b> <span className="text-xs text-muted">({t(sell ? "cust.signHint" : "supp.signHint")})</span></p>}
           {owed > 0 && mayPay && <PayForm docId={d.id} owed={owed} currency={d.currency!} sell={sell} safes={await listSafes(can(me, "cash:view"))} />}
         </Card>
       )}

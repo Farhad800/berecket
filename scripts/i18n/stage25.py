@@ -40,6 +40,7 @@ group("supp", {
     "payNote": ("Payment note", "ملاحظة الدفعة", "Ödeme notu"),
     "paySave": ("Save payment", "حفظ الدفعة", "Ödemeyi kaydet"),
     "paid": ("{number} saved. The money left the safe.", "حُفظ {number}. خرج المال من الخزنة.", "{number} kaydedildi. Para kasadan çıktı."),
+    "signHint": ("− = the factory owes the supplier", "− يعني أن المعمل مدين للمورد", "− = fabrika tedarikçiye borçlu"),
     "edit": ("Edit supplier", "تعديل المورد", "Tedarikçiyi düzenle"),
 })
 group("supp.kind", {"sale": ("Purchase", "شراء", "Alış"), "payment": ("Payment", "دفعة", "Ödeme")})

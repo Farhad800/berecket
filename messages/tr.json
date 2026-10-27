@@ -2272,6 +2272,7 @@
     "kind": {
       "sale": "Alış",
       "payment": "Ödeme"
-    }
+    },
+    "signHint": "− = fabrika tedarikçiye borçlu"
   }
 }

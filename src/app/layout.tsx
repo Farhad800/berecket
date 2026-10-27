@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { dirOf, type Locale } from "@/i18n/config";
 import InstallBanner from "@/components/install-banner";
+import NoWheelNumbers from "@/components/no-wheel-numbers";
 import "./globals.css";
 
 const latin = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-latin", display: "swap" });
@@ -36,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
           <InstallBanner />
+          <NoWheelNumbers />
         </NextIntlClientProvider>
       </body>
     </html>

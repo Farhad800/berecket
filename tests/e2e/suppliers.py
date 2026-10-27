@@ -61,7 +61,11 @@ with sync_playwright() as p:
     # ── 6. buying in USD: the day's rate is asked; the supplier is owed USD; item cost unchanged
     out=stock_doc(A, B, "BUY", [("PP-01",50,"1.5")], party="Turkish Polymers", currency="USD", rate=1460, paid=25, save=False)
     ck("USD purchase asks for the rate and shows the IQD value (75 × 1,460 = 109,500)", A.get_by_test_id("buy-iqd").inner_text().replace(" "," ")=="Value in IQD: 109,500 IQD")
+    r=A.get_by_label("Rate of the day"); r.click(); r.hover(); A.mouse.wheel(0,-300); A.mouse.wheel(0,300); A.wait_for_timeout(200)
+    pr=A.locator("main ul.divide-y > li").nth(0).locator("input[type=number]").nth(1); pr.click(); pr.hover(); A.mouse.wheel(0,300); A.wait_for_timeout(200)
+    ck("the mouse wheel does not change the rate or the price", r.input_value()=="1460" and pr.input_value()=="1.5")
     A.get_by_role("button", name=re.compile("^Save purchase")).click(); A.wait_for_url(re.compile(r".*/stock/[^/]+\?saved=1$")); uid=doc_id(A); out=A.inner_text("main")
+    ck("purchase page balance hint speaks of the supplier", "the factory owes the supplier" in A.get_by_test_id("customer-balance").inner_text() and "customer" not in A.get_by_test_id("customer-balance").inner_text())
     ck("saved with the rate 1 USD = 1,460 IQD and owed in USD", sql(f"SELECT currency||'|'||total::float||'|'||rate::float FROM {D} WHERE id='{uid}'")=="USD|75|1460" and "1 USD = 1,460 IQD" in out and A.get_by_test_id("doc-iqd").count()==1)
     ck("25 USD paid from the safe, booked to the supplier", sql(f"SELECT amount::float||'|'||currency FROM {Q('\"CashEntry\"')} WHERE {Q('\"stockDocId\"')}='{uid}'")=="-25|USD" and sql(f"SELECT count(*) FROM {Q('\"CashEntry\"')} WHERE {Q('\"supplierId\"')} IS NOT NULL")=="1")
     ck("item cost still 3,000 IQD (buying never changes it)", sql(f"SELECT {Q('\"costIqd\"')}::float FROM {P} WHERE code='PP-01'")=="3000")

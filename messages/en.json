@@ -2272,6 +2272,7 @@
     "kind": {
       "sale": "Purchase",
       "payment": "Payment"
-    }
+    },
+    "signHint": "− = the factory owes the supplier"
   }
 }
