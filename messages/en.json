@@ -585,6 +585,10 @@
       "layoutEdit": "Receipt layout changed",
       "layoutDelete": "Receipt layout deleted",
       "print": "Receipt printed"
+    },
+    "items": {
+      "import": "Items workbook uploaded",
+      "workbookDownload": "Items workbook downloaded"
     }
   },
   "sched": {
@@ -2185,5 +2189,33 @@
     "valueOf": "Show the value of",
     "valueHint": "In IQD: what is in stock × its cost. {n} items in stock.",
     "valueNoCost": "{n} of them have no cost yet and are not counted"
+  },
+  "iw": {
+    "button": "Items workbook (Excel)",
+    "title": "Items workbook",
+    "subtitle": "All labels, raw materials, packaging and products in one Excel file: fill in what is missing, upload it back.",
+    "step1": "1. Download the workbook",
+    "step1Hint": "It already lists every item in the system with what is known about it, its stock now and its cost.",
+    "download": "Download items workbook",
+    "step2": "2. Upload the filled workbook",
+    "tip1": "Sheets: Labels, Raw materials, Packaging, Products, Made of & packaging. Add new items in new rows; leave Code empty for an automatic code.",
+    "tip2": "Rows are matched on their code. Empty cells never delete anything; grey columns are not read.",
+    "tip3": "Cost: price of 1 piece or 1 kg + currency; for USD / EUR also today's rate to IQD.",
+    "tipNoCost": "Costs are left out: your role doesn't see money.",
+    "tip4": "Counted stock: what is on the shelf now. The stock is set to it with one Input / Output count document. Empty = stock unchanged.",
+    "tip5": "Check file shows what will change and any mistakes by row before anything is saved.",
+    "costs": "Costs set or changed: {n}",
+    "stock": "Stock count: {up} items go up, {down} go down",
+    "save": "Save everything",
+    "done": "Saved.",
+    "fromImport": "To fill in labels, raw materials, packaging, costs and stock for items already in the system, use the",
+    "sheet": {
+      "STICKER": "Labels",
+      "MATERIAL": "Raw materials",
+      "PACKAGING": "Packaging",
+      "PRODUCT": "Products",
+      "RECIPE": "Made of & packaging"
+    },
+    "choose": "Choose the filled workbook (.xlsx)"
   }
 }

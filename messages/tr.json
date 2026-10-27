@@ -585,6 +585,10 @@
       "layoutEdit": "Makbuz düzeni değiştirildi",
       "layoutDelete": "Makbuz düzeni silindi",
       "print": "Makbuz yazdırıldı"
+    },
+    "items": {
+      "import": "Kalem dosyası yüklendi",
+      "workbookDownload": "Kalem dosyası indirildi"
     }
   },
   "sched": {
@@ -2185,5 +2189,33 @@
     "valueOf": "Değerini göster",
     "valueHint": "IQD olarak: stoktaki miktar × maliyeti. Stokta {n} kalem.",
     "valueNoCost": "{n} tanesinin henüz maliyeti yok, sayılmadı"
+  },
+  "iw": {
+    "button": "Kalem çalışma kitabı (Excel)",
+    "title": "Kalem çalışma kitabı",
+    "subtitle": "Tüm etiketler, hammaddeler, ambalaj ve ürünler tek bir Excel dosyasında: eksikleri doldurun, geri yükleyin.",
+    "step1": "1. Dosyayı indirin",
+    "step1Hint": "Sistemdeki her kalemi bilgileri, şu anki stoku ve maliyetiyle birlikte içerir.",
+    "download": "Kalem dosyasını indir",
+    "step2": "2. Doldurulmuş dosyayı yükleyin",
+    "tip1": "Sayfalar: Etiketler, Hammaddeler, Ambalaj, Ürünler, İçerik ve ambalaj. Yeni kalemleri yeni satırlara ekleyin; otomatik kod için Kodu boş bırakın.",
+    "tip2": "Satırlar koduna göre eşleşir. Boş hücreler hiçbir şeyi silmez; gri sütunlar okunmaz.",
+    "tip3": "Maliyet: 1 adet veya 1 kg fiyatı + para birimi; USD / EUR için bugünkü IQD kuru da.",
+    "tipNoCost": "Maliyetler yok: rolünüz parayı göremez.",
+    "tip4": "Sayılan stok: rafta şu an olan. Stok, bir Giriş / Çıkış sayım belgesiyle buna ayarlanır. Boş = değişmez.",
+    "tip5": "Dosyayı kontrol et, kaydetmeden önce neyin değişeceğini ve satır satır hataları gösterir.",
+    "costs": "Belirlenen veya değişen maliyet: {n}",
+    "stock": "Sayım: {up} kalem artar, {down} azalır",
+    "save": "Hepsini kaydet",
+    "done": "Kaydedildi.",
+    "fromImport": "Sistemdeki kalemlerin etiket, hammadde, ambalaj, maliyet ve stoklarını doldurmak için kullanın:",
+    "sheet": {
+      "STICKER": "Etiketler",
+      "MATERIAL": "Hammaddeler",
+      "PACKAGING": "Ambalaj",
+      "PRODUCT": "Ürünler",
+      "RECIPE": "İçerik ve ambalaj"
+    },
+    "choose": "Doldurulmuş dosyayı seçin (.xlsx)"
   }
 }

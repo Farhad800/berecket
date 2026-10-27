@@ -66,6 +66,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             <LinkButton href="/products/new"><Plus className="size-4" /> {t("md.newProduct")}</LinkButton>
             <LinkButton href="/products/new-item" variant="secondary"><PackagePlus className="size-4" /> {t("item.newButton")}</LinkButton>
             <LinkButton href="/import" variant="secondary"><FileSpreadsheet className="size-4" /> {t("imp.button")}</LinkButton>
+            {can(me, "products:edit") && <LinkButton href="/import/items" variant="secondary"><FileSpreadsheet className="size-4" /> {t("iw.button")}</LinkButton>}
           </>
         ) : undefined}
       />
