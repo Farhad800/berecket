@@ -10,6 +10,8 @@ import MoldSelect, { moldMatch, newGroup } from "@/components/mold-select";
 
 type Row = { id: string; code: string; name: string; name2: string | null; unit: string; mold?: string | null; stock: number; cost?: number | null; costPartial?: boolean };
 const fmt = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 3 });
+/** Item · cost per unit (wide screens) · in stock · value in IQD (stock × cost). */
+const COLS = "grid-cols-[1fr_6rem_6.5rem] sm:grid-cols-[1fr_8rem_8rem_9rem]";
 
 /** Read-only stock list (the owner's rule: stock only changes through Stock movements and production). */
 export default function StockTable({ rows, withMolds = false, money = false }: { rows: Row[]; withMolds?: boolean; money?: boolean }) {
@@ -34,19 +36,21 @@ export default function StockTable({ rows, withMolds = false, money = false }: {
         </label>
       </div>
       <div className="overflow-hidden rounded-2xl border border-line bg-surface">
-        <div className={cn("grid gap-3 border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-muted", money ? "grid-cols-[1fr_6.5rem_7rem] sm:grid-cols-[1fr_9rem_9rem]" : "grid-cols-[1fr_9rem]")}>
-          <span>{t("wh.item")}</span>{money && <span className="text-end">{t(withMolds ? "cost.colPiece" : "cost.colUnit")}</span>}<span className="text-end">{t("order.inStock")}</span>
+        <div className={cn("grid gap-3 border-b border-line bg-surface-2 px-4 py-2 text-xs font-semibold text-muted", money ? COLS : "grid-cols-[1fr_9rem]")}>
+          <span>{t("wh.item")}</span>{money && <span className="hidden text-end sm:block">{t(withMolds ? "cost.colPiece" : "cost.colUnit")}</span>}<span className="text-end">{t("order.inStock")}</span>
+          {money && <span className="text-end">{t("cost.colValue")}</span>}
         </div>
         <ul className="divide-y divide-line">
           {shown.map((r, i) => (
-            <li key={r.id} className={cn("grid items-center gap-3 px-4 py-2", money ? "grid-cols-[1fr_6.5rem_7rem] sm:grid-cols-[1fr_9rem_9rem]" : "grid-cols-[1fr_9rem]")}>
+            <li key={r.id} className={cn("grid items-center gap-3 px-4 py-2", money ? COLS : "grid-cols-[1fr_9rem]")}>
               {withMolds && r.mold && newGroup(shown, i) && <p className="col-span-full -mx-4 -mt-2 mb-1 bg-surface-2 px-4 py-1 text-xs font-bold text-muted" dir="ltr">{r.mold}</p>}
               <div className="min-w-0">
                 <Link href={`/products/${r.id}`} className="block truncate text-sm font-medium hover:underline">{r.name}</Link>
                 <p className="truncate text-xs text-muted" dir="ltr">{r.name2 ? `${r.name2} · ` : ""}{r.code}</p>
+                {money && r.cost !== null && r.cost !== undefined && <p className="text-xs text-muted sm:hidden" dir="ltr">{fmtIqd(r.cost)} IQD / {r.unit.toLowerCase() === "kg" ? "kg" : t("md.pcs")}{r.costPartial && " *"}</p>}
               </div>
               {money && (
-                <span className="text-end text-sm tabular-nums" dir="ltr" data-testid={`cost-${r.code}`}>
+                <span className="hidden text-end text-sm tabular-nums sm:block" dir="ltr" data-testid={`cost-${r.code}`}>
                   {r.cost === null || r.cost === undefined ? <span className="text-muted">—</span> : <>{fmtIqd(r.cost)}{r.costPartial && <span className="text-amber-600" title={t("cost.partial")}> *</span>}</>}
                   {r.cost !== null && r.cost !== undefined && <span className="block text-xs text-muted">IQD</span>}
                 </span>
@@ -54,6 +58,11 @@ export default function StockTable({ rows, withMolds = false, money = false }: {
               <span className={cn("text-end text-base font-bold tabular-nums", r.stock === 0 && "font-normal text-muted", r.stock < 0 && "text-red-600")} dir="ltr">
                 {fmt(r.stock)} <span className="text-xs font-normal text-muted">{r.unit.toLowerCase() === "kg" ? "kg" : t("md.pcs")}</span>
               </span>
+              {money && (
+                <span className="text-end text-sm font-semibold tabular-nums" dir="ltr" data-testid={`value-${r.code}`}>
+                  {r.cost === null || r.cost === undefined || r.stock <= 0 ? <span className="font-normal text-muted">—</span> : fmtIqd(Math.round(r.cost * r.stock * 100) / 100)}
+                </span>
+              )}
             </li>
           ))}
         </ul>

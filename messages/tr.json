@@ -2165,8 +2165,8 @@
     "perPiece": "Adet başına",
     "unitCost": "Birim maliyet (IQD)",
     "cost": "Maliyet (IQD)",
-    "colPiece": "Maliyet / adet",
-    "colUnit": "Maliyet / birim",
+    "colPiece": "Adet maliyeti (IQD)",
+    "colUnit": "Birim maliyet (IQD)",
     "partial": "Bazı kalemlerin henüz maliyeti yok",
     "stockValue": "Stok değeri",
     "tableHint": "Her ürünün son üretimine göre adet maliyeti (henüz üretilmediyse bir tam koli): etiket + malzeme + tam koli ve torbalar, IQD. * = bazı kalemlerinin henüz maliyeti yok.",
@@ -2180,6 +2180,10 @@
     "typeQty": "Herhangi bir miktar yazın",
     "used": "{n} adet için kullanılan",
     "runTotal": "{n} adet toplamı (IQD)",
-    "onePieceCost": "Bir adetin maliyeti"
+    "onePieceCost": "Bir adetin maliyeti",
+    "colValue": "Değer (IQD)",
+    "valueOf": "Değerini göster",
+    "valueHint": "IQD olarak: stoktaki miktar × maliyeti. Stokta {n} kalem.",
+    "valueNoCost": "{n} tanesinin henüz maliyeti yok, sayılmadı"
   }
 }

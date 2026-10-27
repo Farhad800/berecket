@@ -2165,8 +2165,8 @@
     "perPiece": "Per piece",
     "unitCost": "Cost per unit (IQD)",
     "cost": "Cost (IQD)",
-    "colPiece": "Cost / piece",
-    "colUnit": "Cost / unit",
+    "colPiece": "Cost / piece (IQD)",
+    "colUnit": "Cost / unit (IQD)",
     "partial": "Some items have no cost yet",
     "stockValue": "Stock value",
     "tableHint": "Cost per piece of each product's last production (or one full carton if not made yet): label + materials + full cartons and bags, in IQD. * = some of its items have no cost yet.",
@@ -2180,6 +2180,10 @@
     "typeQty": "Type any quantity",
     "used": "Used for {n} pcs",
     "runTotal": "Total for {n} pieces (IQD)",
-    "onePieceCost": "Cost of one piece"
+    "onePieceCost": "Cost of one piece",
+    "colValue": "Value (IQD)",
+    "valueOf": "Show the value of",
+    "valueHint": "In IQD: what is in stock × its cost. {n} items in stock.",
+    "valueNoCost": "{n} of them have no cost yet and are not counted"
   }
 }
