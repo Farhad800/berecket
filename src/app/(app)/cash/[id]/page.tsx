@@ -38,7 +38,7 @@ export default async function CashEntryPage({ params, searchParams }: { params: 
           })}
           {e.rate && pair.length === 2 && row(t("cash.rateLabel"), rateText(Number(e.rate), pair[0].currency, pair[1].currency), true)}
           {e.category && row(t("cash.category"), catName(t, e.category))}
-          {e.party && row(e.kind === "EXPENSE" ? t("cash.paidTo") : e.kind === "DEPOSIT" ? t("cash.from") : e.kind === "SALE" ? t("sd.customer") : t("sd.supplier"), e.party)}
+          {e.party && row(e.kind === "EXPENSE" ? t("cash.paidTo") : e.kind === "DEPOSIT" ? t("cash.from") : t("sd.customer"), e.party)}
           {e.stockDoc && row(t("cash.forDoc"), <Link href={`/stock/${e.stockDoc.id}`} className="text-brand-600 hover:underline" dir="ltr">{e.stockDoc.number}</Link>)}
         </dl>
         {e.note && <p className="mt-3 rounded-lg bg-surface-2 p-3 text-sm whitespace-pre-wrap">{e.note}</p>}

@@ -98,7 +98,7 @@ with sync_playwright() as p:
     sql(f"INSERT INTO {Q('\"CashEntry\"')} (id,number,kind,{Q('\"safeId\"')},currency,amount,{Q('\"createdById\"')}) SELECT 'cashseed','CIN-T','DEPOSIT','safe_main','USD',1000,id FROM {Q('\"User\"')} WHERE username='owner'")
     stock_doc(A, B, "BUY", [("P-200",100,"1.5")], party="Gulf Polymers", currency="USD", paid="150")
     bid=A.url.split("/")[-1].split("?")[0]; A.goto(B+f"/print/receipt/doc/{bid}"); txt=A.inner_text("main")
-    ck("purchase receipt says supplier and purchase invoice", "فاتورة شراء" in txt and "اسم المورد" in txt and "Gulf Polymers" in txt and "150 USD" in txt)
+    ck("purchase receipt says customer and purchase invoice", "فاتورة شراء" in txt and "اسم الزبون" in txt and "Gulf Polymers" in txt and "150 USD" in txt)
 
     # 8. permissions
     S.goto(B+"/receipts/new"); ck("sales manager can't make layouts", "/forbidden" in S.url)

@@ -9,7 +9,6 @@ import { PageHeader } from "@/components/ui";
 import { DOC_PERM, DOC_TYPES, type DocType } from "../types";
 import DocForm, { type CustomerOpt } from "./doc-form";
 import { customerBalances } from "@/lib/customers";
-import { supplierBalances } from "@/lib/suppliers";
 import { listSafes } from "@/lib/cash";
 
 export const metadata = { title: "New stock movement" };
@@ -26,19 +25,12 @@ export default async function NewStockDocPage({ searchParams }: { searchParams: 
     db.order.findMany({ where: { status: "OPEN" }, orderBy: { createdAt: "desc" }, take: 200, select: { id: true, number: true, lines: { select: { productId: true, quantity: true } } } }),
   ]);
   const stock = await getStock();
-  // Sell: customer accounts with their balance now (only for people who may sell — they see money).
+  // Buy / Sell: customer accounts with their balance now (only for people who may buy or sell — they see money).
   let customers: CustomerOpt[] = [];
-  if (allowed.includes("SELL")) {
+  if (allowed.includes("SELL") || allowed.includes("BUY")) {
     const list = await db.customer.findMany({ where: { archivedAt: null }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, phone: true, address: true } });
     const bal = await customerBalances(list.map((c) => c.id));
     customers = list.map((c) => ({ ...c, balance: bal.get(c.id) ?? { IQD: 0, USD: 0, EUR: 0 } }));
-  }
-  // Buy: supplier accounts with what the factory owes each now (only for people who may buy — they see money).
-  let suppliers: CustomerOpt[] = [];
-  if (allowed.includes("BUY")) {
-    const list = await db.supplier.findMany({ where: { archivedAt: null }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true, phone: true, address: true } });
-    const bal = await supplierBalances(list.map((c) => c.id));
-    suppliers = list.map((c) => ({ ...c, balance: bal.get(c.id) ?? { IQD: 0, USD: 0, EUR: 0 } }));
   }
   // Buy / Sell: the safes the paid-now money can go into / come out of (balances only for people who see the safe).
   const safes = allowed.includes("BUY") || allowed.includes("SELL") ? await listSafes(can(me, "cash:view")) : [];
@@ -53,9 +45,7 @@ export default async function NewStockDocPage({ searchParams }: { searchParams: 
         items={items.map((i) => ({ ...i, stock: stock.get(i.id) ?? 0 }))}
         orders={orders.map((o) => ({ id: o.id, number: o.number, lines: o.lines }))}
         customers={customers}
-        initialCustomer={customers.some((c) => c.id === sp.customer) ? sp.customer! : ""}
-        suppliers={suppliers}
-        initialSupplier={suppliers.some((c) => c.id === sp.supplier) ? sp.supplier! : ""}
+        initialCustomer={customers.some((c) => c.id === (sp.customer ?? sp.supplier)) ? (sp.customer ?? sp.supplier)! : ""}
         safes={safes}
         canCost={canSeeMoney(me)}
       />

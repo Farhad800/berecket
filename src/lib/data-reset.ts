@@ -61,8 +61,7 @@ export async function resetData(db: PrismaClient, scope: ResetScope) {
         await tx.machine.deleteMany({});
         await tx.product.deleteMany({});
         await tx.customer.deleteMany({});
-        await tx.supplier.deleteMany({});
-        await tx.counter.deleteMany({ where: { name: { in: ["customer", "supplier"] } } });
+        await tx.counter.deleteMany({ where: { name: { in: ["customer"] } } });
         await tx.safe.deleteMany({ where: { isMain: false } }); // extra safes go; the main safe stays (empty)
       } else {
         // Test maintenance may have left machines "down" — start clean.

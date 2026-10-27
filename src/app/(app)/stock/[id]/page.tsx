@@ -11,7 +11,6 @@ import { DOC_TONE, fmtMoney, fmtQty } from "../types";
 import { docTotal, fmtPrice, lineTotal } from "@/lib/money";
 import PayForm from "./pay-form";
 import { customerBalance } from "@/lib/customers";
-import { supplierBalance } from "@/lib/suppliers";
 import { listSafes } from "@/lib/cash";
 
 export const metadata = { title: "Stock movement" };
@@ -24,7 +23,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   const saved = (await searchParams).saved === "1";
   const d = await db.stockDoc.findUnique({
     where: { id },
-    include: { order: { select: { id: true, number: true } }, customer: { select: { id: true, code: true, name: true } }, supplier: { select: { id: true, code: true, name: true } }, lines: { orderBy: { createdAt: "asc" }, include: { product: { select: { id: true, code: true, name: true, name2: true, unit: true } } } } },
+    include: { order: { select: { id: true, number: true } }, customer: { select: { id: true, code: true, name: true } }, lines: { orderBy: { createdAt: "asc" }, include: { product: { select: { id: true, code: true, name: true, name2: true, unit: true } } } } },
   });
   if (!d) notFound();
   const [by, stock, payments] = await Promise.all([
@@ -42,7 +41,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
   const paid = Math.round(payments.reduce((s, p) => s + Math.abs(Number(p.amount)), 0) * 100) / 100;
   const owed = Math.round((total - paid) * 100) / 100;
   const mayPay = sell ? can(me, "stock:sell") || can(me, "cash:in") : can(me, "stock:buy") || can(me, "cash:out");
-  const balance = money && d.currency && (sell ? d.customerId : d.supplierId) ? (sell ? await customerBalance(d.customerId!) : await supplierBalance(d.supplierId!))[d.currency] : null;
+  const balance = money && d.currency && d.customerId ? (await customerBalance(d.customerId))[d.currency] : null;
   const hasLineDisc = d.lines.some((l) => Number(l.discount ?? 0) > 0);
   const minus = d.lines.filter((l) => (stock.get(l.productId) ?? 0) < 0);
 
@@ -55,10 +54,10 @@ export default async function StockDocPage({ params, searchParams }: { params: P
       <Card className="mb-4">
         <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           {d.reason && <div><dt className="text-xs text-muted">{t("sd.reasonLabel")}</dt><dd>{t(`sd.reason.${d.reason}`)}</dd></div>}
-          {d.party && <div><dt className="text-xs text-muted">{t(d.type === "BUY" ? "sd.supplier" : "sd.customer")}</dt><dd className="font-semibold">
+          {d.party && <div><dt className="text-xs text-muted">{t("sd.customer")}</dt><dd className="font-semibold">
             {d.customer && can(me, "customers:view") && canSeeMoney(me) ? <Link href={`/customers/${d.customer.id}`} className="text-brand-600 hover:underline">{d.party}</Link>
-              : d.supplier && can(me, "suppliers:view") && canSeeMoney(me) ? <Link href={`/suppliers/${d.supplier.id}`} className="text-brand-600 hover:underline">{d.party}</Link> : d.party}
-            {(d.customer ?? d.supplier) && <span className="ms-1 text-xs font-normal text-muted" dir="ltr">{(d.customer ?? d.supplier)!.code}</span>}</dd></div>}
+              : d.party}
+            {d.customer && <span className="ms-1 text-xs font-normal text-muted" dir="ltr">{d.customer.code}</span>}</dd></div>}
           {d.delivery && <div><dt className="text-xs text-muted">{t("sd.delivery")}</dt><dd>{d.delivery}</dd></div>}
           {money && d.phone && <div><dt className="text-xs text-muted">{t("sd.phone")}</dt><dd dir="ltr">{d.phone}</dd></div>}
           {d.invoiceNo && <div><dt className="text-xs text-muted">{t(d.type === "BUY" ? "sd.purchaseNo" : "sd.invoice")}</dt><dd dir="ltr">{d.invoiceNo}</dd></div>}
@@ -91,7 +90,7 @@ export default async function StockDocPage({ params, searchParams }: { params: P
               ))}
             </ul>
           )}
-          {balance !== null && <p className="mt-3 text-sm" data-testid="customer-balance">{t("cust.balanceNow")}: <b dir="ltr" className={balance < 0 ? "text-red-600" : ""}>{fmtMoney(balance)} {d.currency}</b> <span className="text-xs text-muted">({t(sell ? "cust.signHint" : "supp.signHint")})</span></p>}
+          {balance !== null && <p className="mt-3 text-sm" data-testid="customer-balance">{t("cust.balanceNow")}: <b dir="ltr" className={balance < 0 ? "text-red-600" : ""}>{fmtMoney(balance)} {d.currency}</b> <span className="text-xs text-muted">({t("cust.signHint")})</span></p>}
           {owed > 0 && mayPay && <PayForm docId={d.id} owed={owed} currency={d.currency!} sell={sell} safes={await listSafes(can(me, "cash:view"))} />}
         </Card>
       )}

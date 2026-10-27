@@ -6,7 +6,6 @@ import { can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { balances, listSafes, paidFor } from "@/lib/cash";
 import { customerBalances } from "@/lib/customers";
-import { supplierBalances } from "@/lib/suppliers";
 import { formatDateTime } from "@/lib/time";
 import { Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
@@ -129,16 +128,14 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
   }
 
   async function Owed() {
-    // Sales booked to a customer account count in that customer's balance (below); the rest per invoice.
-    // Sales / purchases booked to an account count in that customer's / supplier's balance (below); the rest per invoice.
-    const docs = await db.stockDoc.findMany({ where: { type: { in: ["BUY", "SELL"] }, total: { gt: 0 }, customerId: null, supplierId: null }, orderBy: { createdAt: "desc" }, select: { id: true, number: true, type: true, party: true, currency: true, total: true, createdAt: true } });
+    // Sales / purchases booked to a customer account count in that customer's balance (below); the rest per invoice.
+    // One balance per customer: − = they owe the factory, + = the factory owes them.
+    const docs = await db.stockDoc.findMany({ where: { type: { in: ["BUY", "SELL"] }, total: { gt: 0 }, customerId: null }, orderBy: { createdAt: "desc" }, select: { id: true, number: true, type: true, party: true, currency: true, total: true, createdAt: true } });
     const custs = await db.customer.findMany({ select: { id: true, code: true, name: true } });
     const cb = await customerBalances(custs.map((c) => c.id));
     const custRows = custs.flatMap((c) => CURS.filter((x) => (cb.get(c.id)?.[x] ?? 0) < 0).map((x) => ({ ...c, cur: x, owed: -(cb.get(c.id)![x]), href: `/customers/${c.id}` })));
-    const supps = await db.supplier.findMany({ select: { id: true, code: true, name: true } });
-    const sb = await supplierBalances(supps.map((c) => c.id));
-    const suppRows = supps.flatMap((c) => CURS.filter((x) => (sb.get(c.id)?.[x] ?? 0) < 0).map((x) => ({ ...c, cur: x, owed: -(sb.get(c.id)![x]), href: `/suppliers/${c.id}` })));
-    const accRows = (type: "SELL" | "BUY") => (type === "SELL" ? custRows : suppRows);
+    const weOweRows = custs.flatMap((c) => CURS.filter((x) => (cb.get(c.id)?.[x] ?? 0) > 0).map((x) => ({ ...c, cur: x, owed: cb.get(c.id)![x], href: `/customers/${c.id}` })));
+    const accRows = (type: "SELL" | "BUY") => (type === "SELL" ? custRows : weOweRows);
     const paid = await paidFor(docs.map((d) => d.id));
     const open = docs.map((d) => ({ ...d, owed: Math.round((Number(d.total) - (paid.get(d.id) ?? 0)) * 100) / 100 })).filter((d) => d.owed > 0.004);
     const sum = (type: string, c: string) => open.filter((d) => d.type === type && d.currency === c).reduce((s, d) => s + d.owed, 0) + accRows(type as "SELL" | "BUY").filter((r) => r.cur === c).reduce((s, r) => s + r.owed, 0);
@@ -156,7 +153,7 @@ export default async function CashPage({ searchParams }: { searchParams: Promise
                 <li key={r.id + r.cur}>
                   <Link href={r.href} className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-surface-2">
                     <span className="min-w-0"><span className="block truncate font-medium">{r.name}</span><span className="text-xs text-muted" dir="ltr">{r.code}</span></span>
-                    <span className="font-bold text-red-600 tabular-nums" dir="ltr">−{fmtMoney(r.owed)} {r.cur}</span>
+                    <span className={`font-bold tabular-nums ${type === "SELL" ? "text-red-600" : "text-amber-600"}`} dir="ltr">{type === "SELL" ? "−" : "+"}{fmtMoney(r.owed)} {r.cur}</span>
                   </Link>
                 </li>
               ))}

@@ -10,10 +10,10 @@ import { nextNumber } from "@/lib/numbering";
 import { run, UserError } from "@/lib/action";
 import { maxDecimals } from "@/lib/money";
 import { customerBalance } from "@/lib/customers";
-import { pickSafe } from "@/lib/cash";
+import { pickSafe, takeOut } from "@/lib/cash";
 import { once, submissionKey } from "@/lib/submission";
 
-/** Customer accounts (accountant, 26 Oct 2026): code, name, phone, address; sales and payments are booked to them. */
+/** Customer accounts (26–27 Oct 2026): code, name, phone, address; sales, purchases and payments either way are booked to them. */
 const CODE = /^[A-Za-z0-9._\-/]{1,30}$/;
 const PHONE = /^[0-9+()\-\s]*$/;
 const fields = {
@@ -25,10 +25,10 @@ const fields = {
 };
 const done = (id?: string) => { revalidatePath("/customers"); if (id) revalidatePath(`/customers/${id}`); revalidatePath("/stock/new"); };
 
-/** People who sell may add a customer while making a sale; keeping the list needs customers:manage. */
+/** People who sell or buy may add a customer while making a sale or purchase; keeping the list needs customers:manage. */
 async function mayCreate() {
   const me = await requireUser();
-  if (!(can(me, "customers:manage") || can(me, "stock:sell"))) throw new UserError("You don't have permission to do this.");
+  if (!(can(me, "customers:manage") || can(me, "stock:sell") || can(me, "stock:buy"))) throw new UserError("You don't have permission to do this.");
   return me;
 }
 
@@ -103,6 +103,36 @@ export async function receiveFromCustomerAction(input: unknown) {
       await audit({ userId: me.id, action: "cash.receive", entityType: "CashEntry", entityId: e.id, reason: v.note ?? null,
         after: { number, customer: `${c.code} · ${c.name}`, safe: safe.name, amount: fmt(v.amount), balanceBefore: fmt(before), balanceAfter: fmt(before + v.amount) } }, tx);
       await notify({ type: "cash.receive", data: { number, doc: c.code, amount: fmt(v.amount), party: c.name, by: me.fullName },
+        link: `/customers/${c.id}`, toPermission: "cash:view", exceptUserId: me.id }, tx);
+      return { id: e.id, number };
+    });
+    done(v.customerId);
+    revalidatePath("/cash");
+    return result;
+  });
+}
+
+/**
+ * Money paid to a customer (e.g. for what was bought from them, not one particular purchase): it leaves the
+ * chosen safe and lowers their balance. More than the factory owes is allowed — they then owe the factory (−).
+ */
+export async function payToCustomerAction(input: unknown) {
+  return run(async () => {
+    const v = paySchema.parse(input);
+    const me = await requireUser();
+    if (!(can(me, "cash:out") || can(me, "stock:buy"))) throw new UserError("You don't have permission to do this.");
+    const fmt = (n: number) => `${n.toLocaleString("en", { maximumFractionDigits: 2 })} ${v.currency}`;
+    const { result } = await once(submissionKey(v.submissionId), me.id, "customer.pay", async (tx) => {
+      const c = await tx.customer.findFirst({ where: { id: v.customerId } });
+      if (!c) throw new UserError("That customer no longer exists.");
+      const before = (await customerBalance(c.id, {}, tx))[v.currency];
+      const safe = await pickSafe(tx, v.safeId, v.currency);
+      await takeOut(tx, safe, v.currency, v.amount);
+      const number = await nextNumber("cashPay", tx);
+      const e = await tx.cashEntry.create({ data: { number, kind: "PURCHASE", safeId: safe.id, currency: v.currency, amount: -v.amount, customerId: c.id, party: c.name, note: v.note || null, createdById: me.id } });
+      await audit({ userId: me.id, action: "cash.pay", entityType: "CashEntry", entityId: e.id, reason: v.note ?? null,
+        after: { number, customer: `${c.code} · ${c.name}`, safe: safe.name, amount: fmt(v.amount), balanceBefore: fmt(before), balanceAfter: fmt(before - v.amount) } }, tx);
+      await notify({ type: "cash.pay", data: { number, doc: c.code, amount: fmt(v.amount), party: c.name, by: me.fullName },
         link: `/customers/${c.id}`, toPermission: "cash:view", exceptUserId: me.id }, tx);
       return { id: e.id, number };
     });

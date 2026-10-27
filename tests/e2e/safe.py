@@ -97,7 +97,7 @@ with sync_playwright() as p:
     sid=S.url.split("/")[-1].split("?")[0]
     ck("sale 2,500,000 IQD with 1,000,000 received → RCV, safe +1,000,000", f"RCV-{yr}-0001" in out and bal("IQD")==9_950_000)
     A.goto(B+"/cash?tab=owed"); ow=A.inner_text("main")
-    ck("still-owed tab: customer owes 1,500,000 IQD; suppliers nothing", "Al Noor Market" in ow and "1,500,000 IQD" in ow and "Euro Polymers" not in ow)
+    ck("still-owed tab: customer owes 1,500,000 IQD; Euro Polymers not in the owes-us list", "Al Noor Market" in ow and "1,500,000 IQD" in ow and "Euro Polymers" not in ow)
     S.goto(B+f"/stock/{sid}"); S.get_by_role("button", name="Receive payment").click(); S.wait_for_timeout(1500)
     ck("sales receives the rest: safe 11,450,000 IQD, nothing owed", bal("IQD")==11_450_000 and S.get_by_role("button", name="Receive payment").count()==0)
     S.goto(B+"/cash"); ck("sales can see the safe but has no money in/out buttons", "11,450,000 IQD" in S.inner_text("main") and S.locator("a[href^='/cash/new']").count()==0)
