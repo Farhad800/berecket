@@ -170,7 +170,7 @@ export async function readItemsWorkbook(buf: Buffer) {
       if (Object.values(v).every((x) => !x)) return;
       rows.push({ row: rn, v });
     });
-    if (rows.length > 6000) errors.push({ sheet: sh.id, row: 1, message: "More than 6,000 rows — split the file." });
+    if (rows.length > 12000) errors.push({ sheet: sh.id, row: 1, message: "More than 12,000 rows — split the file." });
     out[sh.id] = rows;
   }
   if (!Object.keys(out).length && !errors.length) throw new Error("NO_SHEETS");
@@ -264,19 +264,30 @@ export async function planItems(sheets: Partial<Record<SheetId, Raw[]>>, pre: Ro
 
   // recipes
   const recipe = new Map<string, { item: string; qty: number; per: "PIECE" | "CARTON"; row: number }[]>();
+  const labelFor = new Map<string, { item: string; row: number }>(); // a label listed under a product = that product's label
   for (const { row, v } of sheets.RECIPE ?? []) {
+    if (!v.item && !v.qty) continue; // an empty row left in a product's block
     const product = v.product.toUpperCase(), item = v.item.toUpperCase();
+    if (!item) { err("RECIPE", row, "Choose the item (its code is missing)."); continue; }
     const qty = num(v.qty ?? ""), per = /^(pack|c|carton|cartons|nylon|bag|عبوة|كارتون|نايلون|كيس|koli|naylon|torba|paket)/i.test(v.per) ? "CARTON" : /^(p|piece|pieces|pcs|قطعة|عدد|adet)/i.test(v.per) ? "PIECE" : null;
     if (kindOf.get(product) !== "PRODUCT") { err("RECIPE", row, `${product} isn't a product in the system or on the Products sheet.`); continue; }
     if (!kindOf.has(item)) { err("RECIPE", row, `Item ${item} doesn't exist (give it a Code on its sheet first).`); continue; }
     if (item === product) { err("RECIPE", row, "A product can't be made of itself."); continue; }
+    if (kindOf.get(item) === "STICKER") {
+      const had = labelFor.get(product);
+      if (had && had.item !== item) { err("RECIPE", row, `${product} has two labels (${had.item} and ${item}). A product has one label.`); continue; }
+      labelFor.set(product, { item, row }); continue;
+    }
     if (qty === undefined || Number.isNaN(qty) || qty <= 0 || !dec(qty, 4)) { err("RECIPE", row, "Quantity must be more than 0 (at most 4 decimals)."); continue; }
     if (!per) { err("RECIPE", row, `Per must be piece or pack (not "${v.per}").`); continue; }
-    if (per === "CARTON" && kindOf.get(item) !== "PACKAGING") { err("RECIPE", row, `${item} isn't packaging — use "piece" for materials and labels.`); continue; }
+    if (per === "CARTON" && kindOf.get(item) !== "PACKAGING") { err("RECIPE", row, `${item} isn't packaging — use "piece" for materials.`); continue; }
     const lines = recipe.get(product) ?? [];
     if (lines.some((l) => l.item === item && l.per === per)) { err("RECIPE", row, `${item} is listed twice for ${product}.`); continue; }
     lines.push({ item, qty, per, row }); recipe.set(product, lines);
   }
+
+  // a label chosen in a product's block wins over the Products sheet's Label code
+  for (const r of rows) if (r.sheet === "PRODUCT" && r.code && labelFor.has(r.code)) r.label = undefined;
 
   // what would change
   const changed = (e: Record<string, unknown>, d: Record<string, unknown>) => Object.entries(d).some(([k, val]) => String(e[k] ?? "") !== String(val ?? ""));
@@ -290,10 +301,13 @@ export async function planItems(sheets: Partial<Record<SheetId, Raw[]>>, pre: Ro
     counts[r.sheet][!e ? "create" : changed(e as unknown as Record<string, unknown>, r.data) || moldChange || labelChange || costChange ? "update" : "same"]++;
   }
   const curRecipes = await c.productComponent.findMany({ where: { product: { code: { in: [...recipe.keys()] } } }, select: { qty: true, per: true, product: { select: { code: true } }, component: { select: { code: true } } } });
+  const codeOfId = new Map(all.map((x) => [x.id, x.code]));
+  const labelChanges = [...labelFor].filter(([prod, l]) => { const e = byCode.get(prod); return !e || codeOfId.get(e.labelId ?? "") !== l.item; });
+  for (const [prod] of labelChanges) if (!recipe.has(prod)) counts.RECIPE[byCode.has(prod) ? "update" : "create"]++;
   for (const [prod, lines] of recipe) {
     const cur = curRecipes.filter((x) => x.product.code === prod).map((x) => `${x.component.code}|${Number(x.qty)}|${x.per}`).sort().join(";");
     const next = lines.map((l) => `${l.item}|${l.qty}|${l.per}`).sort().join(";");
-    counts.RECIPE[cur === next ? "same" : cur ? "update" : "create"]++;
+    counts.RECIPE[cur === next && !labelChanges.some(([p]) => p === prod) ? "same" : cur ? "update" : "create"]++;
   }
   // stock counts: difference to the stock right now
   const countedRows = rows.filter((r) => r.counted !== undefined);
@@ -332,6 +346,7 @@ export async function planItems(sheets: Partial<Record<SheetId, Raw[]>>, pre: Ro
     }
   }
   for (const r of rows) if (r.label) await tx.product.update({ where: { id: ids.get(r.code!)! }, data: { labelId: ids.get(r.label)! } });
+  for (const [prod, l] of labelFor) await tx.product.update({ where: { id: ids.get(prod)! }, data: { labelId: ids.get(l.item)! } });
   for (const [prod, lines] of recipe) {
     const pid = ids.get(prod)!;
     await tx.productComponent.deleteMany({ where: { productId: pid } }); // the sheet gives the product's whole "made of & packaging"

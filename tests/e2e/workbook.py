@@ -85,6 +85,10 @@ with sync_playwright() as p:
     nr=first_empty(R)
     for i,(prod,item,qty,per) in enumerate([("P-200","PP-01",48,"piece"),("P-200","DYE-BLK",0.5,"piece"),("P-200","CART-880",880,"pack"),("P-200","NYL-01",880,"pack")]):
         for c,v in zip([1,3,5,6],[prod,item,qty,per]): R.cell(nr+i,c).value=v
+    # a label row in a product's block = that product's label; an empty row of a block is skipped
+    r=first_empty(L); L.cell(r,col(L,"Code")).value="LBL-X1"; L.cell(r,col(L,"Name")).value="Erbil label"
+    R.cell(nr+4,1).value="P-100"; R.cell(nr+4,3).value="LBL-X1"; R.cell(nr+4,6).value="piece"
+    R.cell(nr+5,1).value="P-100"; R.cell(nr+5,6).value="pack"
     f2=os.path.join(TMP,"filled.xlsx"); wb.save(f2)
     # a copy with mistakes
     bad=openpyxl.load_workbook(f2); bM=bad["Raw materials"]; bR=bad["Made of & packaging"]; bK=bad["Packaging"]; bP=bad["Products"]
@@ -114,6 +118,7 @@ with sync_playwright() as p:
     ck("new product P-200 on the mold with label and QC", sql(f"SELECT p.kind||' '||m.code||' '||l.code||' '||p.{Q('\"qcRequired\"')} FROM {P} p JOIN {Q('\"Mold\"')} m ON m.id=p.{Q('\"moldId\"')} JOIN {P} l ON l.id=p.{Q('\"labelId\"')} WHERE p.code='P-200'")=="PRODUCT MD-BOWL LBL-0001 true")
     ck("P-200 made of & packaging: 4 lines", sql(f"SELECT string_agg(c.code||':'||pc.qty::float||':'||pc.per,',' ORDER BY c.code) FROM {Q('\"ProductComponent\"')} pc JOIN {P} c ON c.id=pc.{Q('\"componentId\"')} JOIN {P} p ON p.id=pc.{Q('\"productId\"')} WHERE p.code='P-200'")=="CART-880:880:CARTON,DYE-BLK:0.5:PIECE,NYL-01:880:CARTON,PP-01:48:PIECE")
     ck("P-100's made of & packaging kept as it was", sql(f"SELECT count(*) FROM {Q('\"ProductComponent\"')} WHERE {Q('\"productId\"')}='tprod1'")=="2")
+    ck("a label listed under P-100 became its label; the empty row was skipped", sql(f"SELECT l.code FROM {P} p JOIN {P} l ON l.id=p.{Q('\"labelId\"')} WHERE p.code='P-100'")=="LBL-X1")
     s={c: stock(c) for c in ["PP-01","CART-880","NYL-01","LBL-0002","P-100"]}
     ck(f"stock set to the counted amounts: PP 96.5, cartons 25, nylon 3.25, Duhok label 1,000, product 480 ({s})", s=={"PP-01":96.5,"CART-880":25,"NYL-01":3.25,"LBL-0002":1000,"P-100":480})
     ck("count documents have reason COUNT and the file name", sql(f"SELECT string_agg(type||':'||reason,',' ORDER BY type) FROM {Q('\"StockDoc\"')} WHERE note LIKE 'Stock count from Excel (filled.xlsx)'")=="INPUT:COUNT,OUTPUT:COUNT")
