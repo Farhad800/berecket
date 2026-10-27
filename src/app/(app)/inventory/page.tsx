@@ -3,7 +3,6 @@ import type { StockMoveType } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
 import { can, canSeeMoney, pageUser } from "@/lib/auth";
 import { productCosts } from "@/lib/product-costs";
-import { fmtIqd } from "@/lib/cost";
 import { db } from "@/lib/db";
 import { formatDateTime, formatNumber } from "@/lib/time";
 import { getStock } from "@/lib/stock";
@@ -12,6 +11,7 @@ import { ArrowLeftRight, PackagePlus } from "lucide-react";
 import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, cn } from "@/components/ui";
 import ListToolbar from "@/components/list-toolbar";
 import StockTable from "./stock-table";
+import StockValue, { type Section, type SectionValue } from "./stock-value";
 
 export const metadata = { title: "Warehouse stock" };
 const TABS = ["stock", "stickers", "materials", "packaging", "movements"] as const;
@@ -42,9 +42,31 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           </Link>
         ))}
       </div>
+      {money && <div className="mb-4">{await valuePanel()}</div>}
       {tab === "stock" ? <StockTab /> : tab === "movements" ? <MovementsTab /> : <SuppliesTab kind={tab === "stickers" ? "STICKER" : tab === "packaging" ? "PACKAGING" : "MATERIAL"} />}
     </>
   );
+
+  /** Value of all stock in IQD per section (stock × cost; products at their cost per piece). Money roles only. */
+  async function valuePanel() {
+    const [items, stock, costs] = await Promise.all([
+      db.product.findMany({ where: { archivedAt: null }, select: { id: true, kind: true, costIqd: true } }),
+      getStock(),
+      productCosts(),
+    ]);
+    const values = { PRODUCT: { value: 0, items: 0, noCost: 0 }, STICKER: { value: 0, items: 0, noCost: 0 }, MATERIAL: { value: 0, items: 0, noCost: 0 }, PACKAGING: { value: 0, items: 0, noCost: 0 } } as Record<Exclude<Section, "ALL">, SectionValue>;
+    for (const it of items) {
+      const q = stock.get(it.id) ?? 0;
+      if (!(q > 0)) continue;
+      const c = it.kind === "PRODUCT" ? costs.get(it.id) : null;
+      const unit = it.kind === "PRODUCT" ? (c && !c.cost.noRecipe ? c.cost.perPiece : null) : it.costIqd === null ? null : Number(it.costIqd);
+      const v = values[it.kind as Exclude<Section, "ALL">];
+      v.items++;
+      if (unit === null) v.noCost++; else v.value += unit * q;
+    }
+    const initial: Section = tab === "stock" ? "PRODUCT" : tab === "stickers" ? "STICKER" : tab === "materials" ? "MATERIAL" : tab === "packaging" ? "PACKAGING" : "ALL";
+    return <StockValue key={tab} values={values} initial={initial} />;
+  }
 
   async function StockTab() {
     const [products, stock, costs] = await Promise.all([
@@ -56,14 +78,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       const c = costs?.get(p.id);
       return { id: p.id, code: p.code, name: p.name, name2: p.name2, unit: p.unit, mold: p.mold?.code ?? null, stock: stock.get(p.id) ?? 0, cost: c && !c.cost.noRecipe ? c.cost.perPiece : null, costPartial: !!c?.cost.missing.length };
     });
-    const value = rows.reduce((s, r) => s + (r.cost && r.stock > 0 ? r.cost * r.stock : 0), 0);
     const total = rows.reduce((s, r) => s + r.stock, 0);
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card><p className="text-xs text-muted">{t("wh.totalPieces")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(total)}</p></Card>
           <Card><p className="text-xs text-muted">{t("wh.productsInStock")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.filter((r) => r.stock > 0).length)}</p></Card>
-          {money && <Card><p className="text-xs text-muted">{t("cost.stockValue")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr" data-testid="stock-value">{fmtIqd(value)} IQD</p></Card>}
         </div>
         {money && <p className="text-xs text-muted">{t("cost.tableHint")}</p>}
         <StockTable rows={rows} withMolds money={money} />
@@ -79,7 +99,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     const items = await db.product.findMany({ where, orderBy: [{ name: "asc" }], select: { id: true, code: true, name: true, name2: true, unit: true, costIqd: true } });
     const stock = await getStock(items.map((i) => i.id));
     const rows = items.map(({ costIqd, ...i }) => ({ ...i, stock: stock.get(i.id) ?? 0, cost: money && costIqd !== null ? Number(costIqd) : null }));
-    const value = rows.reduce((s, r) => s + (r.cost && r.stock > 0 ? r.cost * r.stock : 0), 0);
     const kg = rows.filter((r) => r.unit.toLowerCase() === "kg");
     return (
       <div className="space-y-4">
@@ -87,7 +106,6 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <Card><p className="text-xs text-muted">{t("wh.itemsN")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.length)}</p></Card>
           <Card><p className="text-xs text-muted">{t("wh.withStock")}</p><p className="mt-1 text-2xl font-bold tabular-nums">{n(rows.filter((r) => r.stock > 0).length)}</p></Card>
           {kg.length > 0 && <Card><p className="text-xs text-muted">{t("wh.totalKg")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr">{fmt(kg.reduce((s, r) => s + r.stock, 0))} kg</p></Card>}
-          {money && <Card><p className="text-xs text-muted">{t("cost.stockValue")}</p><p className="mt-1 text-2xl font-bold tabular-nums" dir="ltr" data-testid="stock-value">{fmtIqd(value)} IQD</p></Card>}
         </div>
         {rows.length === 0 ? <EmptyState>{t(kind === "STICKER" ? "wh.noStickers" : kind === "PACKAGING" ? "wh.noPackaging" : "wh.noMaterials")}</EmptyState> : <StockTable key={kind} rows={rows} money={money} />}
       </div>

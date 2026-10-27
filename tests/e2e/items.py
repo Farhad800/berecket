@@ -105,10 +105,17 @@ with sync_playwright() as p:
     ck("bought 500 kg PP in USD: stock +500 kg, supplier owed 625 USD", stock("MAT-0001")==596.22 and sql(f"SELECT currency||'|'||total::float FROM {Q('\"StockDoc\"')} WHERE type='BUY'")=="USD|625")
     ck("buying doesn't change the item's cost (set by hand only)", sql(f"SELECT {Q('\"costIqd\"')}::float FROM {P} WHERE code='MAT-0001'")=="1898")
     A.goto(B+"/inventory?tab=materials"); ck("…and it is in the Raw materials section", "596.22" in A.inner_text("main"))
+    ck("each raw material shows its value in stock (596.22 kg × 1,898 = 1,131,625.56 IQD); no cost → —", A.get_by_test_id("value-MAT-0001").inner_text()=="1,131,625.56" and A.get_by_test_id("value-"+sql(f"SELECT code FROM {P} WHERE name='Handle'")).inner_text()=="—")
+    ck("stock value panel opens on Raw materials: 1,131,625.56 IQD, 1 item without a cost", A.get_by_test_id("stock-value").inner_text()=="1,131,625.56 IQD" and "1 of them have no cost yet" in A.inner_text("main"))
+    A.goto(B+"/inventory?tab=packaging"); ck("packaging values: 9 cartons × 500 = 4,500 · 1.64 kg nylon × 3,000 = 4,920; section 9,420", A.get_by_test_id("value-PKG-0001").inner_text()=="4,500" and A.get_by_test_id("value-PKG-0002").inner_text()=="4,920" and A.get_by_test_id("stock-value").inner_text()=="9,420 IQD")
+    A.goto(B+"/inventory?tab=stickers"); ck("labels: 3,200 × 25 = 80,000", A.get_by_test_id("value-LBL-0001").inner_text()=="80,000" and A.get_by_test_id("stock-value").inner_text()=="80,000 IQD")
+    A.goto(B+"/inventory"); ck("products: 1,800 pcs × 29.86 = 53,754.44", A.get_by_test_id("value-P-100").inner_text()=="53,754.44" and A.get_by_test_id("stock-value").inner_text()=="53,754.44 IQD")
+    A.get_by_role("radio", name="All", exact=True).click()
+    ck("All: 1,274,800 IQD with each section listed", A.get_by_test_id("stock-value").inner_text()=="1,274,800 IQD" and A.get_by_test_id("value-MATERIAL").inner_text()=="1,131,625.56 IQD" and A.get_by_test_id("value-PRODUCT").inner_text()=="53,754.44 IQD")
 
     # ── 5. only Buy / Sell / Safe roles see costs
     W=ctx(); login(W,"walid",pw["walid"])
-    W.goto(B+"/inventory"); h=W.content(); m=W.inner_text("main"); ck("warehouse sees stock but no cost column or value", "Cost / piece" not in m and "Stock value" not in m and "29.86" not in h and "29.8636" not in h)
+    W.goto(B+"/inventory"); h=W.content(); m=W.inner_text("main"); ck("warehouse sees stock but no cost column or value", "Cost / piece" not in m and "Stock value" not in m and "Value (IQD)" not in m and "29.86" not in h and "29.8636" not in h)
     W.goto(B+"/inventory?tab=materials"); h=W.content(); ck("…no material costs", "1,898" not in h and "1898" not in h)
     W.goto(B+"/products/tpbowl000001"); h=W.content(); m=W.inner_text("main"); ck("…no product cost on the product page (not even in the page data)", "Cost of one piece" not in m and "29.86" not in h and "costIqd" not in h and "1898" not in h)
     W.goto(B+f"/products/{pid('MAT-0001')}"); h=W.content(); ck("…no cost on the item page", "1,898" not in h and "1898" not in h)
