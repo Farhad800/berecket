@@ -62,6 +62,7 @@ export type ReceiptData = {
   note: string | null;
   currency: "IQD" | "USD" | "EUR";
   customerCode?: string | null;
+  supplierRef?: string | null;
   delivery?: string | null;
   /** total = after the line discount */
   lines: { code: string; name: string; name2: string | null; qty: number; unit: string; price: number; discount?: number; discountLabel?: string; total: number }[];

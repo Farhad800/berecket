@@ -1,0 +1,83 @@
+"use client";
+
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { Archive, ArchiveRestore, Banknote, Pencil, Save } from "lucide-react";
+import { Alert, Button, Card, Input, Select } from "@/components/ui";
+import { archiveSupplierAction, payToSupplierAction, updateSupplierAction } from "@/app/actions/suppliers";
+import SafeSelect, { fitSafe, type SafeOpt } from "../../cash/safe-select";
+import type { CurCode } from "../../cash/types";
+
+type C = { id: string; code: string; name: string; phone: string; address: string; note: string; archived: boolean };
+const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}-x`);
+
+/** Edit the supplier, archive it, and pay it (money out of a chosen safe). */
+export default function SupplierTools({ customer, canEdit, canPay, safes = [] }: { customer: C; canEdit: boolean; canPay: boolean; safes?: SafeOpt[] }) {
+  const t = useTranslations();
+  const router = useRouter();
+  const [edit, setEdit] = useState(false);
+  const [v, setV] = useState(customer);
+  const [pay, setPay] = useState({ currency: "IQD", amount: "", note: "", safe: "" });
+  const safeId = fitSafe(safes, pay.currency as CurCode, pay.safe);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, start] = useTransition();
+  const key = useRef<string | null>(null);
+  const fail = (r: { error: string; fieldErrors?: Record<string, string> }) => setMsg({ ok: false, text: r.fieldErrors ? Object.values(r.fieldErrors)[0] ?? r.error : r.error });
+
+  const save = () => start(async () => {
+    const r = await updateSupplierAction({ id: v.id, code: v.code, name: v.name, phone: v.phone || undefined, address: v.address || undefined, note: v.note || undefined });
+    if (!r.ok) return fail(r);
+    setEdit(false); setMsg({ ok: true, text: t("supp.saved") }); router.refresh();
+  });
+  const archive = () => start(async () => {
+    const r = await archiveSupplierAction({ id: v.id, archived: !customer.archived });
+    if (!r.ok) return fail(r);
+    router.refresh();
+  });
+  const receive = () => start(async () => {
+    key.current ??= newId(); // same number on a retry → saved once
+    const r = await payToSupplierAction({ supplierId: v.id, currency: pay.currency, safeId: safeId || undefined, amount: pay.amount, note: pay.note || undefined, submissionId: key.current });
+    if (!r.ok) return fail(r);
+    key.current = null;
+    setPay({ ...pay, amount: "", note: "" }); setMsg({ ok: true, text: t("supp.paid", { number: r.data.number }) }); router.refresh();
+  });
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      {canPay && !customer.archived && (
+        <Card>
+          <h2 className="mb-2 flex items-center gap-2 font-semibold"><Banknote className="size-4" /> {t("supp.pay")}</h2>
+          <p className="mb-2 text-xs text-muted">{t("supp.payHint")}</p>
+          <div className="grid gap-2 sm:grid-cols-[7rem_1fr]">
+            <Select value={pay.currency} onChange={(e) => setPay({ ...pay, currency: e.target.value })} aria-label={t("cash.currency")}><option>IQD</option><option>USD</option><option>EUR</option></Select>
+            <Input type="number" inputMode="decimal" min={0} step="any" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: e.target.value })} placeholder={t("cash.amount")} aria-label={t("supp.payAmount")} dir="ltr" className="text-end" />
+            {safes.length > 0 && <div className="sm:col-span-2"><SafeSelect safes={safes} currency={pay.currency as CurCode} value={safeId} onChange={(id) => setPay({ ...pay, safe: id })} label={t("safe.outOfSafe")} /></div>}
+            <Input value={pay.note} onChange={(e) => setPay({ ...pay, note: e.target.value })} placeholder={t("sd.note")} aria-label={t("supp.payNote")} className="sm:col-span-2" />
+          </div>
+          <Button className="mt-2" onClick={receive} disabled={pending || !(Number(pay.amount) > 0)}><Banknote className="size-4" /> {t("supp.paySave")}</Button>
+        </Card>
+      )}
+      {canEdit && (
+        <Card>
+          {!edit ? (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={() => setEdit(true)}><Pencil className="size-4" /> {t("supp.edit")}</Button>
+              <Button variant="ghost" onClick={archive} disabled={pending}>{customer.archived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />} {customer.archived ? t("common.restore") : t("common.archive")}</Button>
+            </div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-sm font-medium">{t("supp.code")}<Input value={v.code} onChange={(e) => setV({ ...v, code: e.target.value })} className="mt-1" dir="ltr" aria-label={t("supp.code")} /></label>
+              <label className="text-sm font-medium">{t("supp.name")}<Input value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} className="mt-1" aria-label={t("supp.name")} /></label>
+              <label className="text-sm font-medium">{t("sd.phone")}<Input type="tel" value={v.phone} onChange={(e) => setV({ ...v, phone: e.target.value })} className="mt-1" dir="ltr" aria-label={t("sd.phone")} /></label>
+              <label className="text-sm font-medium">{t("supp.address")}<Input value={v.address} onChange={(e) => setV({ ...v, address: e.target.value })} className="mt-1" aria-label={t("supp.address")} /></label>
+              <label className="text-sm font-medium sm:col-span-2">{t("sd.note")}<Input value={v.note} onChange={(e) => setV({ ...v, note: e.target.value })} className="mt-1" aria-label={t("sd.note")} /></label>
+              <div className="flex gap-2 sm:col-span-2"><Button onClick={save} disabled={pending}><Save className="size-4" /> {t("common.save")}</Button><Button variant="ghost" onClick={() => { setEdit(false); setV(customer); }}>{t("common.cancel")}</Button></div>
+            </div>
+          )}
+        </Card>
+      )}
+      {msg && <div className="lg:col-span-2"><Alert tone={msg.ok ? "green" : "red"}>{msg.text}</Alert></div>}
+    </div>
+  );
+}

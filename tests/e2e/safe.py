@@ -78,7 +78,7 @@ with sync_playwright() as p:
     ck("…and the balances did not change", bal("IQD")==8_950_000 and bal("USD")==4000)
 
     # 5. buy in EUR, paid later from the safe
-    stock_doc(A, B, "BUY", [("M-100","100","2")], party="Euro Polymers", currency="EUR")
+    stock_doc(A, B, "BUY", [("M-100","100","2")], party="Euro Polymers", currency="EUR", paid=200)
     ck("buy fully paid in EUR refused: the safe has no EUR", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")=="0" and "\"Main safe\" has only 0 EUR" in A.inner_text("main"))
     out=stock_doc(A, B, "BUY", [("M-100","100","2")], party="Euro Polymers", currency="EUR", paid=0)
     did=A.url.split("/")[-1].split("?")[0]

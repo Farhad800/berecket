@@ -2,7 +2,7 @@ import "server-only";
 import { db, type Tx } from "./db";
 import { defaultPieces, productCost, type CostRecipe, type ProductCost } from "./cost";
 
-const item = { id: true, code: true, name: true, unit: true, unitWeightKg: true, costIqd: true } as const;
+const item = { id: true, code: true, name: true, unit: true, unitWeightKg: true, costIqd: true, kind: true } as const;
 export const COST_SELECT = {
   label: { select: item },
   components: { select: { qty: true, per: true, component: { select: item } }, orderBy: { createdAt: "asc" as const } },
@@ -18,16 +18,42 @@ export async function lastMade(ids?: string[], tx: Tx = db) {
   return new Map(rows.map((r) => [r.productId, r.quantity]));
 }
 
-/** Recipe with costs, the default quantity, and the cost at that quantity, for each product. */
+type Entry = { recipe: CostRecipe; pieces: number; fromProduction: boolean; cost: ProductCost };
+
+/**
+ * Recipe with costs, the default quantity, and the cost at that quantity, for each product.
+ * A product can be made of another product made in the factory (the plastic handle of a bucket):
+ * that part costs what one piece of it costs (its own label + materials + packaging). If its own cost
+ * isn't complete yet, it counts as an item without a cost. Metal handles are bought items with a typed cost.
+ */
 export async function productCosts(ids?: string[], tx: Tx = db) {
   const [list, made] = await Promise.all([
-    tx.product.findMany({ where: { kind: "PRODUCT", ...(ids ? { id: { in: ids } } : {}) }, select: { id: true, ...COST_SELECT } }),
-    lastMade(ids, tx),
+    tx.product.findMany({ where: { kind: "PRODUCT" }, select: { id: true, ...COST_SELECT } }),
+    lastMade(undefined, tx),
   ]);
-  const out = new Map<string, { recipe: CostRecipe; pieces: number; fromProduction: boolean; cost: ProductCost }>();
-  for (const p of list) {
-    const pieces = defaultPieces(p, made.get(p.id));
-    out.set(p.id, { recipe: p, pieces, fromProduction: made.has(p.id), cost: productCost(p, pieces) });
-  }
+  const byId = new Map(list.map((p) => [p.id, p]));
+  const memo = new Map<string, Entry | null>();
+  const solve = (id: string, path: Set<string>): Entry | null => {
+    if (memo.has(id)) return memo.get(id)!;
+    const p = byId.get(id);
+    if (!p || path.has(id)) return null; // unknown, or made of itself through other products
+    path.add(id);
+    const recipe: CostRecipe = {
+      label: p.label,
+      components: p.components.map((l) => {
+        if (l.component.kind !== "PRODUCT") return l;
+        const sub = solve(l.component.id, path);
+        const ok = sub && !sub.cost.noRecipe && sub.cost.missing.length === 0;
+        return { ...l, component: { ...l.component, costIqd: ok ? sub!.cost.perPiece : null } };
+      }),
+    };
+    path.delete(id);
+    const pieces = defaultPieces(recipe, made.get(id));
+    const e = { recipe, pieces, fromProduction: made.has(id), cost: productCost(recipe, pieces) };
+    memo.set(id, e);
+    return e;
+  };
+  const out = new Map<string, Entry>();
+  for (const p of list) if (!ids || ids.includes(p.id)) { const e = solve(p.id, new Set()); if (e) out.set(p.id, e); }
   return out;
 }

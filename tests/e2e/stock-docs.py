@@ -60,7 +60,7 @@ with sync_playwright() as p:
     A.goto(B+f"/print/receipt/doc/{sd}"); rc=A.inner_text("main")
     ck("receipt shows 0.005, line 100 and total 101.85", "0.005" in rc and "101.85 USD" in rc)
     n0=sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")
-    stock_doc(A, B, "BUY", [("S-100",10,"0.0000001")], party="X", currency="USD", paid=0)
+    stock_doc(A, B, "BUY", [("S-100",10,"0.0000001")], party="Xy Supplies", currency="USD", paid=0)
     ck("a price with 7 decimals is refused", sql(f"SELECT count(*) FROM {Q('\"StockDoc\"')}")==n0)
     sql(f"DELETE FROM {Q('\"StockMovement\"')} WHERE {Q('\"docId\"')}='{sd}'"); sql(f"DELETE FROM {Q('\"StockDoc\"')} WHERE id='{sd}'")
 

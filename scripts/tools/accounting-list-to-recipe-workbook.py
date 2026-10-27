@@ -60,6 +60,8 @@ RANGES = {}
 for j, k in enumerate(["STICKER", "MATERIAL", "PACKAGING"]):
     c0 = 1 + j * 4  # A/E/I
     items = sorted(by[k], key=lambda x: x[1])
+    # Raw-material rows can also take a part made in the factory (the plastic handle is a product).
+    if k == "MATERIAL": items += sorted(by["PRODUCT"], key=lambda x: x[1])
     lists.cell(1, c0, "name"); lists.cell(1, c0 + 1, "code"); lists.cell(1, c0 + 2, "unit")
     for i, r in enumerate(items, 2):
         lists.cell(i, c0, r[1]); lists.cell(i, c0 + 1, r[0]).number_format = "@"; lists.cell(i, c0 + 2, unit(r[3]))
@@ -76,7 +78,7 @@ BLOCK = [("STICKER", "Label · ملصق", "piece"), ("MATERIAL", "Raw material �
 dvs = {k: DataValidation(type="list", formula1=f"={RANGES[k][0]}", allow_blank=True, showErrorMessage=True, errorTitle="Bereket", error="Choose an item from the list (add new items on its sheet first).") for k in RANGES}
 for dv in dvs.values(): rec.add_data_validation(dv)
 dvper = DataValidation(type="list", formula1='"piece,pack"', allow_blank=True); rec.add_data_validation(dvper)
-cost_of = lambda e: f'IFERROR(VLOOKUP({e},Labels!$A:$I,9,FALSE),IFERROR(VLOOKUP({e},\'Raw materials\'!$A:$I,9,FALSE),IFERROR(VLOOKUP({e},Packaging!$A:$I,9,FALSE),"")))'
+cost_of = lambda e: f'IFERROR(VLOOKUP({e},Labels!$A:$I,9,FALSE),IFERROR(VLOOKUP({e},\'Raw materials\'!$A:$I,9,FALSE),IFERROR(VLOOKUP({e},Packaging!$A:$I,9,FALSE),IFERROR(INDIRECT("K"&MATCH({e},$A:$A,0)),""))))'
 r = 2
 for bi, p in enumerate(by["PRODUCT"]):
     top = r
@@ -114,6 +116,7 @@ for i, l in enumerate([
     "Sheet 'Made of & packaging': every product has its own block of rows: 1 label, 3 raw materials (granules, dye, handle…), 2 packaging (carton, nylon).",
     "  • Item: choose it from the drop-down list of that row. Its code, unit and cost fill in by themselves.",
     "  • Quantity: Label → leave empty. Raw material counted in kg → GRAMS for one piece (e.g. 50). Counted in pieces → pieces for one piece (handle = 1).",
+    "  • A plastic handle made in the factory is a product: choose it in a Raw material row (it is in the same list, after the materials). Its cost comes from its own block. A metal handle is a bought raw material with its own price.",
     "    Packaging → how many products go into ONE carton / ONE nylon bag (e.g. 880).",
     "  • Rows you don't need stay empty. Products you don't fill stay as they are.",
     "Sheets 'Labels', 'Raw materials', 'Packaging': the cost of each item, ONCE: Cost price of 1 piece or 1 kg + Currency; for USD / EUR also the Rate to IQD.",

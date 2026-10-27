@@ -24,6 +24,7 @@ Sign in at **https://bereket-fms.vercel.app** with your own username. Your first
 - **Items workbook (Excel)** — the fast way to fill in everything (Warehouse Stock or Products → *Items workbook (Excel)*): **Download items workbook** gives one Excel file with sheets *Labels, Raw materials, Packaging, Products, Made of & packaging*, already filled with every item in the system, its stock now and its cost. Fill in what is missing or wrong (unit, weight of one bag, cost price + currency + rate for USD/EUR, mold, label, QC, made of & packaging) and add new items in new rows (empty Code = automatic code). **Counted stock**: what is on the shelf now — the stock is set to it with one Input / Output count document (empty = unchanged). Upload → **Check file** lists what will change and every mistake by sheet and row → **Save everything**. Rows are matched on their code (a row without a code is matched by its name); empty cells never delete anything; grey columns are only for information. Needs Products: Create + Edit; costs need a money role; counted stock needs Stock movements Input / Output. On *Made of & packaging*, rows that are left empty are skipped, and a **label** listed under a product becomes that product's label.
 - Costs are shown only to roles that can **Buy**, **Sell** or **view the Safe** (like all money). Others still see items and stock.
 - Production still takes the label, materials and packaging out of stock exactly as before.
+- **Plastic handles made in the factory** are products with their own made-of (granules, dye). Put the handle in a bucket's *Made of* (pieces per piece = 1): its cost per piece is the handle's own cost, and making buckets takes handles out of stock. A **metal handle** is a bought raw material with its own cost.
 
 ## Sales
 1. **Orders → New order**: the whole product list is shown as one sheet. Type the amount next to each product you need and leave the rest empty (Enter jumps to the next box; *Show only chosen* hides the empty ones). Press **Save order**. Up to 500 products per order. No customer or date is needed.
@@ -57,7 +58,7 @@ Every manual change of stock is one numbered document. Press one of the four but
 |---|---|---|---|
 | **Input** | IN-2026-0001 | no | reason: return, transfer, count correction, other |
 | **Output** | OUT-2026-0001 | no | reason: damage/scrap, sample, transfer, count correction, other |
-| **Buy** | BUY-2026-0001 | yes | supplier name, invoice no. (optional), currency IQD, USD or EUR, price per unit, **paid now** (taken from the safe) |
+| **Buy** | BUY-2026-0001 | yes | **supplier** (choose from the list or **New supplier**), the supplier's own invoice no. (optional), currency IQD, USD or EUR — for USD/EUR the **rate of the day** (1 USD = ? IQD, typed by you), price per unit, discounts, **paid now** (taken from the safe). Our purchase number PUR-2026-0001 is given automatically |
 | **Sell** | SAL-2026-0001 | yes | **customer** (choose from the list or **New customer**), delivery place, currency, price per unit, discounts, **received now** (goes into the safe); optionally the order — the list button fills the lines from the order. The invoice number INV-2026-0001 is given automatically |
 - Under each line you see the stock now and after saving. If it would go below zero you are warned, but you can still save (the warehouse is notified).
 - Kg items can have 3 decimals (25.250); pieces must be whole numbers.
@@ -65,6 +66,14 @@ Every manual change of stock is one numbered document. Press one of the four but
 - A sale linked to an order shows on that order (**Sold** column + list of sales).
 - Report **Buying and selling** lists every bought/sold line with totals per currency (CSV / Excel / PDF).
 - **Who can do what** is set per role in Administration → Roles → *Stock movements*: View, Input, Output, Buy, Sell. Warehouse Team has Input and Output; switch Buy/Sell on for the roles that need them.
+
+## Suppliers (accounts, what we owe)
+- **Suppliers** in the menu works like Customers: each supplier has a **code** (S-0001, automatic, can be changed), one balance per currency, a statement and **Pay the supplier** (money out of a chosen safe; more than owed is allowed = paid in advance). **Minus (−, red) = the factory owes the supplier.**
+- Every purchase is booked to a supplier. Old purchases were moved into supplier accounts by name; the invoice number typed on them is kept as *Supplier's invoice no.*
+- **Discount when buying**: per line and on the whole purchase, % or amount. It only lowers what is owed to the supplier; the item's price on the line (and its cost) stays the bought price.
+- **Buying in USD or EUR**: the supplier is owed in that currency; the form asks the **rate of the day** and shows the purchase's value in IQD. An item's cost is only changed by hand (item page or Items workbook).
+- **Paid now / Received now starts at 0** on every purchase and sale. Type what was really paid, or press **Paid in full**.
+- Permissions: Administration → Roles → *Suppliers*: View, Manage (given automatically to roles that can Buy or view the Safe).
 
 ## Customers (accounts, balances, discounts)
 - **Customers** in the menu lists every customer with a **code** (C-0001, given automatically; you can change it) and their balance. Search by code, name or phone; filter **Owes us** or **Archived**.
