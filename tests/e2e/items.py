@@ -1,5 +1,7 @@
 """Labels / raw materials / packaging added by hand, their cost, product cost, warehouse sections on Buy (accountant, 26 Oct 2026).
-EMPTY database. Fresh bereket_accept on :3001 (see TESTING.md), then: python3 tests/e2e/items.py"""
+EMPTY database. Checks costs from each item's starting cost, so start the server with FIFO_START in the future
+(e.g. FIFO_START=2099-01-01T00:00:00Z); batches.py checks costs from batches. Fresh bereket_accept on :3001 (see TESTING.md),
+then: python3 tests/e2e/items.py"""
 import os, re, subprocess, sys
 from playwright.sync_api import sync_playwright
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from stockdoc import stock_doc
