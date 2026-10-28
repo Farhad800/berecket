@@ -101,32 +101,31 @@ export default function RecipeEditor({ productId, canEdit, labels, madeOf, packa
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
       <div className="space-y-4">
-        <Card>
-          <h2 className="mb-1 flex items-center gap-2 font-semibold"><Tag className="size-4" /> {t("rc.label")}</h2>
-          <p className="mb-2 text-xs text-muted">{creating ? t("md.labelHint") : t("rc.labelHint")}</p>
-          {canEdit ? (
-            <Combobox name="labelId" options={[{ value: "", label: t("md.noLabel") }, ...opt(labels)]} defaultValue={labelId} onChange={setLabelId} placeholder={t("md.noLabel")} />
-          ) : <p className="text-sm">{all.get(labelId)?.name ?? t("md.noLabel")}</p>}
-          {labelId && all.get(labelId) && <p className="mt-1 text-xs text-muted" dir="ltr">{all.get(labelId)!.code} · {t("order.inStock")}: {fmt(all.get(labelId)!.stock)}</p>}
-          {showDetails && (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2" id="edit">
-              {!labelId && (
-                <>
-                  <label className="text-sm font-medium">{t("md.productName")}<Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" aria-label={t("md.productName")} /><span className="text-xs font-normal text-muted">{t("rc.nameNoLabel")}</span></label>
-                  <label className="text-sm font-medium">{t("md.name2")}<Input value={name2} onChange={(e) => setName2(e.target.value)} className="mt-1" dir="ltr" aria-label={t("md.name2")} /></label>
-                </>
-              )}
-              {labelId && all.get(labelId) && <p className="text-sm sm:col-span-2">{t("rc.nameWillBe")} <b>{all.get(labelId)!.name.replace(/اتيكيت|إتيكيت/g, " ").replace(/\s+/g, " ").trim()}</b></p>}
+        {showDetails && (
+          <Card id="edit">
+            <h2 className="mb-1 font-semibold">{t("rc.details")}</h2>
+            <p className="mb-2 text-xs text-muted">{t("rc.nameTyped")}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-sm font-medium">{t("md.productName")} *<Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" aria-label={t("md.productName")} maxLength={160} /></label>
+              <label className="text-sm font-medium">{t("md.name2")}<Input value={name2} onChange={(e) => setName2(e.target.value)} className="mt-1" dir="ltr" aria-label={t("md.name2")} maxLength={160} /></label>
               <label className="text-sm font-medium">{t("md.productCode")} *<Input value={code} onChange={(e) => setCode(e.target.value)} className="mt-1" dir="ltr" required /></label>
               <div className="text-sm font-medium">{t("md.mold")}<div className="mt-1"><Combobox name="moldId" options={[{ value: "", label: "—" }, ...(molds ?? []).map((m) => ({ value: m.id, label: m.code, hint: m.name }))]} defaultValue={moldId} onChange={setMoldId} /></div></div>
               <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={qc} onChange={(e) => setQc(e.target.checked)} className="size-5 accent-brand-600" /> {t("md.qcRequired")}</label>
             </div>
-          )}
-        </Card>
+          </Card>
+        )}
 
         <Card>
           <h2 className="mb-1 font-semibold">{t("rc.madeOf")}</h2>
           <p className="text-xs text-muted">{t("rc.madeOfHint")}</p>
+          <div className="mt-3 rounded-lg border border-line p-3">
+            <p className="mb-1 flex items-center gap-2 text-sm font-semibold"><Tag className="size-4" /> {t("rc.label")}</p>
+            <p className="mb-2 text-xs text-muted">{t("rc.labelHint")}</p>
+            {canEdit ? (
+              <Combobox name="labelId" options={[{ value: "", label: t("md.noLabel") }, ...opt(labels)]} defaultValue={labelId} onChange={setLabelId} placeholder={t("md.noLabel")} />
+            ) : <p className="text-sm">{all.get(labelId)?.name ?? t("md.noLabel")}</p>}
+            {labelId && all.get(labelId) && <p className="mt-1 text-xs text-muted" dir="ltr">{all.get(labelId)!.code} · {t("order.inStock")}: {fmt(all.get(labelId)!.stock)} · {t("rc.onePerPiece")}</p>}
+          </div>
           <ul className="divide-y divide-line">{rows("PIECE", madeOf)}</ul>
           {canEdit && <Button type="button" size="sm" variant="secondary" onClick={() => add("PIECE")} className="mt-2"><Plus className="size-4" /> {t("rc.addMaterial")}</Button>}
         </Card>

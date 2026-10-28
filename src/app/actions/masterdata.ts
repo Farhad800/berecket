@@ -21,11 +21,6 @@ function clean<T extends Record<string, unknown>>(o: T) {
 }
 
 // ───────── Products ─────────
-/** "بركة كاسة اتيكيت 700 غم" → "بركة كاسة 700 غم"; "700 GR BEREKET KASE ETIKET" → "700 GR BEREKET KASE". */
-function nameFromLabel(l: { name: string; name2: string | null }) {
-  const strip = (s: string, re: RegExp) => s.replace(re, " ").replace(/\s+/g, " ").trim();
-  return { name: strip(l.name, /اتيكيت|إتيكيت|ستيكر/g), name2: l.name2 ? strip(l.name2, /\bETIKET\b|\bETİKET\b|\bSTICKER\b|\bLABEL\b/gi) : undefined };
-}
 const productSchema = z.object({
   code,
   name: z.string().trim().max(160).optional(),
@@ -48,13 +43,9 @@ export async function saveProductAction(_: unknown, fd: FormData) {
     const me = await requirePermission(id ? "products:edit" : "products:create");
     const v = productSchema.parse(raw);
     const before = id ? await db.product.findUniqueOrThrow({ where: { id } }) : null;
-    // A product with a label takes its name from the label (owner's rule); without a label the name is typed.
-    if (v.labelId && v.labelId !== before?.labelId) {
-      const label = await db.product.findFirst({ where: { id: v.labelId, kind: "STICKER" }, select: { name: true, name2: true } });
-      if (!label) throw new UserError("That label doesn't exist any more.");
-      Object.assign(v, nameFromLabel(label));
-    }
-    if (!v.name || v.name.length < 2) throw new UserError("Choose the product's label, or type a name if it has no label.");
+    // A product's name is always typed by hand (owner, 28 Oct 2026): a label's name has "اتيكيت" in it.
+    if (v.labelId && !(await db.product.count({ where: { id: v.labelId, kind: "STICKER" } }))) throw new UserError("That label doesn't exist any more.");
+    if (!v.name || v.name.length < 2) throw new UserError("Type the product's name.");
     const data = clean({ ...v, name: v.name, code: v.code.toUpperCase() });
     if (id && before) {
       await db.product.update({ where: { id }, data });
@@ -339,14 +330,9 @@ export async function saveProductPageAction(input: unknown) {
         data.mold = v.moldId ? { connect: { id: v.moldId } } : { disconnect: true };
         if (v.qcRequired !== undefined) data.qcRequired = v.qcRequired;
       }
-      // A product with a label takes its name from the label (owner's rule); without a label the name is typed.
-      if (v.labelId) {
-        if (v.labelId !== p.labelId) {
-          const label = await tx.product.findFirst({ where: { id: v.labelId, kind: "STICKER" }, select: { name: true, name2: true } });
-          if (label) Object.assign(data, nameFromLabel(label));
-        }
-      } else if (v.code !== undefined) {
-        if (!v.name || v.name.length < 2) throw new UserError("Choose the product's label, or type a name if it has no label.");
+      // The name is always typed by hand; choosing a label never renames the product (owner, 28 Oct 2026).
+      if (v.code !== undefined) {
+        if (!v.name || v.name.length < 2) throw new UserError("Type the product's name.");
         data.name = v.name; data.name2 = v.name2 || null;
       }
       if (Object.keys(data).length) {
@@ -362,7 +348,7 @@ export async function saveProductPageAction(input: unknown) {
   });
 }
 
-/** New product in one go: label (or typed name), code, mold, and what it is made of and packed in. */
+/** New product in one go: typed name, code, mold, and what it is made of (label included) and packed in. */
 export async function createProductAction(input: unknown) {
   const res = await run(async () => {
     const me = await requirePermission("products:create");
@@ -372,15 +358,9 @@ export async function createProductAction(input: unknown) {
       moldId: z.string().max(40).optional(), qcRequired: z.boolean().default(false), lines: linesSchema,
     }).parse(input);
     checkLines(v.lines);
-    let names: { name: string; name2?: string | null };
-    if (v.labelId) {
-      const label = await db.product.findFirst({ where: { id: v.labelId, kind: "STICKER" }, select: { name: true, name2: true } });
-      if (!label) throw new UserError("That label doesn't exist any more.");
-      names = nameFromLabel(label);
-    } else {
-      if (!v.name || v.name.length < 2) throw new UserError("Choose the product's label, or type a name if it has no label.");
-      names = { name: v.name, name2: v.name2 || null };
-    }
+    // Always the typed name (owner, 28 Oct 2026) — never the label's name, which has "اتيكيت" in it.
+    if (!v.name || v.name.length < 2) throw new UserError("Type the product's name.");
+    const names = { name: v.name, name2: v.name2 || null };
     const p = await db.$transaction(async (tx) => {
       const created = await tx.product.create({ data: { code: v.code.toUpperCase(), kind: "PRODUCT", name: names.name, name2: names.name2 ?? null, moldId: v.moldId || null, qcRequired: v.qcRequired } });
       await audit({ userId: me.id, action: "product.create", entityType: "Product", entityId: created.id, after: { code: created.code, name: created.name } }, tx);
