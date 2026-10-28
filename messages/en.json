@@ -252,7 +252,7 @@
     "name2": "Second name (Turkish / English)",
     "name2Hint": "Shown under the main name.",
     "label": "Label",
-    "labelHint": "Choose the product's label — the name comes from the label. Leave empty if the product has no label.",
+    "labelHint": "The label used on this product (1 per piece). The product's name is typed by hand.",
     "productNameFromLabel": "Only for products without a label. With a label, the name is taken from the label.",
     "noLabel": "No label",
     "recipeLink": "Made of & packaging",
@@ -1793,7 +1793,7 @@
   },
   "rc": {
     "label": "Label",
-    "labelHint": "1 label per piece is taken from stock when production is entered.",
+    "labelHint": "The product's label: 1 label per piece is taken from stock when production is entered. Choosing it doesn't change the product's name.",
     "madeOf": "Made of (per piece)",
     "madeOfHint": "Raw materials and colours in grams per piece; handles and other parts in pieces per piece.",
     "addMaterial": "Add material / colour / part",
@@ -1820,7 +1820,10 @@
     "nameWillBe": "Product name (from the label):",
     "create": "Create product",
     "newIntro": "Pick the label first — the name comes from it. Then add what one piece is made of and how it is packed.",
-    "created": "Product created. Daily production will now take its label, materials and packaging from stock."
+    "created": "Product created. Daily production will now take its label, materials and packaging from stock.",
+    "details": "Product",
+    "nameTyped": "Type the product's own name. It never comes from the label (a label's name has \"اتيكيت\" in it).",
+    "onePerPiece": "1 per piece"
   },
   "sd": {
     "intro": "Every manual change of stock: input, output, buy and sell. Production and what it uses still change stock automatically.",

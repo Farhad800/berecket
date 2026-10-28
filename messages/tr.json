@@ -252,7 +252,7 @@
     "name2": "İkinci ad (Türkçe / İngilizce)",
     "name2Hint": "Ana adın altında gösterilir.",
     "label": "Etiket",
-    "labelHint": "Ürünün etiketini seçin — ad etiketten gelir. Etiketi yoksa boş bırakın.",
+    "labelHint": "Bu üründe kullanılan etiket (adet başına 1). Ürünün adı elle yazılır.",
     "productNameFromLabel": "Yalnızca etiketsiz ürünler için. Etiket seçilirse ad etiketten alınır.",
     "noLabel": "Etiketsiz",
     "recipeLink": "İçerik ve ambalaj",
@@ -1793,7 +1793,7 @@
   },
   "rc": {
     "label": "Etiket",
-    "labelHint": "Üretim girildiğinde parça başına 1 etiket stoktan düşülür.",
+    "labelHint": "Ürünün etiketi: üretim girildiğinde her adet için 1 etiket stoktan düşülür. Seçmek ürünün adını değiştirmez.",
     "madeOf": "İçerik (parça başına)",
     "madeOfHint": "Hammadde ve boyalar parça başına gram; saplar ve diğer parçalar parça başına adet.",
     "addMaterial": "Malzeme / boya / parça ekle",
@@ -1820,7 +1820,10 @@
     "nameWillBe": "Ürün adı (etiketten):",
     "create": "Ürünü oluştur",
     "newIntro": "Önce etiketi seçin — ad ondan gelir. Sonra bir parçanın içeriğini ve ambalajını ekleyin.",
-    "created": "Ürün oluşturuldu. Günlük üretim artık etiketini, malzemelerini ve ambalajını stoktan düşecek."
+    "created": "Ürün oluşturuldu. Günlük üretim artık etiketini, malzemelerini ve ambalajını stoktan düşecek.",
+    "details": "Ürün",
+    "nameTyped": "Ürünün kendi adını yazın. Ad asla etiketten alınmaz (etiketin adında \"اتيكيت\" vardır).",
+    "onePerPiece": "adet başına 1"
   },
   "sd": {
     "intro": "Stoktaki her elle değişiklik: giriş, çıkış, alış ve satış. Üretim ve kullandıkları stoğu yine otomatik değiştirir.",

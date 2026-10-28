@@ -70,8 +70,10 @@ with sync_playwright() as p:
     ck(f"deleted entry gives everything back ({s4})", s4=={PROD:0,LABEL:5000,RAW:100,DYE:5,CART:10,NYL:2})
     # new product: label + made of + packaging in one form
     A.goto(B+"/products"); A.get_by_role("link", name="New product").click(); A.wait_for_url("**/products/new")
+    ck("new product: name typed by hand, label chosen under Made of", A.get_by_label("Product name").count()==1 and A.locator("#labelId").count()==1 and "Made of" in A.inner_text("main") and A.inner_text("main").index("Product name") < A.inner_text("main").index("Label"))
     A.locator("#labelId").click(); A.keyboard.type("دريا كاسة اتيكيت 1600"); A.wait_for_timeout(300); A.keyboard.press("Enter")
-    ck("name preview comes from the label", "دريا كاسة 1600 غم" in A.inner_text("main"))
+    ck("choosing a label doesn't fill in the name", A.get_by_label("Product name").input_value()=="")
+    A.get_by_label("Product name").fill("دريا كاسة 1600 غم"); A.get_by_label("Second name (Turkish / English)").fill("1600 GR DERYA KASE")
     A.get_by_label("Product code *").fill("TEST-1")
     A.get_by_role("button", name=re.compile("^Add material")).click(); A.get_by_text("Choose item…").last.click(); A.keyboard.type(RAW); A.wait_for_timeout(300); A.keyboard.press("Enter")
     A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(0).fill("60")
@@ -79,10 +81,16 @@ with sync_playwright() as p:
     A.locator("input[type=number]:not([data-testid=cost-pieces])").nth(1).fill("1200")
     A.get_by_role("button", name="Create product").click(); A.wait_for_url(re.compile(r".*/products/c[a-z0-9]+\?created=1"), wait_until="commit"); A.wait_for_load_state("networkidle")
     t1=pid("TEST-1")
-    ck("new product created with its label name, label link and 2 lines", sql("SELECT name||' | '||name2 FROM \\\"Product\\\" WHERE code='TEST-1'")=="دريا كاسة 1600 غم | 1600 GR DERYA KASE"
+    ck("new product created with its typed name, label link and 2 lines", sql("SELECT name||' | '||name2 FROM \\\"Product\\\" WHERE code='TEST-1'")=="دريا كاسة 1600 غم | 1600 GR DERYA KASE"
        and sql(f"SELECT count(*) FROM \\\"ProductComponent\\\" WHERE \\\"productId\\\"='{t1}'")=="2" and sql("SELECT \\\"labelId\\\" FROM \\\"Product\\\" WHERE code='TEST-1'")==pid("0090.77") and "Product created" in A.inner_text("main"))
-    A.goto(B+"/products/new"); A.get_by_label("Product code *").fill("TEST-2"); A.get_by_role("button", name="Create product").click(); A.wait_for_timeout(1500)
-    ck("no label and no name is refused", "Choose the product's label" in A.inner_text("main"))
+    A.goto(B+"/products/new"); A.locator("#labelId").click(); A.keyboard.type("دريا كاسة اتيكيت 1600"); A.wait_for_timeout(300); A.keyboard.press("Enter")
+    A.get_by_label("Product code *").fill("TEST-2"); A.get_by_role("button", name="Create product").click(); A.wait_for_timeout(1500)
+    ck("a label but no typed name is refused (the name never comes from the label)", "Type the product's name" in A.inner_text("main") and sql("SELECT count(*) FROM \\\"Product\\\" WHERE code='TEST-2'")=="0")
+    A.goto(B+f"/products/{t1}"); A.locator("#labelId").click(); A.keyboard.type("No label"); A.wait_for_timeout(300); A.keyboard.press("Enter")
+    A.get_by_role("button", name="Save made of & packaging").click(); A.wait_for_timeout(1500)
+    A.goto(B+f"/products/{t1}"); A.locator("#labelId").click(); A.keyboard.type("دريا كاسة اتيكيت 1600"); A.wait_for_timeout(300); A.keyboard.press("Enter")
+    A.get_by_role("button", name="Save made of & packaging").click(); A.wait_for_timeout(1500)
+    ck("changing the label on a product keeps its typed name", sql("SELECT name FROM \\\"Product\\\" WHERE code='TEST-1'")=="دريا كاسة 1600 غم")
     # import: label codes + pieces per carton + Recipe sheet
     wb=openpyxl.Workbook(); w=wb.active; w.title="Products"; w.append(["Product code","Label / product name","Kind (product/sticker/material)","Label code"])
     w.append(["0007.6","اسود كاسة 700 غم","product",None]); w.append(["0007.7","خيرات دهوك كاسة 700 غم","product","0007.22"])
