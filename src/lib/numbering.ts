@@ -19,6 +19,7 @@ const PREFIX = {
   salesInvoice: "INV",
   purchaseInvoice: "PUR",
   customer: "C",
+  worker: "W",
   itemLabel: "LBL",
   itemMaterial: "MAT",
   itemPackaging: "PKG",
@@ -27,7 +28,7 @@ const PREFIX = {
 export type DocKind = keyof typeof PREFIX;
 
 /** Kinds numbered without a year: customer codes C-0001, C-0002… */
-const NO_YEAR: DocKind[] = ["customer", "itemLabel", "itemMaterial", "itemPackaging"];
+const NO_YEAR: DocKind[] = ["customer", "worker", "itemLabel", "itemMaterial", "itemPackaging"];
 
 /**
  * Atomic, gap-tolerant sequential numbers per kind and year, e.g. ORD-2026-0007.
