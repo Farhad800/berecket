@@ -50,7 +50,7 @@ group("wk.sheet", {
     "no": ("No.", "ت", "No"), "name": ("Employee Name", "اسم الموظف", "Çalışan Adı"), "id": ("Employee ID", "رقم الموظف", "Çalışan No"), "days": ("Days Worked", "أيام العمل", "Çalışılan Gün"),
     "final": ("Final Salary (IQD)", "الراتب النهائي (دينار)", "Net Maaş (IQD)"), "signature": ("Employee Signature", "توقيع الموظف", "Çalışan İmzası"),
     "total": ("Total — {n} employees", "المجموع — {n} موظف", "Toplam — {n} çalışan"), "manager": ("Manager approval", "موافقة المدير", "Müdür onayı"),
-    "accountant": ("Accountant", "المحاسب", "Muhasebeci"), "name2": ("Name", "الاسم", "Ad"), "approvalDate": ("Approval date", "تاريخ الموافقة", "Onay tarihi"), "date": ("Date", "التاريخ", "Tarih"),
+    "accountant": ("Accountant", "المحاسب", "Muhasebeci"), "sign": ("Signature", "التوقيع", "İmza"), "name2": ("Name", "الاسم", "Ad"), "approvalDate": ("Approval date", "تاريخ الموافقة", "Onay tarihi"), "date": ("Date", "التاريخ", "Tarih"),
     "note": ("This sheet is an acknowledgment of salary received; printing it does not record any payment.", "هذا الكشف إقرار باستلام الراتب؛ طباعته لا تسجّل أي دفع.", "Bu liste maaş alındı belgesidir; yazdırmak herhangi bir ödeme kaydetmez."),
 })
 group("wk", {

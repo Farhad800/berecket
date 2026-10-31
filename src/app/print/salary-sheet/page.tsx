@@ -31,7 +31,7 @@ export default async function SalarySheet({ searchParams }: { searchParams: Prom
   const cell = "border border-black px-2 py-1";
   return (
     <main dir={rtl ? "rtl" : "ltr"} className="mx-auto max-w-[210mm] bg-white p-6 text-black print:p-0" data-testid="salary-sheet">
-      <style>{`@page { size: A4 portrait; margin: 10mm } @media print { body { background: white } .no-print { display: none } thead { display: table-header-group } tfoot { display: table-row-group } tr { break-inside: avoid; page-break-inside: avoid } .keep { break-inside: avoid; page-break-inside: avoid } }`}</style>
+      <style>{`@page { size: A4 portrait; margin: 10mm } @media print { html, body { background: white } .no-print { display: none } thead { display: table-header-group } tfoot { display: table-row-group } tr { break-inside: avoid; page-break-inside: avoid } .keep { break-inside: avoid; page-break-inside: avoid } }`}</style>
       <div className="no-print mb-4 flex items-center justify-between gap-3">
         <p className="text-sm text-gray-600">{frozen ? t("wk.sheetFrozen", { state: t(`wk.run.${run!.state}`) }) : t("wk.sheetDraft")}</p>
         <PrintButton label={t("rep.printSave")} />
@@ -85,13 +85,13 @@ export default async function SalarySheet({ searchParams }: { searchParams: Prom
           <p className="font-bold">{t("wk.sheet.manager")}</p>
           <p className="mt-3">{t("wk.sheet.name2")}: ______________________</p>
           <p className="mt-3">{t("wk.sheet.approvalDate")}: ______________________</p>
-          <p className="mt-3">{t("wk.sheet.signature")}:</p><div className="mt-1 h-[22mm] border border-dashed border-gray-500" />
+          <p className="mt-3">{t("wk.sheet.sign")}:</p><div className="mt-1 h-[22mm] border border-dashed border-gray-500" />
         </div>
         <div className="rounded border border-black p-3">
           <p className="font-bold">{t("wk.sheet.accountant")}</p>
           <p className="mt-3">{t("wk.sheet.name2")}: ______________________</p>
           <p className="mt-3">{t("wk.sheet.date")}: ______________________</p>
-          <p className="mt-3">{t("wk.sheet.signature")}:</p><div className="mt-1 h-[22mm] border border-dashed border-gray-500" />
+          <p className="mt-3">{t("wk.sheet.sign")}:</p><div className="mt-1 h-[22mm] border border-dashed border-gray-500" />
         </div>
       </section>
       <p className="mt-3 text-[10px] text-gray-500">{t("wk.sheet.note")}</p>

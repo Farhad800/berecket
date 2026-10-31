@@ -2478,7 +2478,8 @@
       "name2": "Ad",
       "approvalDate": "Onay tarihi",
       "date": "Tarih",
-      "note": "Bu liste maaş alındı belgesidir; yazdırmak herhangi bir ödeme kaydetmez."
+      "note": "Bu liste maaş alındı belgesidir; yazdırmak herhangi bir ödeme kaydetmez.",
+      "sign": "İmza"
     },
     "intro": "Üç vardiyadaki fabrika çalışanları. Giriş yapmazlar; vardiya amirleri devamsızlık ve cezaları girer.",
     "add": "Çalışan ekle",

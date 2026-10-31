@@ -2478,7 +2478,8 @@
       "name2": "Name",
       "approvalDate": "Approval date",
       "date": "Date",
-      "note": "This sheet is an acknowledgment of salary received; printing it does not record any payment."
+      "note": "This sheet is an acknowledgment of salary received; printing it does not record any payment.",
+      "sign": "Signature"
     },
     "intro": "Factory employees on the three shifts. They don't log in; team leaders report absences and penalties.",
     "add": "Add employee",
