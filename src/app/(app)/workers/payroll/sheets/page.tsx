@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { maySeeSalaries } from "@/lib/workers";
 import { getTranslations } from "next-intl/server";
 import { pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -11,6 +13,7 @@ export const metadata = { title: "Salary sheets" };
 /** Choose month, year and ONE shift, preview the sheet, then print it from the preview. */
 export default async function SheetsPage({ searchParams }: { searchParams: Promise<{ year?: string; month?: string; shift?: string }> }) {
   const me = await pageUser("payroll:view");
+  if (!maySeeSalaries(me)) redirect("/forbidden"); // salaries only with the "see money" rule
   const t = await getTranslations();
   const sp = await searchParams;
   const now = todayYmd();

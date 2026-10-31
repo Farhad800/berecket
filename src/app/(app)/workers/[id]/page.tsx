@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { ArrowLeft } from "lucide-react";
 import { can, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { SHIFTS, SHIFT_NO, mayWork, scopeOf, ymdDate } from "@/lib/workers";
+import { SHIFTS, SHIFT_NO, maySeeSalaries, mayWork, scopeOf, ymdDate } from "@/lib/workers";
 import { formatDate, formatDateTime } from "@/lib/time";
 import { todayYmd } from "@/lib/production";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui";
@@ -74,7 +74,7 @@ export default async function WorkerPage({ params, searchParams }: { params: Pro
             ]} /></div>}
           </Card>
         )}
-        {can(me, "workers:salary") && (
+        {maySeeSalaries(me, "workers:salary") && (
           <Card>
             <h2 className="mb-2 font-semibold">{t("wk.changeSalary")}</h2>
             <p className="mb-2 text-xs text-muted">{t("wk.salaryRule")}</p>
