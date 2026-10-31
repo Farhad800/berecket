@@ -23,7 +23,7 @@
     "assets": "Machines & Molds",
     "reports": "Reports & Analytics",
     "notifications": "Notifications",
-    "employees": "Employee Directory",
+    "employees": "System users",
     "administration": "Administration & Permissions",
     "menu": "Menu",
     "close": "Close",
@@ -31,7 +31,11 @@
     "stock": "Stock Movements",
     "cash": "Safe",
     "receipts": "Receipts",
-    "customers": "Customers"
+    "customers": "Customers",
+    "people": "Employees",
+    "workers": "Employees",
+    "attendance": "Daily Attendance",
+    "payroll": "Monthly Payroll"
   },
   "common": {
     "save": "Save",
@@ -156,7 +160,12 @@
       "audit": "Audit log",
       "stock": "Stock movements",
       "cash": "Safe (money)",
-      "receipts": "Receipts (print layouts)"
+      "receipts": "Receipts (print layouts)",
+      "workers": "Employees (factory workers)",
+      "attendance": "Daily attendance",
+      "penalties": "Penalties",
+      "blacklist": "Blacklist",
+      "payroll": "Payroll (salaries)"
     },
     "actions": {
       "view": "View",
@@ -173,7 +182,8 @@
       "in": "Money in",
       "out": "Money out",
       "exchange": "Exchange",
-      "transfer": "Transfer between safes"
+      "transfer": "Transfer between safes",
+      "salary": "Change salary"
     }
   },
   "install": {
@@ -597,6 +607,46 @@
       "update": "Supplier changed",
       "archive": "Supplier archived",
       "restore": "Supplier restored"
+    },
+    "worker": {
+      "create": "Employee added",
+      "update": "Employee details changed",
+      "salary": "Salary changed",
+      "transfer": "Moved to another shift",
+      "leader": "Team leader changed",
+      "fired": "Employee fired",
+      "quit": "Employee quit",
+      "departureConfirm": "Departure confirmed",
+      "departureUndo": "Departure undone"
+    },
+    "attendance": {
+      "submit": "Attendance submitted",
+      "correct": "Attendance corrected",
+      "excuseApprove": "Excuse approved",
+      "excuseReject": "Excuse rejected",
+      "excuseRevoke": "Excuse revoked",
+      "extraAsk": "Extra deduction days asked",
+      "extraApprove": "Extra deduction days approved",
+      "extraReject": "Extra deduction days rejected"
+    },
+    "penalty": {
+      "add": "Penalty given",
+      "change": "Penalty changed",
+      "cancel": "Penalty cancelled"
+    },
+    "blacklist": {
+      "add": "Added to blacklist",
+      "removeAsk": "Blacklist removal asked",
+      "remove": "Removed from blacklist",
+      "removeRefused": "Blacklist removal refused"
+    },
+    "payroll": {
+      "submit": "Payroll submitted",
+      "approve": "Payroll approved",
+      "reject": "Payroll sent back",
+      "finalize": "Payroll finalized",
+      "correct": "Finalized payroll corrected",
+      "print": "Salary sheet printed"
     }
   },
   "sched": {
@@ -1412,7 +1462,14 @@
       "ReceiptLayout": "Receipt layout",
       "Customer": "Customer",
       "Safe": "Safe",
-      "Supplier": "Supplier"
+      "Supplier": "Supplier",
+      "Worker": "Employee",
+      "AttendanceReport": "Attendance report",
+      "AttendanceRecord": "Attendance",
+      "Penalty": "Penalty",
+      "BlacklistEntry": "Blacklist",
+      "PayrollRun": "Payroll",
+      "Shift": "Shift"
     }
   },
   "sys": {
@@ -1788,6 +1845,50 @@
       "edited": {
         "title": "{number} was changed",
         "body": "by {by}: {reason}"
+      }
+    },
+    "worker": {
+      "leader": {
+        "title": "You lead shift {shift}",
+        "body": "set by {by}"
+      },
+      "departure": {
+        "title": "{name} left ({kind}) — shift {shift}",
+        "body": "recorded by {by}; confirm it"
+      }
+    },
+    "blacklist": {
+      "added": {
+        "title": "{name} added to the blacklist",
+        "body": "shift {shift} · by {by}"
+      },
+      "removeAsk": {
+        "title": "Remove {name} from the blacklist?",
+        "body": "asked by {by}"
+      }
+    },
+    "attendance": {
+      "excuses": {
+        "title": "{n} excused absence(s) to approve",
+        "body": "shift {shift}, {day} · by {by}"
+      },
+      "extra": {
+        "title": "Extra deduction: {name} +{days} day(s)",
+        "body": "absence on {day} · asked by {by}"
+      }
+    },
+    "payroll": {
+      "submitted": {
+        "title": "Payroll {month} waiting for approval",
+        "body": "{n} employees · by {by}"
+      },
+      "approved": {
+        "title": "Payroll {month} approved",
+        "body": "by {by}"
+      },
+      "rejected": {
+        "title": "Payroll {month} sent back",
+        "body": "{by}: {note}"
       }
     }
   },
@@ -2302,5 +2403,260 @@
       "PRODUCTION": "Production",
       "SHORT": "Taken with no stock"
     }
+  },
+  "wk": {
+    "tab": {
+      "active": "Active Employees",
+      "inactive": "Inactive Employees",
+      "blacklist": "Blacklisted Employees",
+      "shifts": "Shift Management",
+      "attendance": "Daily Attendance",
+      "excuses": "Excused Absences",
+      "penalties": "Penalties",
+      "payroll": "Monthly Payroll",
+      "sheets": "Printable Salary Sheets",
+      "history": "Payroll History"
+    },
+    "att": {
+      "PRESENT": "Present",
+      "ABSENT": "Absent",
+      "EXCUSED": "Excused"
+    },
+    "excuse": {
+      "WAITING": "waiting for approval",
+      "APPROVED": "approved",
+      "REJECTED": "rejected — counted as absent",
+      "REVOKED": "revoked — counted as absent"
+    },
+    "appr": {
+      "WAITING": "waiting",
+      "APPROVED": "approved",
+      "REJECTED": "rejected"
+    },
+    "kind": {
+      "FIRED": "Fired",
+      "QUIT": "Quit"
+    },
+    "status": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive"
+    },
+    "same": {
+      "name": "same name",
+      "phone": "same phone"
+    },
+    "run": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Submitted",
+      "APPROVED": "Approved",
+      "FINALIZED": "Finalized"
+    },
+    "col": {
+      "employee": "Employee",
+      "salary": "Monthly salary",
+      "daysWorked": "Days worked",
+      "absent": "Absent",
+      "excused": "Excused",
+      "extra": "Extra days",
+      "deductionDays": "Deduction days",
+      "dailyRate": "Daily rate",
+      "absenceDed": "Absence deduction",
+      "penalties": "Penalties",
+      "totalDed": "Total deductions",
+      "final": "Final salary"
+    },
+    "sheet": {
+      "no": "No.",
+      "name": "Employee Name",
+      "id": "Employee ID",
+      "days": "Days Worked",
+      "final": "Final Salary (IQD)",
+      "signature": "Employee Signature",
+      "total": "Total — {n} employees",
+      "manager": "Manager approval",
+      "accountant": "Accountant",
+      "name2": "Name",
+      "approvalDate": "Approval date",
+      "date": "Date",
+      "note": "This sheet is an acknowledgment of salary received; printing it does not record any payment."
+    },
+    "intro": "Factory employees on the three shifts. They don't log in; team leaders report absences and penalties.",
+    "add": "Add employee",
+    "addIntro": "Five fields. The employee number is given automatically; the salary starts at 400,000 IQD.",
+    "noShift": "You are not the team leader of a shift yet. Ask the administrator to set you as a shift's leader (Shift Management).",
+    "shiftN": "Shift {n}",
+    "search": "Name, number or phone…",
+    "allShifts": "All shifts",
+    "none": "No active employees.",
+    "since": "since {date}",
+    "fullName": "Full name",
+    "shift": "Shift",
+    "salary": "Monthly salary (IQD)",
+    "salaryHint": "400,000 IQD by default.",
+    "salaryFixed": "Every new employee starts at 400,000 IQD; only the administrator changes salaries.",
+    "startDate": "Start date",
+    "phone": "Phone number",
+    "numberAuto": "The employee number (W-0001…) is given automatically.",
+    "matchFound": "Someone with this name or phone was already in the system. Check before adding:",
+    "matchBlack": "WARNING — this name or phone is on the blacklist:",
+    "blacklisted": "Blacklisted",
+    "sameAs": "{what}",
+    "blackReason": "Reason",
+    "reviewed": "I reviewed this and still want to add the employee",
+    "save": "Add employee",
+    "saved": "Employee {number} saved.",
+    "number": "Employee number",
+    "lastDay": "Last working day",
+    "edit": "Edit details",
+    "transfer": "Move to another shift",
+    "newShift": "New shift",
+    "reasonOpt": "Reason (optional)",
+    "reason": "Reason",
+    "changeSalary": "Change salary",
+    "salaryRule": "Counts from next month's payroll; already submitted or finalized months never change.",
+    "newSalary": "New monthly salary (IQD)",
+    "penaltyAdd": "Give a penalty",
+    "penaltySave": "Save penalty",
+    "penaltySaved": "Penalty saved.",
+    "amount": "Amount (IQD)",
+    "date": "Date",
+    "depart": "Fired or quit",
+    "departHint": "The employee leaves the attendance lists at once; the administrator confirms it.",
+    "departHintAdmin": "The employee becomes inactive after the last working day. All history is kept.",
+    "departQuit": "Record: quit",
+    "departFired": "Record: fired",
+    "departKind": "Fired or quit",
+    "departSave": "Save departure",
+    "explanation": "Explanation",
+    "alsoBlack": "Also add to the blacklist",
+    "blackReasonIfAdded": "Blacklist reason (if added)",
+    "blackDetailsIfAdded": "Blacklist details (if added)",
+    "blackAdd": "Add to blacklist",
+    "blackDetails": "Detailed explanation",
+    "absences": "Absences",
+    "noAbsences": "No absences.",
+    "extraLine": "Extra deduction: +{days} day(s) → {total} deduction days for 1 absent day",
+    "extraAsk": "Count as more days",
+    "extraSend": "Send for approval",
+    "extraDays": "Extra deduction days",
+    "noPenalties": "No penalties.",
+    "cancelled": "Cancelled",
+    "history": "History",
+    "blackRemoved": "removed from the blacklist",
+    "moved": "Moved from shift {from} to shift {to}",
+    "salaryFromTo": "Salary {from} → {to}",
+    "created": "Added",
+    "inactiveIntro": "Employees who were fired or quit. Nothing is deleted: their attendance, penalties and payroll stay.",
+    "firedOrQuit": "Fired or quit",
+    "noneInactive": "No inactive employees.",
+    "waitingConfirm": "waiting for the administrator",
+    "recordedBy": "Recorded by {name}, {at}",
+    "confirm": "Confirm",
+    "undo": "Undo (employee active again)",
+    "blackIntro": "One list shared by all three shifts, so a team leader can check someone's history before hiring.",
+    "blackAddOther": "Add someone (name and phone)",
+    "prevShift": "Previous shift",
+    "blackSaved": "Added to the blacklist.",
+    "onList": "On the list",
+    "blackRemovedList": "Removed (history)",
+    "noneBlack": "Nobody is on the blacklist.",
+    "removalWaiting": "removal waiting for the administrator",
+    "addedBy": "Added by {name}, {at}",
+    "removalReason": "Removal reason",
+    "decidedBy": "decided by {name}",
+    "removalApprove": "Approve removal",
+    "removalRefuse": "Keep on the list",
+    "removeAsk": "Ask to remove",
+    "removeNow": "Remove from the list",
+    "shiftsIntro": "Each shift has its own team leader. Only the administrator assigns leaders and moves employees.",
+    "leader": "Team leader",
+    "noLeader": "No leader",
+    "setLeader": "Change leader",
+    "activeN": "{n} active employees",
+    "otherShift": "Another shift's employees are visible to its own leader.",
+    "attIntro": "Tap only the employees who are absent. Everyone else is recorded present when you submit.",
+    "attHint": "Everyone is present unless marked Absent or Excused. Excused needs a reason.",
+    "total": "Total",
+    "excuseReason": "Reason for the excuse",
+    "correctReason": "Why is the report corrected?",
+    "countLine": "Present {present} · Absent {absent} · Excused {excused} · Total {total}",
+    "submit": "Submit attendance",
+    "saveCorrection": "Save correction",
+    "submitted": "Attendance submitted.",
+    "corrected": "Correction saved.",
+    "reportFor": "Shift {shift} · {date}",
+    "submittedBadge": "Submitted",
+    "submittedBy": "by {name}, {at}",
+    "correctedAt": "corrected {at}",
+    "correct": "Correct this report",
+    "noActive": "There are no active employees in this shift for that day.",
+    "notSubmitted": "Not Submitted — the team leader hasn't sent this day's report. Nobody is counted present or absent, and nothing is deducted.",
+    "notSubmittedShort": "Not Submitted",
+    "monthView": "Month {month}",
+    "gridHint": "✓ = all present · a number = absent/excused that day · ! (red) = Not Submitted. Tap a day to open it.",
+    "excusesIntro": "Excused absences need a reason and an approval; extra deduction days count one absence as more days.",
+    "waitingExcuses": "Excuses waiting ({n})",
+    "waitingExtra": "Extra deduction days waiting ({n})",
+    "nothingWaiting": "Nothing waiting.",
+    "askedBy": "asked by {name}",
+    "approve": "Approve",
+    "reject": "Reject",
+    "decided": "Decided (last 2 months)",
+    "nothingDecided": "Nothing decided yet.",
+    "revoke": "Revoke excuse",
+    "penaltiesIntro": "Money penalties in IQD. Changing or cancelling one needs a reason; nothing is deleted.",
+    "employee": "Employee",
+    "thisMonth": "This month",
+    "penaltyTotal": "{n} active penalties · {total}",
+    "givenBy": "Given by {name}, {at}",
+    "change": "Change",
+    "cancel": "Cancel penalty",
+    "penaltyReason": "Penalty reason",
+    "whyChange": "Why is it changed?",
+    "whyCancel": "Why is it cancelled?",
+    "payrollIntro": "Monthly salary ÷ 30 per day. Final = salary − deduction days × daily rate − penalties, rounded to 250 IQD.",
+    "monthN": "Month {n}",
+    "payrollOf": "Payroll {month}/{year}",
+    "frozenNote": "Figures frozen when submitted — later changes don't touch them.",
+    "liveNote": "Draft: worked out live from attendance, excuses and penalties.",
+    "runSubmitted": "Submitted by {name}, {at}",
+    "runApproved": "Approved by {name}, {at}",
+    "runFinalized": "Finalized by {name}, {at}",
+    "sentBack": "Sent back by the manager",
+    "submitPayroll": "Submit to the manager",
+    "approvePayroll": "Approve payroll",
+    "sendBack": "Send back",
+    "finalize": "Finalize payroll",
+    "employeesN": "Employees",
+    "totalAbsence": "Absence deductions (IQD)",
+    "totalPenalties": "Penalties (IQD)",
+    "totalPayable": "Total payable",
+    "review": "Review before submitting",
+    "missingDays": "{n} days Not Submitted:",
+    "open": "Open",
+    "waitingDecisions": "{n} excuses or extra deduction requests are still waiting (not deducted until decided)",
+    "reviewHint": "Days Not Submitted are never deducted; they count as worked.",
+    "shiftTotal": "Shift total",
+    "printSheet": "Print salary sheet",
+    "paidDays": "paid {n} of 30 days",
+    "waiting": "waiting decisions",
+    "correctedBadge": "corrected",
+    "correctLine": "Correct (finalized)",
+    "noPayroll": "No employees were employed in this month.",
+    "formula": "Pay is always on 30 days: the 31st isn't counted, February pays 30. Joining on the 10th = 21 paid days. A salary change counts from the next month.",
+    "sheetsIntro": "Choose the month, year and ONE shift, check the preview, then print. Printing marks nobody as paid.",
+    "year": "Year",
+    "month": "Month",
+    "preview": "Preview",
+    "openToPrint": "Open to print",
+    "sheetFrozen": "Payroll {state}: the frozen figures are printed.",
+    "sheetDraft": "Draft: these figures can still change until the payroll is submitted.",
+    "historyIntro": "Every month's payroll and who submitted, approved and finalized it.",
+    "noRuns": "No payroll submitted yet.",
+    "employeesCount": "{n} employees",
+    "factory": "Factory Management System",
+    "sheetTitle": "Monthly Employee Salary Sheet",
+    "printDate": "Printed",
+    "draftMark": "DRAFT — not yet submitted"
   }
 }

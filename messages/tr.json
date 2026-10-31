@@ -23,7 +23,7 @@
     "assets": "Makineler ve Kalıplar",
     "reports": "Raporlar ve Analizler",
     "notifications": "Bildirimler",
-    "employees": "Çalışan Rehberi",
+    "employees": "Sistem kullanıcıları",
     "administration": "Yönetim ve Yetkiler",
     "menu": "Menü",
     "close": "Kapat",
@@ -31,7 +31,11 @@
     "stock": "Stok Hareketleri",
     "cash": "Kasa",
     "receipts": "Makbuzlar",
-    "customers": "Müşteriler"
+    "customers": "Müşteriler",
+    "people": "Çalışanlar",
+    "workers": "Çalışanlar",
+    "attendance": "Günlük Yoklama",
+    "payroll": "Aylık Bordro"
   },
   "common": {
     "save": "Kaydet",
@@ -156,7 +160,12 @@
       "audit": "Denetim kaydı",
       "stock": "Stok hareketleri",
       "cash": "Kasa (para)",
-      "receipts": "Makbuzlar (baskı düzenleri)"
+      "receipts": "Makbuzlar (baskı düzenleri)",
+      "workers": "Çalışanlar (fabrika işçileri)",
+      "attendance": "Günlük yoklama",
+      "penalties": "Cezalar",
+      "blacklist": "Kara liste",
+      "payroll": "Bordro (maaşlar)"
     },
     "actions": {
       "view": "Görüntüle",
@@ -173,7 +182,8 @@
       "in": "Para girişi",
       "out": "Para çıkışı",
       "exchange": "Döviz çevir",
-      "transfer": "Kasalar arası transfer"
+      "transfer": "Kasalar arası transfer",
+      "salary": "Maaşı değiştir"
     }
   },
   "install": {
@@ -597,6 +607,46 @@
       "update": "Tedarikçi değiştirildi",
       "archive": "Tedarikçi arşivlendi",
       "restore": "Tedarikçi geri alındı"
+    },
+    "worker": {
+      "create": "Çalışan eklendi",
+      "update": "Çalışan bilgileri değişti",
+      "salary": "Maaş değişti",
+      "transfer": "Başka vardiyaya taşındı",
+      "leader": "Vardiya amiri değişti",
+      "fired": "Çalışan çıkarıldı",
+      "quit": "Çalışan ayrıldı",
+      "departureConfirm": "Ayrılış onaylandı",
+      "departureUndo": "Ayrılış geri alındı"
+    },
+    "attendance": {
+      "submit": "Yoklama gönderildi",
+      "correct": "Yoklama düzeltildi",
+      "excuseApprove": "Mazeret onaylandı",
+      "excuseReject": "Mazeret reddedildi",
+      "excuseRevoke": "Mazeret geri alındı",
+      "extraAsk": "Ek kesinti günü istendi",
+      "extraApprove": "Ek kesinti günü onaylandı",
+      "extraReject": "Ek kesinti günü reddedildi"
+    },
+    "penalty": {
+      "add": "Ceza verildi",
+      "change": "Ceza değişti",
+      "cancel": "Ceza iptal edildi"
+    },
+    "blacklist": {
+      "add": "Kara listeye eklendi",
+      "removeAsk": "Kara listeden çıkarma istendi",
+      "remove": "Kara listeden çıkarıldı",
+      "removeRefused": "Kara listeden çıkarma reddedildi"
+    },
+    "payroll": {
+      "submit": "Bordro gönderildi",
+      "approve": "Bordro onaylandı",
+      "reject": "Bordro geri gönderildi",
+      "finalize": "Bordro kesinleşti",
+      "correct": "Kesin bordro düzeltildi",
+      "print": "Maaş listesi yazdırıldı"
     }
   },
   "sched": {
@@ -1412,7 +1462,14 @@
       "ReceiptLayout": "Makbuz düzeni",
       "Customer": "Müşteri",
       "Safe": "Kasa",
-      "Supplier": "Tedarikçi"
+      "Supplier": "Tedarikçi",
+      "Worker": "Çalışan",
+      "AttendanceReport": "Yoklama raporu",
+      "AttendanceRecord": "Yoklama",
+      "Penalty": "Ceza",
+      "BlacklistEntry": "Kara liste",
+      "PayrollRun": "Bordro",
+      "Shift": "Vardiya"
     }
   },
   "sys": {
@@ -1788,6 +1845,50 @@
       "edited": {
         "title": "{number} değiştirildi",
         "body": "{by}: {reason}"
+      }
+    },
+    "worker": {
+      "leader": {
+        "title": "{shift}. vardiyanın amirisiniz",
+        "body": "atayan: {by}"
+      },
+      "departure": {
+        "title": "{name} ayrıldı ({kind}) — vardiya {shift}",
+        "body": "kaydeden {by}; onaylayın"
+      }
+    },
+    "blacklist": {
+      "added": {
+        "title": "{name} kara listeye eklendi",
+        "body": "vardiya {shift} · {by}"
+      },
+      "removeAsk": {
+        "title": "{name} kara listeden çıkarılsın mı?",
+        "body": "isteyen {by}"
+      }
+    },
+    "attendance": {
+      "excuses": {
+        "title": "Onaylanacak {n} mazeretli devamsızlık",
+        "body": "vardiya {shift}, {day} · {by}"
+      },
+      "extra": {
+        "title": "Ek kesinti: {name} +{days} gün",
+        "body": "{day} devamsızlığı · isteyen {by}"
+      }
+    },
+    "payroll": {
+      "submitted": {
+        "title": "{month} bordrosu onay bekliyor",
+        "body": "{n} çalışan · {by}"
+      },
+      "approved": {
+        "title": "{month} bordrosu onaylandı",
+        "body": "{by}"
+      },
+      "rejected": {
+        "title": "{month} bordrosu geri gönderildi",
+        "body": "{by}: {note}"
       }
     }
   },
@@ -2302,5 +2403,260 @@
       "PRODUCTION": "Üretim",
       "SHORT": "Stoksuz alındı"
     }
+  },
+  "wk": {
+    "tab": {
+      "active": "Aktif Çalışanlar",
+      "inactive": "Pasif Çalışanlar",
+      "blacklist": "Kara Listedekiler",
+      "shifts": "Vardiya Yönetimi",
+      "attendance": "Günlük Yoklama",
+      "excuses": "Mazeretli Devamsızlık",
+      "penalties": "Cezalar",
+      "payroll": "Aylık Bordro",
+      "sheets": "Yazdırılabilir Maaş Listeleri",
+      "history": "Bordro Geçmişi"
+    },
+    "att": {
+      "PRESENT": "Var",
+      "ABSENT": "Yok",
+      "EXCUSED": "Mazeretli"
+    },
+    "excuse": {
+      "WAITING": "onay bekliyor",
+      "APPROVED": "onaylandı",
+      "REJECTED": "reddedildi — devamsızlık sayıldı",
+      "REVOKED": "geri alındı — devamsızlık sayıldı"
+    },
+    "appr": {
+      "WAITING": "bekliyor",
+      "APPROVED": "onaylandı",
+      "REJECTED": "reddedildi"
+    },
+    "kind": {
+      "FIRED": "İşten çıkarıldı",
+      "QUIT": "Ayrıldı"
+    },
+    "status": {
+      "ACTIVE": "Aktif",
+      "INACTIVE": "Pasif"
+    },
+    "same": {
+      "name": "aynı ad",
+      "phone": "aynı telefon"
+    },
+    "run": {
+      "DRAFT": "Taslak",
+      "SUBMITTED": "Gönderildi",
+      "APPROVED": "Onaylandı",
+      "FINALIZED": "Kesinleşti"
+    },
+    "col": {
+      "employee": "Çalışan",
+      "salary": "Aylık maaş",
+      "daysWorked": "Çalışılan gün",
+      "absent": "Devamsız",
+      "excused": "Mazeretli",
+      "extra": "Ek gün",
+      "deductionDays": "Kesinti günü",
+      "dailyRate": "Günlük ücret",
+      "absenceDed": "Devamsızlık kesintisi",
+      "penalties": "Cezalar",
+      "totalDed": "Toplam kesinti",
+      "final": "Net maaş"
+    },
+    "sheet": {
+      "no": "No",
+      "name": "Çalışan Adı",
+      "id": "Çalışan No",
+      "days": "Çalışılan Gün",
+      "final": "Net Maaş (IQD)",
+      "signature": "Çalışan İmzası",
+      "total": "Toplam — {n} çalışan",
+      "manager": "Müdür onayı",
+      "accountant": "Muhasebeci",
+      "name2": "Ad",
+      "approvalDate": "Onay tarihi",
+      "date": "Tarih",
+      "note": "Bu liste maaş alındı belgesidir; yazdırmak herhangi bir ödeme kaydetmez."
+    },
+    "intro": "Üç vardiyadaki fabrika çalışanları. Giriş yapmazlar; vardiya amirleri devamsızlık ve cezaları girer.",
+    "add": "Çalışan ekle",
+    "addIntro": "Beş alan. Çalışan numarası otomatik verilir; maaş 400.000 IQD ile başlar.",
+    "noShift": "Henüz bir vardiyanın amiri değilsiniz. Yöneticiden sizi bir vardiyaya amir yapmasını isteyin (Vardiya Yönetimi).",
+    "shiftN": "Vardiya {n}",
+    "search": "Ad, numara veya telefon…",
+    "allShifts": "Tüm vardiyalar",
+    "none": "Aktif çalışan yok.",
+    "since": "{date} tarihinden beri",
+    "fullName": "Ad soyad",
+    "shift": "Vardiya",
+    "salary": "Aylık maaş (IQD)",
+    "salaryHint": "Varsayılan 400.000 IQD.",
+    "salaryFixed": "Her yeni çalışan 400.000 IQD ile başlar; maaşları yalnızca yönetici değiştirir.",
+    "startDate": "Başlangıç tarihi",
+    "phone": "Telefon numarası",
+    "numberAuto": "Çalışan numarası (W-0001…) otomatik verilir.",
+    "matchFound": "Bu ad veya telefonla biri sistemde zaten var. Eklemeden önce kontrol edin:",
+    "matchBlack": "UYARI — bu ad veya telefon kara listede:",
+    "blacklisted": "Kara listede",
+    "sameAs": "{what}",
+    "blackReason": "Sebep",
+    "reviewed": "Bunu inceledim ve yine de çalışanı eklemek istiyorum",
+    "save": "Çalışanı ekle",
+    "saved": "{number} çalışanı kaydedildi.",
+    "number": "Çalışan no",
+    "lastDay": "Son çalışma günü",
+    "edit": "Bilgileri düzenle",
+    "transfer": "Başka vardiyaya taşı",
+    "newShift": "Yeni vardiya",
+    "reasonOpt": "Sebep (isteğe bağlı)",
+    "reason": "Sebep",
+    "changeSalary": "Maaşı değiştir",
+    "salaryRule": "Gelecek ayın bordrosundan itibaren geçerli; gönderilmiş veya kesinleşmiş aylar değişmez.",
+    "newSalary": "Yeni aylık maaş (IQD)",
+    "penaltyAdd": "Ceza ver",
+    "penaltySave": "Cezayı kaydet",
+    "penaltySaved": "Ceza kaydedildi.",
+    "amount": "Tutar (IQD)",
+    "date": "Tarih",
+    "depart": "İşten çıkarma veya ayrılma",
+    "departHint": "Çalışan yoklama listelerinden hemen çıkar; yönetici onaylar.",
+    "departHintAdmin": "Çalışan son çalışma gününden sonra pasif olur. Tüm geçmiş saklanır.",
+    "departQuit": "Kaydet: ayrıldı",
+    "departFired": "Kaydet: çıkarıldı",
+    "departKind": "Çıkarıldı veya ayrıldı",
+    "departSave": "Ayrılışı kaydet",
+    "explanation": "Açıklama",
+    "alsoBlack": "Kara listeye de ekle",
+    "blackReasonIfAdded": "Kara liste sebebi (eklenirse)",
+    "blackDetailsIfAdded": "Kara liste ayrıntıları (eklenirse)",
+    "blackAdd": "Kara listeye ekle",
+    "blackDetails": "Ayrıntılı açıklama",
+    "absences": "Devamsızlıklar",
+    "noAbsences": "Devamsızlık yok.",
+    "extraLine": "Ek kesinti: +{days} gün → 1 devamsızlık günü için {total} kesinti günü",
+    "extraAsk": "Daha fazla gün say",
+    "extraSend": "Onaya gönder",
+    "extraDays": "Ek kesinti günü",
+    "noPenalties": "Ceza yok.",
+    "cancelled": "İptal edildi",
+    "history": "Geçmiş",
+    "blackRemoved": "kara listeden çıkarıldı",
+    "moved": "{from}. vardiyadan {to}. vardiyaya taşındı",
+    "salaryFromTo": "Maaş {from} → {to}",
+    "created": "Eklendi",
+    "inactiveIntro": "İşten çıkarılan veya ayrılan çalışanlar. Hiçbir şey silinmez: yoklama, ceza ve bordroları kalır.",
+    "firedOrQuit": "Çıkarıldı veya ayrıldı",
+    "noneInactive": "Pasif çalışan yok.",
+    "waitingConfirm": "yönetici bekleniyor",
+    "recordedBy": "Kaydeden: {name}, {at}",
+    "confirm": "Onayla",
+    "undo": "Geri al (çalışan yeniden aktif)",
+    "blackIntro": "Üç vardiyanın ortak tek listesi; amir işe almadan önce kişinin geçmişine bakabilir.",
+    "blackAddOther": "Birini ekle (ad ve telefon)",
+    "prevShift": "Önceki vardiya",
+    "blackSaved": "Kara listeye eklendi.",
+    "onList": "Listede",
+    "blackRemovedList": "Çıkarılanlar (geçmiş)",
+    "noneBlack": "Kara listede kimse yok.",
+    "removalWaiting": "çıkarma yönetici onayı bekliyor",
+    "addedBy": "Ekleyen: {name}, {at}",
+    "removalReason": "Çıkarma sebebi",
+    "decidedBy": "karar veren: {name}",
+    "removalApprove": "Çıkarmayı onayla",
+    "removalRefuse": "Listede tut",
+    "removeAsk": "Çıkarma iste",
+    "removeNow": "Listeden çıkar",
+    "shiftsIntro": "Her vardiyanın kendi amiri vardır. Amirleri yalnızca yönetici atar ve çalışanları taşır.",
+    "leader": "Vardiya amiri",
+    "noLeader": "Amir yok",
+    "setLeader": "Amiri değiştir",
+    "activeN": "{n} aktif çalışan",
+    "otherShift": "Diğer vardiyanın çalışanlarını yalnızca kendi amiri görür.",
+    "attIntro": "Yalnızca gelmeyenlere dokunun. Gönderdiğinizde diğer herkes var olarak kaydedilir.",
+    "attHint": "Yok veya Mazeretli işaretlenmedikçe herkes var sayılır. Mazeret için sebep gerekir.",
+    "total": "Toplam",
+    "excuseReason": "Mazeret sebebi",
+    "correctReason": "Rapor neden düzeltiliyor?",
+    "countLine": "Var {present} · Yok {absent} · Mazeretli {excused} · Toplam {total}",
+    "submit": "Yoklamayı gönder",
+    "saveCorrection": "Düzeltmeyi kaydet",
+    "submitted": "Yoklama gönderildi.",
+    "corrected": "Düzeltme kaydedildi.",
+    "reportFor": "Vardiya {shift} · {date}",
+    "submittedBadge": "Gönderildi",
+    "submittedBy": "{name}, {at}",
+    "correctedAt": "düzeltildi {at}",
+    "correct": "Bu raporu düzelt",
+    "noActive": "O gün bu vardiyada aktif çalışan yok.",
+    "notSubmitted": "Gönderilmedi — amir bu günün raporunu göndermedi. Kimse var/yok sayılmaz, kesinti yapılmaz.",
+    "notSubmittedShort": "Gönderilmedi",
+    "monthView": "Ay {month}",
+    "gridHint": "✓ = herkes var · sayı = o gün yok/mazeretli · ! (kırmızı) = Gönderilmedi. Açmak için güne dokunun.",
+    "excusesIntro": "Mazeretli devamsızlık sebep ve onay ister; ek kesinti günleri bir devamsızlığı daha fazla gün sayar.",
+    "waitingExcuses": "Bekleyen mazeretler ({n})",
+    "waitingExtra": "Bekleyen ek kesinti günleri ({n})",
+    "nothingWaiting": "Bekleyen yok.",
+    "askedBy": "isteyen: {name}",
+    "approve": "Onayla",
+    "reject": "Reddet",
+    "decided": "Karara bağlananlar (son 2 ay)",
+    "nothingDecided": "Henüz karar yok.",
+    "revoke": "Mazereti geri al",
+    "penaltiesIntro": "IQD cinsinden para cezaları. Değiştirmek veya iptal etmek sebep ister; hiçbir şey silinmez.",
+    "employee": "Çalışan",
+    "thisMonth": "Bu ay",
+    "penaltyTotal": "{n} etkin ceza · {total}",
+    "givenBy": "Veren: {name}, {at}",
+    "change": "Değiştir",
+    "cancel": "Cezayı iptal et",
+    "penaltyReason": "Ceza sebebi",
+    "whyChange": "Neden değiştiriliyor?",
+    "whyCancel": "Neden iptal ediliyor?",
+    "payrollIntro": "Aylık maaş ÷ 30 günlük. Net = maaş − kesinti günü × günlük ücret − cezalar, 250 IQD'ye yuvarlanır.",
+    "monthN": "{n}. ay",
+    "payrollOf": "Bordro {month}/{year}",
+    "frozenNote": "Rakamlar gönderildiğinde donduruldu — sonraki değişiklikler etkilemez.",
+    "liveNote": "Taslak: yoklama, mazeret ve cezalardan anlık hesaplanır.",
+    "runSubmitted": "Gönderen: {name}, {at}",
+    "runApproved": "Onaylayan: {name}, {at}",
+    "runFinalized": "Kesinleştiren: {name}, {at}",
+    "sentBack": "Müdür geri gönderdi",
+    "submitPayroll": "Müdüre gönder",
+    "approvePayroll": "Bordroyu onayla",
+    "sendBack": "Geri gönder",
+    "finalize": "Bordroyu kesinleştir",
+    "employeesN": "Çalışanlar",
+    "totalAbsence": "Devamsızlık kesintileri (IQD)",
+    "totalPenalties": "Cezalar (IQD)",
+    "totalPayable": "Toplam ödenecek",
+    "review": "Göndermeden önce kontrol",
+    "missingDays": "{n} gün gönderilmedi:",
+    "open": "Aç",
+    "waitingDecisions": "{n} mazeret veya ek kesinti talebi bekliyor (karar verilene kadar kesilmez)",
+    "reviewHint": "Gönderilmeyen günler asla kesilmez; çalışılmış sayılır.",
+    "shiftTotal": "Vardiya toplamı",
+    "printSheet": "Maaş listesini yazdır",
+    "paidDays": "30 günün {n} günü ödenir",
+    "waiting": "bekleyen kararlar",
+    "correctedBadge": "düzeltildi",
+    "correctLine": "Düzelt (kesin)",
+    "noPayroll": "Bu ay çalışan yoktu.",
+    "formula": "Ödeme her zaman 30 gün üzerinden: 31'i sayılmaz, Şubat 30 öder. Ayın 10'unda başlayan = 21 gün. Maaş değişikliği sonraki aydan geçerlidir.",
+    "sheetsIntro": "Ay, yıl ve TEK vardiya seçin, önizlemeye bakın, sonra yazdırın. Yazdırmak kimseyi ödendi saymaz.",
+    "year": "Yıl",
+    "month": "Ay",
+    "preview": "Önizle",
+    "openToPrint": "Yazdırmak için aç",
+    "sheetFrozen": "Bordro {state}: dondurulmuş rakamlar yazdırılır.",
+    "sheetDraft": "Taslak: bordro gönderilene kadar rakamlar değişebilir.",
+    "historyIntro": "Her ayın bordrosu ve onu kimin gönderdiği, onayladığı, kesinleştirdiği.",
+    "noRuns": "Henüz bordro gönderilmedi.",
+    "employeesCount": "{n} çalışan",
+    "factory": "Fabrika Yönetim Sistemi",
+    "sheetTitle": "Aylık Çalışan Maaş Listesi",
+    "printDate": "Yazdırma",
+    "draftMark": "TASLAK — henüz gönderilmedi"
   }
 }

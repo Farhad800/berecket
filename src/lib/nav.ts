@@ -22,6 +22,11 @@ export const NAV: NavGroup[] = [
     { href: "/customers", key: "customers", icon: "Contact", perm: "customers:view" },
     { href: "/cash", key: "cash", icon: "Vault", perm: "cash:view" },
   ]},
+  { key: "people", items: [
+    { href: "/workers", key: "workers", icon: "UserRound", perm: "workers:view" },
+    { href: "/workers/attendance", key: "attendance", icon: "CalendarCheck", perm: "workers:view" },
+    { href: "/workers/payroll", key: "payroll", icon: "Wallet", perm: "payroll:view" },
+  ]},
   { key: "masterData", items: [
     { href: "/products", key: "products", icon: "Package", perm: "products:view" },
     { href: "/assets", key: "assets", icon: "Cog", perm: "assets:view" },

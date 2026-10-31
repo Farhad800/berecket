@@ -6,14 +6,14 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ArrowLeftRight, Vault, Printer, Contact, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
-  LayoutDashboard, Menu, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench, X, type LucideIcon,
+  LayoutDashboard, Menu, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench, X, UserRound, CalendarCheck, Wallet, type LucideIcon,
 } from "lucide-react";
 import type { NavGroup } from "@/lib/nav";
 import { cn } from "@/components/ui";
 
 const ICONS: Record<string, LucideIcon> = {
   ArrowLeftRight, Vault, Printer, Contact, BarChart3, Bell, Building2, CalendarRange, ClipboardList, Cog, Factory, History, KeyRound,
-  LayoutDashboard, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench,
+  LayoutDashboard, Package, ScrollText, ShieldCheck, Truck, Users, Warehouse, Wrench, UserRound, CalendarCheck, Wallet,
 };
 
 function NavList({ groups, unread, onNavigate }: { groups: NavGroup[]; unread: number; onNavigate?: () => void }) {
@@ -27,7 +27,9 @@ function NavList({ groups, unread, onNavigate }: { groups: NavGroup[]; unread: n
           <ul className="space-y-0.5">
             {g.items.map((item) => {
               const Icon = ICONS[item.icon];
-              const active = path === item.href || path.startsWith(item.href + "/");
+              // The most specific item wins (/workers/attendance is not also /workers).
+              const hit = (h: string) => path === h || path.startsWith(h + "/");
+              const active = hit(item.href) && !groups.some((gg) => gg.items.some((o) => o.href.length > item.href.length && o.href.startsWith(item.href + "/") && hit(o.href)));
               return (
                 <li key={item.href}>
                   <Link

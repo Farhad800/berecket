@@ -747,3 +747,292 @@ model SubmissionKey {
 
   @@index([createdAt])
 }
+
+// ───────────────────────────── Employees, attendance, payroll (owner, 31 Oct 2026) ─────────────────────────────
+// Factory workers on the three shifts. They never log in; team leaders, the accountant, the manager and the
+// administrator are system users. Shift 1 / 2 / 3 = the production shifts A / B / C.
+
+enum WorkerStatus {
+  ACTIVE
+  INACTIVE // fired or quit (see WorkerDeparture); never deleted
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED // did not attend, with a reason; no salary deduction once approved
+}
+
+enum ExcuseState {
+  WAITING
+  APPROVED
+  REJECTED // the day became an ordinary absence
+  REVOKED // an approved excuse withdrawn by the administrator; the day became an ordinary absence
+}
+
+enum ApprovalState {
+  WAITING
+  APPROVED
+  REJECTED
+}
+
+enum DepartureKind {
+  FIRED
+  QUIT
+}
+
+enum PenaltyState {
+  ACTIVE
+  CANCELLED // kept, never deleted
+}
+
+enum PayrollState {
+  DRAFT // figures worked out live
+  SUBMITTED // figures frozen in PayrollLine, waiting for the manager
+  APPROVED
+  FINALIZED // locked; later changes never touch it
+}
+
+model Worker {
+  id          String       @id @default(cuid())
+  number      String       @unique // W-0001, automatic
+  fullName    String
+  phone       String
+  phoneKey    String // digits only, without +964 / leading 0 — for duplicate and blacklist checks
+  shift       Shift
+  salary      Decimal      @db.Decimal(14, 2) // monthly, IQD; 400,000 by default
+  startDate   DateTime     @db.Date
+  status      WorkerStatus @default(ACTIVE)
+  endDate     DateTime?    @db.Date // last working day when inactive
+  createdById String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  salaryChanges WorkerSalaryChange[]
+  shiftChanges  WorkerShiftChange[]
+  attendance    AttendanceRecord[]
+  penalties     Penalty[]
+  extraDays     ExtraDeduction[]
+  departures    WorkerDeparture[]
+  blacklist     BlacklistEntry[]
+  payrollLines  PayrollLine[]
+
+  @@index([shift, status])
+  @@index([phoneKey])
+  @@index([fullName])
+}
+
+/// Every salary change; payroll uses the salary in force on the 1st of the month.
+model WorkerSalaryChange {
+  id          String   @id @default(cuid())
+  workerId    String
+  worker      Worker   @relation(fields: [workerId], references: [id])
+  oldSalary   Decimal  @db.Decimal(14, 2)
+  newSalary   Decimal  @db.Decimal(14, 2)
+  reason      String?
+  changedById String
+  createdAt   DateTime @default(now())
+
+  @@index([workerId, createdAt])
+}
+
+model WorkerShiftChange {
+  id          String   @id @default(cuid())
+  workerId    String
+  worker      Worker   @relation(fields: [workerId], references: [id])
+  fromShift   Shift
+  toShift     Shift
+  reason      String?
+  changedById String
+  createdAt   DateTime @default(now())
+
+  @@index([workerId])
+}
+
+/// The team leader of each shift (a system user). History is in the audit log.
+model ShiftLeader {
+  shift       Shift    @id
+  userId      String?
+  updatedById String
+  updatedAt   DateTime @updatedAt
+}
+
+/// One daily attendance report per shift and day: only absences are picked, everyone else is recorded present.
+model AttendanceReport {
+  id            String             @id @default(cuid())
+  shift         Shift
+  day           DateTime           @db.Date
+  submittedById String
+  submittedAt   DateTime           @default(now())
+  correctedAt   DateTime?
+  records       AttendanceRecord[]
+
+  @@unique([shift, day])
+  @@index([day])
+}
+
+model AttendanceRecord {
+  id           String           @id @default(cuid())
+  reportId     String
+  report       AttendanceReport @relation(fields: [reportId], references: [id])
+  workerId     String
+  worker       Worker           @relation(fields: [workerId], references: [id])
+  day          DateTime         @db.Date // copy of the report's day, for monthly totals
+  status       AttendanceStatus
+  excuseReason String?
+  excuseState  ExcuseState?
+  excuseById   String? // who asked for the excuse
+  decidedById  String?
+  decidedAt    DateTime?
+  decisionNote String?
+  extra        ExtraDeduction?
+
+  @@unique([reportId, workerId])
+  @@index([workerId, day])
+}
+
+/// Extra salary-deduction days for one actual absence (a punishment); attendance still shows one absent day.
+model ExtraDeduction {
+  id            String           @id @default(cuid())
+  recordId      String           @unique // one per absence: no duplicates
+  record        AttendanceRecord @relation(fields: [recordId], references: [id])
+  workerId      String
+  worker        Worker           @relation(fields: [workerId], references: [id])
+  days          Int
+  reason        String
+  state         ApprovalState    @default(WAITING)
+  requestedById String
+  requestedAt   DateTime         @default(now())
+  decidedById   String?
+  decidedAt     DateTime?
+  decisionNote  String?
+
+  @@index([workerId])
+}
+
+/// A money penalty in IQD given by a team leader. Changed or cancelled only with a reason; never deleted.
+model Penalty {
+  id            String       @id @default(cuid())
+  workerId      String
+  worker        Worker       @relation(fields: [workerId], references: [id])
+  shift         Shift // the worker's shift when it was given
+  day           DateTime     @db.Date
+  amount        Decimal      @db.Decimal(14, 2)
+  reason        String
+  state         PenaltyState @default(ACTIVE)
+  issuedById    String
+  createdAt     DateTime     @default(now())
+  cancelledById String?
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  @@index([workerId, day])
+  @@index([shift, day])
+}
+
+/// Fired or quit. Recorded by the team leader (worker leaves the lists at once) and confirmed by the administrator.
+model WorkerDeparture {
+  id           String        @id @default(cuid())
+  workerId     String
+  worker       Worker        @relation(fields: [workerId], references: [id])
+  kind         DepartureKind
+  lastDay      DateTime      @db.Date
+  explanation  String
+  shift        Shift
+  recordedById String
+  recordedAt   DateTime      @default(now())
+  state        ApprovalState @default(WAITING)
+  decidedById  String?
+  decidedAt    DateTime?
+  decisionNote String?
+
+  @@index([workerId])
+}
+
+/// One shared blacklist for all shifts. Removal needs the administrator; entries are never deleted.
+model BlacklistEntry {
+  id                   String         @id @default(cuid())
+  workerId             String?
+  worker               Worker?        @relation(fields: [workerId], references: [id])
+  fullName             String
+  phone                String
+  phoneKey             String
+  shift                Shift?
+  reason               String
+  details              String
+  addedById            String
+  addedAt              DateTime       @default(now())
+  active               Boolean        @default(true)
+  removalState         ApprovalState?
+  removalReason        String?
+  removalRequestedById String?
+  removalRequestedAt   DateTime?
+  removalDecidedById   String?
+  removalDecidedAt     DateTime?
+
+  @@index([phoneKey])
+  @@index([active])
+}
+
+/// One payroll per month. Submitting freezes the figures into PayrollLine; finalizing locks them for good.
+model PayrollRun {
+  id            String        @id @default(cuid())
+  year          Int
+  month         Int
+  state         PayrollState  @default(DRAFT)
+  createdById   String
+  createdAt     DateTime      @default(now())
+  submittedById String?
+  submittedAt   DateTime?
+  approvedById  String?
+  approvedAt    DateTime?
+  rejectNote    String?
+  finalizedById String?
+  finalizedAt   DateTime?
+  lines         PayrollLine[]
+
+  @@unique([year, month])
+}
+
+/// Frozen payroll figures for one worker and month (never recalculated after submitting).
+model PayrollLine {
+  id               String              @id @default(cuid())
+  runId            String
+  run              PayrollRun          @relation(fields: [runId], references: [id])
+  workerId         String
+  worker           Worker              @relation(fields: [workerId], references: [id])
+  workerNumber     String
+  workerName       String
+  shift            Shift
+  salary           Decimal             @db.Decimal(14, 2)
+  dailyRate        Decimal             @db.Decimal(18, 6)
+  eligibleDays     Int
+  daysWorked       Int
+  absentDays       Int
+  excusedDays      Int
+  extraDays        Int
+  deductionDays    Int
+  notSubmittedDays Int
+  earned           Decimal             @db.Decimal(14, 2)
+  absenceDeduction Decimal             @db.Decimal(14, 2)
+  penaltyCount     Int
+  penaltyTotal     Decimal             @db.Decimal(14, 2)
+  totalDeductions  Decimal             @db.Decimal(14, 2)
+  finalSalary      Decimal             @db.Decimal(14, 2)
+  corrections      PayrollCorrection[]
+
+  @@unique([runId, workerId])
+  @@index([runId, shift])
+}
+
+/// An authorized change to a finalized payroll line: the original figures stay beside the new ones.
+model PayrollCorrection {
+  id        String      @id @default(cuid())
+  lineId    String
+  line      PayrollLine @relation(fields: [lineId], references: [id])
+  before    Json
+  after     Json
+  reason    String
+  byId      String
+  createdAt DateTime    @default(now())
+}

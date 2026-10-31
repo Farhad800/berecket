@@ -12,6 +12,11 @@ export const RESOURCES = [
   "receipts", // printed receipts: saved layouts
   "customers", // customer accounts: balances, sales, payments
   "cash", // the safes: money in, money out (expenses), currency exchange, transfers between safes, expense categories
+  "workers", // factory workers on the three shifts (no login): list, shifts, salaries, departures
+  "attendance", // daily attendance reports (absences only), excuses, extra deduction days
+  "penalties", // money penalties given by team leaders
+  "blacklist", // the shared blacklist of all shifts
+  "payroll", // monthly salary calculation, salary sheets, approval, finalization
   "products",
   "assets", // machines & molds
   "reports",
@@ -21,7 +26,7 @@ export const RESOURCES = [
   "audit",
 ] as const;
 
-export const ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage", "input", "output", "buy", "sell", "in", "out", "exchange", "transfer"] as const;
+export const ACTIONS = ["view", "create", "edit", "approve", "export", "archive", "manage", "input", "output", "buy", "sell", "in", "out", "exchange", "transfer", "salary"] as const;
 
 export type Resource = (typeof RESOURCES)[number];
 export type Action = (typeof ACTIONS)[number];
@@ -39,6 +44,13 @@ export const RESOURCE_ACTIONS: Record<Resource, Action[]> = {
   cash: ["view", "in", "out", "exchange", "transfer", "manage", "export"],
   receipts: ["manage"],
   customers: ["view", "manage"],
+  // view = own shift (team leader); manage = all shifts, add workers, transfer, leaders, confirm departures;
+  // edit = record a departure; salary = change salaries (see salaries: payroll:view)
+  workers: ["view", "edit", "manage", "salary"],
+  attendance: ["create", "edit", "approve"], // submit (own shift) · correct with a reason · approve excuses and extra days
+  penalties: ["create"], // give, change or cancel penalties for the own shift
+  blacklist: ["view", "create", "manage"], // manage = approve removals
+  payroll: ["view", "create", "approve", "manage"], // see salaries · work out, print, submit · approve (manager) · finalize, correct
   products: ["view", "create", "edit", "archive", "export"],
   assets: ["view", "create", "edit", "archive", "export"],
   reports: ["view", "export"],
@@ -68,6 +80,9 @@ export const BUSINESS_VIEW: Permission[] = [
 ];
 
 const p = (...list: Permission[]) => list;
+
+/** Permissions that let someone see salaries and payroll (team leaders never have them). */
+export const SALARY_PERMS: Permission[] = ["payroll:view"];
 
 export const DEFAULT_ROLES: { name: string; description: string; permissions: Permission[] }[] = [
   {
@@ -120,6 +135,35 @@ export const DEFAULT_ROLES: { name: string; description: string; permissions: Pe
       ...BUSINESS_VIEW,
       "warehouse:create", "warehouse:edit", "warehouse:export",
       "stock:input", "stock:output",
+    ),
+  },
+  {
+    name: "Team Leader",
+    description: "Leads one shift: daily attendance (absences only), penalties, excuse requests, departures; sees the shared blacklist. Never sees salaries.",
+    permissions: p(
+      ...BUSINESS_VIEW,
+      "workers:view", "workers:edit",
+      "attendance:create", "attendance:edit",
+      "penalties:create",
+      "blacklist:view", "blacklist:create",
+    ),
+  },
+  {
+    name: "Accountant",
+    description: "Works out monthly payroll, prints each shift's salary sheet and submits it to the manager.",
+    permissions: p(
+      ...BUSINESS_VIEW,
+      "workers:view", "blacklist:view",
+      "payroll:view", "payroll:create",
+    ),
+  },
+  {
+    name: "Manager",
+    description: "Reviews and approves (or rejects) the monthly payroll.",
+    permissions: p(
+      ...BUSINESS_VIEW,
+      "workers:view", "blacklist:view",
+      "payroll:view", "payroll:approve",
     ),
   },
 ];
