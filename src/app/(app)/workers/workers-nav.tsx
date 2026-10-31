@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { can, type CurrentUser } from "@/lib/auth";
+import { can, canSeeMoney, type CurrentUser } from "@/lib/auth";
 import type { Permission } from "@/lib/permissions";
 import { cn } from "@/components/ui";
 
-const TABS: { key: string; href: string; perm: Permission | Permission[] }[] = [
+const TABS: { key: string; href: string; perm: Permission | Permission[]; money?: boolean }[] = [
   { key: "active", href: "/workers", perm: "workers:view" },
   { key: "inactive", href: "/workers/inactive", perm: "workers:view" },
   { key: "blacklist", href: "/workers/blacklist", perm: "blacklist:view" },
@@ -12,15 +12,15 @@ const TABS: { key: string; href: string; perm: Permission | Permission[] }[] = [
   { key: "attendance", href: "/workers/attendance", perm: "workers:view" },
   { key: "excuses", href: "/workers/excuses", perm: "workers:view" },
   { key: "penalties", href: "/workers/penalties", perm: "workers:view" },
-  { key: "payroll", href: "/workers/payroll", perm: "payroll:view" },
-  { key: "sheets", href: "/workers/payroll/sheets", perm: "payroll:view" },
-  { key: "history", href: "/workers/payroll/history", perm: "payroll:view" },
+  { key: "payroll", href: "/workers/payroll", perm: "payroll:view", money: true },
+  { key: "sheets", href: "/workers/payroll/sheets", perm: "payroll:view", money: true },
+  { key: "history", href: "/workers/payroll/history", perm: "payroll:view", money: true },
 ];
 
 /** The ten sections of Employee Management; each shows only to people allowed to open it. */
 export default async function WorkersNav({ me, active }: { me: CurrentUser; active: string }) {
   const t = await getTranslations();
-  const tabs = TABS.filter((x) => (Array.isArray(x.perm) ? x.perm.some((p) => can(me, p)) : can(me, x.perm)));
+  const tabs = TABS.filter((x) => (Array.isArray(x.perm) ? x.perm.some((p) => can(me, p)) : can(me, x.perm)) && (!x.money || canSeeMoney(me)));
   return (
     <nav className="mb-4 flex gap-1 overflow-x-auto border-b border-line" aria-label={t("nav.workers")}>
       {tabs.map((x) => (

@@ -1,4 +1,4 @@
-import { pageUser } from "@/lib/auth";
+import { canSeeMoney, pageUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NAV } from "@/lib/nav";
 import Sidebar from "@/components/shell/sidebar";
@@ -11,7 +11,7 @@ import { pushPublicKey } from "@/lib/push";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const me = await pageUser();
-  const groups = NAV.map((g) => ({ ...g, items: g.items.filter((i) => me.permissions.has(i.perm)) })).filter(
+  const groups = NAV.map((g) => ({ ...g, items: g.items.filter((i) => me.permissions.has(i.perm) && (!i.money || canSeeMoney(me))) })).filter(
     (g) => g.items.length > 0,
   );
   const unread = await db.notification.count({ where: { userId: me.id, readAt: null } });

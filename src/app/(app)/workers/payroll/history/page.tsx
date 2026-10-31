@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { maySeeSalaries } from "@/lib/workers";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { pageUser } from "@/lib/auth";
@@ -12,6 +14,7 @@ const iqd = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 0 });
 /** Every month's payroll: state, who submitted / approved / finalized it, employees and total. */
 export default async function PayrollHistoryPage() {
   const me = await pageUser("payroll:view");
+  if (!maySeeSalaries(me)) redirect("/forbidden"); // salaries only with the "see money" rule
   const t = await getTranslations();
   const locale = await getLocale();
   const runs = await db.payrollRun.findMany({ orderBy: [{ year: "desc" }, { month: "desc" }], include: { lines: { select: { finalSalary: true } } } });

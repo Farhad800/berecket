@@ -155,6 +155,7 @@ export const DEFAULT_ROLES: { name: string; description: string; permissions: Pe
       ...BUSINESS_VIEW,
       "workers:view", "blacklist:view",
       "payroll:view", "payroll:create",
+      "cash:view", // the "see money" rule: salaries are only shown with it (owner, 31 Oct 2026)
     ),
   },
   {
@@ -164,6 +165,7 @@ export const DEFAULT_ROLES: { name: string; description: string; permissions: Pe
       ...BUSINESS_VIEW,
       "workers:view", "blacklist:view",
       "payroll:view", "payroll:approve",
+      "cash:view", // the "see money" rule: salaries are only shown with it
     ),
   },
 ];

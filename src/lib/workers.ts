@@ -1,7 +1,7 @@
 import "server-only";
 import type { Shift } from "@prisma/client";
 import { db, type Tx } from "./db";
-import { can, type CurrentUser } from "./auth";
+import { can, canSeeMoney, type CurrentUser } from "./auth";
 import { UserError } from "./action";
 import { payFor, ymd, daysInMonth, type DayRecord, type PayResult } from "./payroll-math";
 import { todayYmd } from "./production";
@@ -12,8 +12,9 @@ import { todayYmd } from "./production";
  *
  * - A team leader (the user named for a shift) works only with that shift's workers.
  * - `workers:manage` (administrator) works with every shift.
- * - `payroll:view` (accountant, manager) reads every shift and sees salaries.
- * - Salaries are shown only with `payroll:view` or `workers:salary` — never to a team leader.
+ * - `payroll:view` (accountant, manager) reads every shift.
+ * - Salaries and payroll are shown only to people with the "see money" rule (Buy, Sell or Safe — owner, 31 Oct 2026)
+ *   AND `payroll:view` or `workers:salary`. A team leader never sees them.
  */
 export const SHIFTS = ["A", "B", "C"] as const satisfies readonly Shift[];
 export const SHIFT_NO: Record<Shift, number> = { A: 1, B: 2, C: 3 };
@@ -39,7 +40,7 @@ export async function scopeOf(me: CurrentUser, tx: Tx = db): Promise<Scope> {
   const manage = can(me, "workers:manage");
   const readAll = manage || can(me, "payroll:view");
   const leads = (await tx.shiftLeader.findMany({ where: { userId: me.id }, select: { shift: true } })).map((l) => l.shift);
-  return { all: readAll, manage, leads, shifts: readAll ? [...SHIFTS] : leads, salary: can(me, "payroll:view") || can(me, "workers:salary") };
+  return { all: readAll, manage, leads, shifts: readAll ? [...SHIFTS] : leads, salary: canSeeMoney(me) && (can(me, "payroll:view") || can(me, "workers:salary")) };
 }
 
 /** May this user change records of this shift (attendance, penalties, departures)? Leaders: own shift only. */
@@ -125,3 +126,11 @@ export async function assertMonthOpen(tx: Tx, day: string) {
   if (run && run.state !== "DRAFT") throw new UserError(`The payroll for ${m}/${y} is already ${run.state === "FINALIZED" ? "finalized — a change now needs a payroll correction" : "submitted — ask the manager to send it back first"}.`);
 }
 
+
+/** Payroll pages and salary changes: the permission AND the "see money" rule. */
+export function maySeeSalaries(me: CurrentUser, perm: "payroll:view" | "payroll:create" | "payroll:approve" | "payroll:manage" | "workers:salary" = "payroll:view") {
+  return canSeeMoney(me) && can(me, perm);
+}
+export function assertSalaries(me: CurrentUser, perm: Parameters<typeof maySeeSalaries>[1] = "payroll:view") {
+  if (!maySeeSalaries(me, perm)) throw new UserError("Salaries are only for people allowed to see money.");
+}

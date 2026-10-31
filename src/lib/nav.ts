@@ -1,6 +1,6 @@
 import type { Permission } from "./permissions";
 
-export type NavItem = { href: string; key: string; icon: string; perm: Permission };
+export type NavItem = { href: string; key: string; icon: string; perm: Permission; /** also needs the "see money" rule */ money?: boolean };
 export type NavGroup = { key: string; items: NavItem[] };
 
 export const NAV: NavGroup[] = [
@@ -25,7 +25,7 @@ export const NAV: NavGroup[] = [
   { key: "people", items: [
     { href: "/workers", key: "workers", icon: "UserRound", perm: "workers:view" },
     { href: "/workers/attendance", key: "attendance", icon: "CalendarCheck", perm: "workers:view" },
-    { href: "/workers/payroll", key: "payroll", icon: "Wallet", perm: "payroll:view" },
+    { href: "/workers/payroll", key: "payroll", icon: "Wallet", perm: "payroll:view", money: true },
   ]},
   { key: "masterData", items: [
     { href: "/products", key: "products", icon: "Package", perm: "products:view" },

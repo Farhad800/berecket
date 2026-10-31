@@ -200,6 +200,15 @@ with sync_playwright() as p:
     tr_ok="Aylık Çalışan Maaş Listesi" in pdfp.inner_text("main") and "Çalışan İmzası" in pdfp.inner_text("main")
     ck("43. Arabic sheet prints right-to-left; Turkish characters print", ar_ok and tr_ok)
     ck("44. printing marked nobody as paid (no money moved, payroll still draft)", sql(f"SELECT count(*) FROM {Q('\"CashEntry\"')}")=="0" and sql(f"SELECT count(*) FROM {Q('\"PayrollRun\"')}")=="0")
+    # ── salaries only with the "see money" rule (owner, 31 Oct 2026)
+    RP=Q('"RolePermission"'); mgr_role=sql(f"SELECT id FROM {Q('\"Role\"')} WHERE name='Manager'")
+    ck("Accountant and Manager roles have the see-money rule (Safe: view)", sql(f"SELECT count(*) FROM {RP} r JOIN {Q('\"Role\"')} o ON o.id=r.{Q('\"roleId\"')} WHERE o.name IN ('Accountant','Manager') AND r.permission='cash:view'")=="2")
+    sql(f"DELETE FROM {RP} WHERE {Q('\"roleId\"')}='{mgr_role}' AND permission='cash:view'")
+    MG.goto(B+f"/workers/payroll?year={yr}&month={int(mo)}"); nopay="/forbidden" in MG.url
+    MG.goto(B+f"/print/salary-sheet?year={yr}&month={int(mo)}&shift=A"); nosheet="/forbidden" in MG.url
+    MG.goto(B+f"/workers/{wid('Ahmad Kareem')}"); nosal=MG.get_by_test_id("worker-salary").count()==0 and MG.locator("nav a[href='/workers/payroll']").count()==0
+    sql(f"INSERT INTO {RP} ({Q('\"roleId\"')},permission) VALUES ('{mgr_role}','cash:view')")
+    ck("payroll permission without the see-money rule: no payroll page, no salary sheet, no salary, no menu item", nopay and nosheet and nosal)
     # ── approval and finalization (45)
     AC.goto(B+f"/workers/payroll?year={yr}&month={int(mo)}"); AC.get_by_role("button", name="Submit to the manager").click(); AC.wait_for_timeout(2500)
     ck("accountant submitted: figures frozen", sql(f"SELECT state FROM {Q('\"PayrollRun\"')}")=="SUBMITTED" and int(sql(f"SELECT count(*) FROM {Q('\"PayrollLine\"')}"))>=27)

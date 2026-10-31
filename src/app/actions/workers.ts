@@ -9,7 +9,7 @@ import { audit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { nextNumber } from "@/lib/numbering";
 import { run, UserError } from "@/lib/action";
-import { DEFAULT_SALARY, SHIFT_NO, assertWork, dayDate, nameKey, phoneKey, scopeOf, ymdDate } from "@/lib/workers";
+import { DEFAULT_SALARY, SHIFT_NO, assertSalaries, assertWork, maySeeSalaries, dayDate, nameKey, phoneKey, scopeOf, ymdDate } from "@/lib/workers";
 import { todayYmd } from "@/lib/production";
 
 /** Employees (factory workers), shifts, leaders, salaries, departures and the blacklist (owner, 31 Oct 2026). */
@@ -47,7 +47,7 @@ export async function createWorkerAction(input: unknown) {
   return run(async () => {
     const v = createSchema.parse(input);
     const me = await requirePermission("workers:manage");
-    if (v.salary !== DEFAULT_SALARY && !can(me, "workers:salary")) throw new UserError("Only the administrator can set a different salary.");
+    if (v.salary !== DEFAULT_SALARY && !maySeeSalaries(me, "workers:salary")) throw new UserError("Only the administrator can set a different salary.");
     return db.$transaction(async (tx) => {
       const matches = await findMatches(v.fullName, v.phone, tx);
       const dup = matches.find((m) => m.kind === "worker" && m.status === "ACTIVE" && m.why.includes("phone"));
@@ -87,6 +87,7 @@ export async function changeSalaryAction(input: unknown) {
   return run(async () => {
     const v = z.object({ id: z.string().min(1).max(40), salary: SALARY, reason: REASON }).parse(input);
     const me = await requirePermission("workers:salary");
+    assertSalaries(me, "workers:salary");
     await db.$transaction(async (tx) => {
       const w = await tx.worker.findUnique({ where: { id: v.id } });
       if (!w) throw new UserError("That employee no longer exists.");

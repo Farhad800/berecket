@@ -1,6 +1,7 @@
 import type { Shift } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { maySeeSalaries } from "@/lib/workers";
 import { pageUser } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { SHIFTS, SHIFT_NO } from "@/lib/workers";
@@ -18,6 +19,7 @@ const iqd = (n: number) => n.toLocaleString("en", { maximumFractionDigits: 0 });
  */
 export default async function SalarySheet({ searchParams }: { searchParams: Promise<{ year?: string; month?: string; shift?: string }> }) {
   const me = await pageUser("payroll:view");
+  if (!maySeeSalaries(me)) redirect("/forbidden"); // salaries only with the "see money" rule
   const sp = await searchParams;
   const year = Number(sp.year), month = Number(sp.month);
   if (!(year >= 2024 && year <= 2100 && month >= 1 && month <= 12) || !(SHIFTS as readonly string[]).includes(sp.shift ?? "")) notFound();

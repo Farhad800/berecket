@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/auth";
 import { audit } from "@/lib/audit";
 import { notify } from "@/lib/notify";
 import { run, UserError } from "@/lib/action";
-import { computeMonth } from "@/lib/workers";
+import { assertSalaries, computeMonth } from "@/lib/workers";
 import { todayYmd } from "@/lib/production";
 import { roundIqd } from "@/lib/payroll-math";
 
@@ -25,6 +25,7 @@ export async function submitPayrollAction(input: unknown) {
   return run(async () => {
     const v = MONTH.parse(input);
     const me = await requirePermission("payroll:create");
+    assertSalaries(me, "payroll:create");
     if (`${v.year}-${String(v.month).padStart(2, "0")}` > todayYmd().slice(0, 7)) throw new UserError("A future month can't be submitted.");
     const res = await db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"payroll:" + v.year + ":" + v.month}))`;
@@ -57,6 +58,7 @@ export async function decidePayrollAction(input: unknown) {
   return run(async () => {
     const v = z.object({ runId: z.string().min(1).max(40), approve: z.boolean(), note: z.string().trim().max(500).optional() }).parse(input);
     const me = await requirePermission("payroll:approve");
+    assertSalaries(me, "payroll:approve");
     if (!v.approve && (v.note ?? "").length < 3) throw new UserError("Write why the payroll is sent back.");
     await db.$transaction(async (tx) => {
       const r = await tx.payrollRun.findUnique({ where: { id: v.runId } });
@@ -78,6 +80,7 @@ export async function finalizePayrollAction(input: unknown) {
   return run(async () => {
     const v = z.object({ runId: z.string().min(1).max(40) }).parse(input);
     const me = await requirePermission("payroll:manage");
+    assertSalaries(me, "payroll:manage");
     await db.$transaction(async (tx) => {
       const r = await tx.payrollRun.findUnique({ where: { id: v.runId }, include: { _count: { select: { lines: true } } } });
       if (!r || r.state !== "APPROVED") throw new UserError("Only an approved payroll can be finalized.");
@@ -98,6 +101,7 @@ export async function correctPayrollLineAction(input: unknown) {
       reason: z.string().trim().min(3, "Write the reason").max(500),
     }).parse(input);
     const me = await requirePermission("payroll:manage");
+    assertSalaries(me, "payroll:manage");
     await db.$transaction(async (tx) => {
       const l = await tx.payrollLine.findUnique({ where: { id: v.lineId }, include: { run: true } });
       if (!l) throw new UserError("That payroll line no longer exists.");

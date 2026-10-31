@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { maySeeSalaries } from "@/lib/workers";
 import Link from "next/link";
 import type { Shift } from "@prisma/client";
 import { getLocale, getTranslations } from "next-intl/server";
@@ -21,6 +23,7 @@ const STATE_TONE = { DRAFT: "gray", SUBMITTED: "amber", APPROVED: "blue", FINALI
 /** The month's salaries: review, totals per shift and for all shifts, then submit → approve → finalize. */
 export default async function PayrollPage({ searchParams }: { searchParams: Promise<{ year?: string; month?: string; shift?: string; q?: string }> }) {
   const me = await pageUser("payroll:view");
+  if (!maySeeSalaries(me)) redirect("/forbidden"); // salaries only with the "see money" rule
   const t = await getTranslations();
   const locale = await getLocale();
   const sp = await searchParams;
